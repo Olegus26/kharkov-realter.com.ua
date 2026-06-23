@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-cormorant: 'Cormorant Garamond', serif;
+    --font-inter: 'Inter', sans-serif;
+
+    --background: 218 47% 8%;
+    --foreground: 210 30% 94%;
+    --card: 218 44% 11%;
+    --card-foreground: 210 30% 94%;
+    --popover: 218 44% 11%;
+    --popover-foreground: 210 30% 94%;
+    --primary: 210 70% 55%;
+    --primary-foreground: 218 47% 8%;
+    --secondary: 218 38% 16%;
+    --secondary-foreground: 210 30% 94%;
+    --muted: 218 38% 16%;
+    --muted-foreground: 215 20% 52%;
+    --accent: 210 70% 55%;
+    --accent-foreground: 218 47% 8%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 218 35% 18%;
+    --input: 218 38% 16%;
+    --ring: 210 70% 55%;
+    --radius: 0.5rem;
+
+    --gold: 210 70% 62%;
+    --gold-light: 210 70% 75%;
+    --gold-dark: 210 65% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-cormorant;
+  }
+}
+
+@layer utilities {
+  .font-cormorant {
+    font-family: var(--font-cormorant);
+  }
+
+  .font-inter {
+    font-family: var(--font-inter);
+  }
+
+  .text-gold {
+    color: hsl(var(--gold));
+  }
+
+  .bg-gold {
+    background-color: hsl(var(--gold));
+  }
+
+  .border-gold {
+    border-color: hsl(var(--gold));
+  }
+
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(210, 70%, 55%), hsl(215, 65%, 40%));
+  }
+
+  .gradient-dark {
+    background: linear-gradient(180deg, transparent, hsl(20, 10%, 6%) 80%);
+  }
+}

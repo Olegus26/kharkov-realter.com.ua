@@ -1,0 +1,8 @@
+{
+  "short_name": "Ріелтер",
+  "name": "Харків Ріелтер",
+  "start_url": "/",
+  "background_color": "#0d0d0d",
+  "theme_color": "#c5a880",
+  "display": "standalone"
+}
