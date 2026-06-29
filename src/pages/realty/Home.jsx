@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowRight, ChevronDown, Award, Users, Home, TrendingUp } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
-import { MOCK_PROPERTIES } from '@/lib/mockData'
+import { getObjects, mapObject } from '@/lib/novostoyApi'
 import { cn } from '@/lib/utils'
 
 const HERO_IMAGES = [
@@ -24,7 +25,13 @@ const HomePage = () => {
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
 
-  const properties = MOCK_PROPERTIES
+  const { data: properties = [], isLoading } = useQuery({
+    queryKey: ['novostoy-objects-featured'],
+    queryFn: async () => {
+      const res = await getObjects({ parent_id: '2', limit: 12 })
+      return (res.data || []).map(mapObject)
+    }
+  })
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
@@ -174,16 +181,22 @@ const HomePage = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {properties.slice(0, 3).map((p, i) =>
-            <motion.div
-              key={p.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <PropertyCard property={p} />
-            </motion.div>
+          {isLoading ? (
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="bg-card border border-border aspect-[4/5] animate-pulse" />
+            ))
+          ) : (
+            properties.slice(0, 3).map((p, i) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <PropertyCard property={p} />
+              </motion.div>
+            ))
           )}
         </div>
 
