@@ -81,4 +81,12 @@
   .gradient-dark {
     background: linear-gradient(180deg, transparent, hsl(20, 10%, 6%) 80%);
   }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

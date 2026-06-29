@@ -22,16 +22,11 @@
         "types": []
     },
     "include": [
-        "src/components/**/*.js",
-        "src/pages/**/*.jsx",
-        "src/Layout.jsx"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
         "dist",
-        "src/vite-plugins",
-        "src/components/ui",
-        "src/api",
-        "src/lib"
+        "src/vite-plugins"
     ]
 }

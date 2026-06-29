@@ -24,7 +24,7 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="relative h-80 sm:h-96 overflow-hidden mb-20">
         <img src="/about-bg.jpg" alt="About" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-background/75" />
+        <div className="absolute inset-0 bg-background/50" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
           <p className="text-xs tracking-[0.4em] uppercase text-gold mb-4 font-inter">Про компанію</p>
           <h1 className="font-cormorant text-6xl sm:text-7xl font-light">Харків Ріелтер</h1>

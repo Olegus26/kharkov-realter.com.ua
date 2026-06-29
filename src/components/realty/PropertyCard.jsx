@@ -3,7 +3,7 @@ import { BedDouble, Maximize2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TYPE_LABELS = {
-  apartment: 'Апартаменти',
+  apartment: 'Квартира',
   house: 'Будинок',
   penthouse: 'Пентхаус',
   villa: 'Вілла',
@@ -12,8 +12,9 @@ const TYPE_LABELS = {
 
 export default function PropertyCard({ property, className = '' }) {
   const formatPrice = (p) => {
-    if (p >= 1_000_000) return `${(p / 1_000_000).toFixed(1)} млн ₴`;
-    return `${p?.toLocaleString('uk-UA')} ₴`;
+    if (!p) return '—';
+    if (p >= 1_000_000) return `$${(p / 1_000_000).toFixed(2)} млн`;
+    return `$${p?.toLocaleString('uk-UA')}`;
   };
 
   return (
@@ -39,20 +40,20 @@ export default function PropertyCard({ property, className = '' }) {
           )}
           {property.new_building && (
             <span className="px-3 py-1 bg-background/80 text-foreground text-[10px] tracking-widest uppercase font-inter">
-              Новобудова
+              Новостройка
             </span>
           )}
         </div>
         <div className="absolute top-4 right-4">
           <span className="px-3 py-1 bg-background/80 text-foreground text-[10px] tracking-widest uppercase font-inter">
-            {property.deal === 'sale' ? 'Продаж' : 'Оренда'}
+            {property.deal === 'sale' ? 'Продажа' : 'Аренда'}
           </span>
         </div>
 
         {/* Price on image */}
         <div className="absolute bottom-4 left-4">
           <p className="font-cormorant text-2xl font-semibold text-white">{formatPrice(property.price)}</p>
-          {property.deal === 'rent' && <p className="text-xs text-white/70 font-inter">/місяць</p>}
+          {property.deal === 'rent' && <p className="text-xs text-white/70 font-inter">/месяц</p>}
         </div>
       </div>
 
@@ -72,7 +73,7 @@ export default function PropertyCard({ property, className = '' }) {
           {property.rooms && (
             <span className="flex items-center gap-1.5">
               <BedDouble className="w-3.5 h-3.5" />
-              {property.rooms} кімн.
+              {property.rooms} комн.
             </span>
           )}
           {property.area && (
@@ -82,7 +83,7 @@ export default function PropertyCard({ property, className = '' }) {
             </span>
           )}
           {property.floor && (
-            <span>{property.floor}/{property.floors_total} пов.</span>
+            <span>{property.floor}/{property.floors_total} эт.</span>
           )}
         </div>
       </div>
