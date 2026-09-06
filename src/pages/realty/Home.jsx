@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowRight, ChevronDown, Award, Users, Home, TrendingUp } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
-import { getObjects, mapObject } from '@/lib/novostoyApi'
+import { getObjects, getAllObjects, mapObject } from '@/lib/novostoyApi'
 import { cn } from '@/lib/utils'
 
 const HERO_IMAGES = [
@@ -15,15 +15,28 @@ const HERO_IMAGES = [
 
 const STATS = [
   { icon: Award, value: '30+', label: 'років на ринку' },
-  { icon: Home, value: '3 500+', label: 'угод закрито' },
-  { icon: Users, value: '45', label: 'експертів' },
-  { icon: TrendingUp, value: '98%', label: 'клієнтів задоволені' }
+  { icon: Home, value: '5 000+', label: 'угод закрито' },
+  { icon: Users, value: '100+', label: 'спеціалістів' },
+  { icon: TrendingUp, value: 'ТОП-1', label: 'у Харкові' }
 ]
 
 const HomePage = () => {
   const [deal, setDeal] = useState('sale')
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  // Prefetch full catalog data so navigating to /flats is instant
+  const handlePrefetchCatalog = useCallback(() => {
+    queryClient.prefetchQuery({
+      queryKey: ['novostoy-objects', 'sale'],
+      queryFn: async () => {
+        const allItems = await getAllObjects({ sell_type: '2' })
+        return allItems.map(mapObject)
+      },
+      staleTime: 10 * 60 * 1000,
+    })
+  }, [queryClient])
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['novostoy-objects-featured'],
@@ -35,7 +48,7 @@ const HomePage = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
-    navigate(`/catalog?deal=${deal}&q=${encodeURIComponent(query)}`)
+    navigate(`/flats?deal=${deal}&q=${encodeURIComponent(query)}`)
   }
 
   const handleDealTypeClick = (type) => () => {
@@ -57,32 +70,32 @@ const HomePage = () => {
           style={{ backgroundImage: `url(${HERO_IMAGES[0]})` }}
           aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-background/10" aria-hidden="true" />
-        <div className="bg-gradient-to-b rounded absolute inset-0 from-transparent via-transparent to-background" aria-hidden="true" />
+        <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+        <div className="bg-gradient-to-b rounded absolute inset-0 from-transparent via-background/40 to-background" aria-hidden="true" />
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
+        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto mt-20">
           <motion.p
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-xs tracking-[0.4em] uppercase text-gold mb-6 font-inter"
+            className="text-xs tracking-[0.4em] uppercase text-gold mb-6 font-inter drop-shadow-lg"
           >
-            Агентство нерухомості · Харків
+            Корпорація нерухомості · з 1996 року
           </motion.p>
 
           <motion.h1
             id="hero-heading"
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            className="font-cormorant text-6xl sm:text-7xl lg:text-8xl font-light leading-none mb-8"
+            className="font-cormorant text-6xl sm:text-7xl lg:text-8xl font-light leading-none mb-8 text-white drop-shadow-xl"
           >
-            Знайдіть своє
+            Харків
             <br />
-            {" "}<span className="text-gold italic">ідеальне</span> житло
+            {" "}<span className="text-gold italic">Ріелтер</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-            className="text-muted-foreground text-lg font-light mb-12 max-w-2xl mx-auto font-inter"
+            className="text-white/90 text-lg font-light mb-12 max-w-2xl mx-auto font-inter drop-shadow-lg"
           >
-            Преміальна нерухомість у Харкові та Харківській області — квартири, будинки, пентхауси
+            Лауреат всеукраїнських конкурсів «Професійне визнання». Продаж, оренда та оцінка нерухомості у Харкові.
           </motion.p>
 
           <motion.form
@@ -168,12 +181,13 @@ const HomePage = () => {
       <section id="featured" className="max-w-7xl mx-auto px-6 py-20" aria-label="Топові об'єкти">
         <div className="flex items-end justify-between mb-12">
           <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter">Вибране</p>
-            <h2 className="font-cormorant text-5xl font-light">Топові об'єкти</h2>
+            <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter">Гарячі пропозиції</p>
+            <h2 className="font-cormorant text-5xl font-light">Актуальні об'єкти</h2>
           </div>
           <Link
-            to="/catalog"
+            to="/flats"
             tabIndex={0}
+            onMouseEnter={handlePrefetchCatalog}
             className="hidden sm:flex items-center gap-2 text-sm text-gold hover:gap-4 transition-all font-inter focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded p-1"
           >
             Весь каталог <ArrowRight aria-hidden="true" className="w-4 h-4" />
@@ -202,7 +216,7 @@ const HomePage = () => {
 
         <div className="text-center mt-10 sm:hidden">
           <Link
-            to="/catalog"
+            to="/flats"
             tabIndex={0}
             className="inline-flex items-center gap-2 text-sm text-gold font-inter focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded p-1"
           >
@@ -219,9 +233,9 @@ const HomePage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { num: '01', title: 'Експертиза', desc: 'Понад 30 років роботи на харківському ринку нерухомості. Глибоке знання всіх районів та тенденцій.' },
-              { num: '02', title: 'Ексклюзивні об\'єкти', desc: 'Доступ до закритої бази об\'єктів, які не публікуються у відкритих джерелах.' },
-              { num: '03', title: 'Повний супровід', desc: 'Від пошуку до отримання ключів — ми беремо на себе всі юридичні та фінансові питання.' }
+              { num: '01', title: 'Досвід та авторитет', desc: 'На ринку Харкова з 1996 року. Багаторазовий переможець та лауреат всеукраїнських конкурсів «Професійне визнання» та «Визнання».' },
+              { num: '02', title: 'Професійна спільнота', desc: 'Дійсний член Асоціації фахівців з нерухомості України (АСНУ), Союзу ріелторів Харкова (ХСРіО) та Європейської Асоціації CEREAN.' },
+              { num: '03', title: 'Локальна експертиза', desc: 'Глибоке знання кожного району Харкова та області. Понад 100 кваліфікованих співробітників, які допоможуть з будь-яким запитом.' }
             ].map((item, i) =>
               <motion.div
                 key={item.num}
@@ -257,17 +271,25 @@ const HomePage = () => {
 
           <div className="relative">
             <p className="text-xs tracking-[0.3em] uppercase text-gold mb-4 font-inter">Безкоштовна консультація</p>
-            <h2 className="font-cormorant text-5xl sm:text-6xl font-light mb-6">Готові розпочати пошук?</h2>
+            <h2 className="font-cormorant text-5xl sm:text-6xl font-light mb-6">Потрібна допомога з нерухомістю?</h2>
             <p className="text-muted-foreground font-inter mb-10 max-w-md mx-auto text-sm leading-relaxed">
-              Наші експерти допоможуть знайти ідеальний об'єкт під ваші запити та бюджет у Харкові
+              Зателефонуйте на гарячу лінію або залиште заявку — наші спеціалісти проконсультують безкоштовно
             </p>
-            <Link
-              to="/contact"
-              tabIndex={0}
-              className="inline-flex items-center gap-3 px-10 py-4 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded"
-            >
-              Зв'язатися з нами <ArrowRight aria-hidden="true" className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href="tel:+380507136363"
+                className="inline-flex items-center justify-center gap-3 px-10 py-4 border border-gold/50 text-gold text-xs tracking-widest uppercase font-inter font-medium hover:bg-gold/10 transition-colors rounded"
+              >
+                050 713 63 63
+              </a>
+              <Link
+                to="/contact"
+                tabIndex={0}
+                className="inline-flex items-center justify-center gap-3 px-10 py-4 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity rounded"
+              >
+                Залишити заявку <ArrowRight aria-hidden="true" className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </motion.div>
       </section>

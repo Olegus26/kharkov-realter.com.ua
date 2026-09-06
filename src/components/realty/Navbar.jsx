@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X, Phone, Moon, Sun } from 'lucide-react';
+import { useTheme } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
 
 const links = [
   { to: '/', label: 'Головна' },
-  { to: '/catalog', label: 'Каталог' },
+  { to: '/flats?deal=sale', label: 'Каталог', activePaths: ['/flats', '/houses', '/realtys'] },
   { to: '/agents', label: 'Експерти' },
-  { to: '/about', label: 'Про нас' },
-  { to: '/contact', label: 'Контакти' },
+  { to: '/o-korporatcii', label: 'Про нас' },
+  { to: '/kontakty', label: 'Контакти' },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -51,7 +53,7 @@ export default function Navbar() {
               to={l.to}
               className={cn(
                 'text-sm tracking-widest uppercase transition-colors duration-300',
-                location.pathname === l.to ? 'text-gold' : 'text-muted-foreground hover:text-foreground'
+                (l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to) ? 'text-gold' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {l.label}
@@ -61,11 +63,18 @@ export default function Navbar() {
 
         {/* CTA */}
         <div className="hidden lg:flex items-center gap-4">
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 text-muted-foreground hover:text-gold transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
           <a href="tel:+380501234567" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors">
             <Phone className="w-4 h-4" />
             +380 (50) 123-45-67
           </a>
-          <Link to="/contact" className="px-5 py-2.5 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity">
+          <Link to="/kontakty" className="px-5 py-2.5 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity">
             Консультація
           </Link>
         </div>
@@ -82,12 +91,21 @@ export default function Navbar() {
           {links.map(l => (
             <Link key={l.to} to={l.to} className={cn(
               'block text-sm tracking-widest uppercase py-2 transition-colors',
-              location.pathname === l.to ? 'text-gold' : 'text-muted-foreground'
+              (l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to) ? 'text-gold' : 'text-muted-foreground'
             )}>
               {l.label}
             </Link>
           ))}
-          <Link to="/contact" className="block mt-4 px-5 py-3 gradient-gold text-background text-xs tracking-widest uppercase font-medium text-center">
+          <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
+            <span className="text-sm tracking-widest uppercase text-muted-foreground">Тема</span>
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 text-muted-foreground hover:text-gold transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
+          <Link to="/kontakty" className="block mt-4 px-5 py-3 gradient-gold text-background text-xs tracking-widest uppercase font-medium text-center">
             Консультація
           </Link>
         </div>

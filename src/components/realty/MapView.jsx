@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import { Link } from 'react-router-dom';
 import { BedDouble, Maximize2, X, MapPin, Phone } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { geocodeAddress, getFallbackCoords } from '@/lib/geocode';
+import { getFallbackCoords } from '@/lib/geocode';
 
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl
@@ -53,67 +54,53 @@ export default function MapView({ properties }) {
     const [selected, setSelected] = useState(null);
     const [markers, setMarkers] = useState([]);
 
-    // Geocode all properties — real address first, fallback to district
+    // Instantly map to fallback coordinates since we don't have accurate API coords
+    // and client-side bulk geocoding is rate-limited and very slow.
     useEffect(() => {
-        if (!properties.length) return;
-        setMarkers([]);
-        let cancelled = false;
-
-        const resolve = async () => {
-            const results = [];
-            for (let i = 0; i < properties.length; i++) {
-                if (cancelled) break;
-                const p = properties[i];
-                let coords = null;
-                if (p.address_full) {
-                    coords = await geocodeAddress(p.address_full);
-                }
-                if (!coords) {
-                    coords = getFallbackCoords(p.region, i);
-                }
-                results.push({ property: p, coords });
-            }
-            if (!cancelled) setMarkers(results);
-        };
-
-        resolve();
-        return () => { cancelled = true; };
+        if (!properties.length) {
+            setMarkers([]);
+            return;
+        }
+        
+        const results = properties.map((p, i) => ({
+            property: p,
+            coords: getFallbackCoords(p.region, i)
+        }));
+        setMarkers(results);
     }, [properties]);
 
     const allCoords = markers.map(m => m.coords);
 
     return (
-        <div className="relative w-full h-[calc(100vh-280px)] min-h-[500px] border border-border overflow-hidden">
+        <div className="relative w-full h-[calc(100vh-220px)] min-h-[500px] border border-border overflow-hidden rounded-md z-0">
             <MapContainer
                 center={[49.9935, 36.2304]}
                 zoom={12}
                 style={{ width: '100%', height: '100%' }}
-                zoomControl={false}
+                zoomControl={true}
             >
                 <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    className="dark-map-tiles"
                 />
 
                 {allCoords.length > 0 && <FitBounds coords={allCoords} />}
 
-                {markers.map(({ property, coords }) => (
-                    <Marker
-                        key={property.id}
-                        position={coords}
-                        icon={createCustomIcon(selected?.id === property.id)}
-                        eventHandlers={{ click: () => setSelected(property) }}
-                    />
-                ))}
+                {markers.length > 0 && (
+                    <MarkerClusterGroup chunkedLoading maxClusterRadius={60}>
+                        {markers.map(({ property, coords }) => (
+                            <Marker
+                                key={property.id}
+                                position={coords}
+                                icon={createCustomIcon(selected?.id === property.id)}
+                                eventHandlers={{ click: () => setSelected(property) }}
+                            />
+                        ))}
+                    </MarkerClusterGroup>
+                )}
             </MapContainer>
 
-            {/* Loading indicator */}
-            {markers.length < properties.length && (
-                <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2 px-3 py-1.5 bg-card/90 backdrop-blur border border-border text-xs font-inter text-muted-foreground">
-                    <div className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin" />
-                    Геокодування {markers.length}/{properties.length}...
-                </div>
-            )}
 
             {/* Property popup */}
             {selected && (

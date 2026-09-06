@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getObjects, mapObject } from '@/lib/novostoyApi'
+import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart } from 'lucide-react'
+import { getAllObjects, mapObject } from '@/lib/novostoyApi'
+import { useFavorites } from '@/lib/FavoritesContext'
+import { cn } from '@/lib/utils'
+import SeoMeta from '@/components/seo/SeoMeta'
+import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
 
 const DEAL_LABELS = { sale: 'Продаж', rent: 'Оренда' };
 const TYPE_LABELS = { apartment: 'Квартира', house: 'Будинок', penthouse: 'Пентхаус', villa: 'Вілла', commercial: 'Комерційна' };
@@ -12,6 +16,8 @@ export default function PropertyDetail() {
   const { id } = useParams()
   const [activeImg, setActiveImg] = useState(0)
   const thumbnailRefs = useRef([])
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     if (thumbnailRefs.current[activeImg]) {
@@ -23,34 +29,77 @@ export default function PropertyDetail() {
     }
   }, [activeImg])
 
-  // Fetch from API by searching all objects and find by id
+  // Try to find property in existing cache first, then fetch if needed
   const { data: property, isLoading } = useQuery({
     queryKey: ['novostoy-property', id],
     queryFn: async () => {
-      // Try all parent categories
-      const results = await Promise.allSettled([
-        getObjects({ parent_id: '2', limit: 200 }),
-        getObjects({ parent_id: '4', limit: 200 }),
-        getObjects({ parent_id: '6', limit: 200 }),
-      ]);
-      const allItems = results
-        .filter(r => r.status === 'fulfilled')
-        .flatMap(r => r.value.data || []);
-      const found = allItems.find(o => String(o.id) === String(id));
-      return found ? mapObject(found) : null;
+      // Check if already in catalog cache (sale or rent)
+      const saleCache = queryClient.getQueryData(['novostoy-objects', 'sale'])
+      const rentCache = queryClient.getQueryData(['novostoy-objects', 'rent'])
+      const allCache = queryClient.getQueryData(['novostoy-objects', ''])
+      
+      for (const cache of [saleCache, rentCache, allCache]) {
+        if (cache) {
+          const found = cache.find(o => String(o.id) === String(id))
+          if (found) return found
+        }
+      }
+      
+      // Not in cache — fetch all and find
+      const allItems = await getAllObjects({})
+      const mapped = allItems.map(mapObject)
+      return mapped.find(o => String(o.id) === String(id)) || null
     },
-  });
+    staleTime: 10 * 60 * 1000,
+  })
 
   if (isLoading) return (
-    <div className="pt-32 flex items-center justify-center min-h-screen">
-      <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-background pt-24 pb-20">
+      {/* Skeleton Gallery */}
+      <div className="w-full h-[50vh] md:h-[60vh] bg-card border-b border-border/50 animate-pulse" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 md:mt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Title & Location Skeleton */}
+            <div className="space-y-4">
+              <div className="w-24 h-4 bg-muted/30 rounded animate-pulse" />
+              <div className="w-3/4 h-12 md:h-16 bg-muted/30 rounded animate-pulse" />
+              <div className="w-1/2 h-4 bg-muted/30 rounded animate-pulse" />
+            </div>
+            {/* Specs Grid Skeleton */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border/50">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-card h-32 animate-pulse" />
+              ))}
+            </div>
+            {/* Description Skeleton */}
+            <div className="space-y-3 pt-4">
+              <div className="w-32 h-8 bg-muted/30 rounded animate-pulse mb-6" />
+              <div className="w-full h-4 bg-muted/30 rounded animate-pulse" />
+              <div className="w-5/6 h-4 bg-muted/30 rounded animate-pulse" />
+              <div className="w-full h-4 bg-muted/30 rounded animate-pulse" />
+              <div className="w-4/5 h-4 bg-muted/30 rounded animate-pulse" />
+            </div>
+          </div>
+          {/* Sidebar Skeleton */}
+          <div className="lg:col-span-1 hidden lg:block">
+            <div className="border border-border/50 bg-card p-7 space-y-6">
+              <div className="w-20 h-3 bg-muted/30 rounded animate-pulse" />
+              <div className="w-48 h-14 bg-muted/30 rounded animate-pulse" />
+              <div className="w-24 h-3 bg-muted/30 rounded animate-pulse" />
+              <div className="w-full h-12 bg-muted/30 rounded animate-pulse mt-8" />
+              <div className="w-full h-12 bg-muted/30 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
   if (!property) return (
     <div className="pt-32 text-center min-h-screen flex flex-col items-center justify-center">
       <p className="font-cormorant text-4xl mb-4">Об'єкт не знайдено</p>
-      <Link to="/catalog" className="text-gold text-sm font-inter">← Повернутися до каталогу</Link>
+      <Link to="/flats" className="text-gold text-sm font-inter">← Повернутися до каталогу</Link>
     </div>
   );
 
@@ -68,12 +117,22 @@ export default function PropertyDetail() {
 
   const pricePerM2 = property.area ? Math.round(property.price / property.area) : null;
 
+  const schemaUrl = `https://kharkov-realter.com.ua/property/${property.id}`;
+  const seoTitle = `${TYPE_LABELS[property.type] || 'Об\'єкт'} ${property.rooms ? property.rooms + '-кімн., ' : ''}${property.area} м² за $${property.price.toLocaleString()}`;
+
   return (
     <div className="pt-24 pb-20">
+      <SeoMeta 
+        title={seoTitle}
+        description={property.description?.substring(0, 160) || `Купити ${seoTitle.toLowerCase()} від агентства Харків Ріелтер.`}
+        url={`/property/${property.id}`}
+        image={images[0]}
+      />
+      <JsonLd data={generateRealEstateSchema(property, schemaUrl)} />
       <div className="max-w-7xl mx-auto px-6">
         {/* Breadcrumb */}
         <div className="py-6 flex items-center gap-3">
-          <Link to="/catalog" className="flex items-center gap-2 text-muted-foreground hover:text-gold text-sm font-inter transition-colors">
+          <Link to="/flats" className="flex items-center gap-2 text-muted-foreground hover:text-gold text-sm font-inter transition-colors">
             <ArrowLeft className="w-4 h-4" /> Каталог
           </Link>
           <span className="text-border">/</span>
@@ -138,7 +197,7 @@ export default function PropertyDetail() {
                           : 'border-border opacity-70 hover:opacity-100 hover:border-border/80'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover pointer-events-none"
+                      <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover pointer-events-none"
                         onError={e => { e.currentTarget.style.display = 'none' }} />
                     </button>
                   ))}
@@ -202,11 +261,38 @@ export default function PropertyDetail() {
                 )}
               </div>
 
+              {/* Additional Text Specs */}
+              <div className="mb-8 flex flex-col gap-3 text-sm font-inter">
+                {property.region && (
+                  <div className="grid grid-cols-3 border-b border-border/50 pb-2">
+                    <span className="text-muted-foreground col-span-1">Район</span>
+                    <span className="text-foreground font-medium col-span-2 text-right sm:text-left">{property.region}</span>
+                  </div>
+                )}
+                {property.street && (
+                  <div className="grid grid-cols-3 border-b border-border/50 pb-2">
+                    <span className="text-muted-foreground col-span-1">Вулиця</span>
+                    <span className="text-foreground font-medium col-span-2 text-right sm:text-left">
+                      {property.street} {property.building && `, ${property.building}`}
+                    </span>
+                  </div>
+                )}
+                {property.mregion && (
+                  <div className="grid grid-cols-3 border-b border-border/50 pb-2">
+                    <span className="text-muted-foreground col-span-1">Орієнтир</span>
+                    <span className="text-foreground font-medium col-span-2 text-right sm:text-left">{property.mregion}</span>
+                  </div>
+                )}
+              </div>
+
               {/* Description */}
               {property.description && (
                 <div className="mb-8">
                   <h3 className="font-cormorant text-2xl mb-4">Опис</h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm font-inter whitespace-pre-line">{property.description}</p>
+                  <div 
+                    className="text-muted-foreground leading-relaxed text-sm font-inter"
+                    dangerouslySetInnerHTML={{ __html: property.description }}
+                  />
                 </div>
               )}
 
@@ -255,6 +341,20 @@ export default function PropertyDetail() {
                   className="block w-full py-3.5 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium text-center hover:opacity-90 transition-opacity">
                   Записатись на перегляд
                 </Link>
+
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => toggleFavorite(property.id)}
+                  className="w-full mt-3 py-3.5 border border-border bg-background flex items-center justify-center gap-2 hover:border-gold/50 transition-colors group font-inter"
+                >
+                  <motion.div animate={{ scale: isFavorite(property.id) ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
+                    <Heart className={cn("w-4 h-4 transition-colors", isFavorite(property.id) ? "text-gold fill-gold" : "text-muted-foreground group-hover:text-gold")} />
+                  </motion.div>
+                  <span className="text-xs tracking-widest uppercase font-medium text-foreground">
+                    {isFavorite(property.id) ? 'В обраному' : 'В обране'}
+                  </span>
+                </motion.button>
               </div>
 
               {/* ID */}

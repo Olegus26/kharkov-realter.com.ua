@@ -39,7 +39,7 @@ export default function Footer() {
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-gold mb-5">Навігація</p>
             <ul className="space-y-3">
-              {[['/', 'Головна'], ['/catalog', 'Каталог'], ['/agents', 'Експерти'], ['/about', 'Про нас'], ['/contact', 'Контакти']].map(([to, label]) => (
+              {[['/', 'Головна'], ['/flats?deal=sale', 'Каталог'], ['/agents', 'Експерти'], ['/o-korporatcii', 'Про нас'], ['/kontakty', 'Контакти']].map(([to, label]) => (
                 <li key={to}>
                   <Link to={to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
                 </li>
@@ -85,11 +85,11 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 lg:gap-8">
-            <img src="/rieltor_logo.png" alt="РІЕЛТОР.ua Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300" />
-            <img src="/lun_logo_386.svg" alt="ЛУН Партнер" className="h-6 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300" />
-            <img src="/flatfy.svg" alt="Flatfy Партнер" className="h-6 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300" />
-            <img src="/olx_logo.svg" alt="OLX Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300" />
-            <img src="/dimria-partner.svg" alt="dim RIA Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300" />
+            <img src="/rieltor_logo.png" alt="РІЕЛТОР.ua Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
+            <img src="/lun_logo_386.svg" alt="ЛУН Партнер" className="h-6 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
+            <img src="/flatfy.svg" alt="Flatfy Партнер" className="h-6 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
+            <img src="/olx_logo.svg" alt="OLX Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
+            <img src="/dimria-partner.svg" alt="dim RIA Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
           </div>
 
         </div>

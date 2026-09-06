@@ -9,30 +9,64 @@
     --font-cormorant: 'Cormorant Garamond', serif;
     --font-inter: 'Inter', sans-serif;
 
-    --background: 218 47% 8%;
-    --foreground: 210 30% 94%;
-    --card: 218 44% 11%;
-    --card-foreground: 210 30% 94%;
-    --popover: 218 44% 11%;
-    --popover-foreground: 210 30% 94%;
-    --primary: 210 70% 55%;
-    --primary-foreground: 218 47% 8%;
-    --secondary: 218 38% 16%;
-    --secondary-foreground: 210 30% 94%;
-    --muted: 218 38% 16%;
-    --muted-foreground: 215 20% 52%;
-    --accent: 210 70% 55%;
-    --accent-foreground: 218 47% 8%;
+    --background: 0 0% 100%;
+    --foreground: 222 47% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 15%;
+    
+    --primary: 222 47% 20%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 15%;
+    
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    
+    --accent: 45 93% 47%;
+    --accent-foreground: 222 47% 15%;
+    
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
-    --border: 218 35% 18%;
-    --input: 218 38% 16%;
-    --ring: 210 70% 55%;
+    
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222 47% 20%;
     --radius: 0.5rem;
 
-    --gold: 210 70% 62%;
-    --gold-light: 210 70% 75%;
-    --gold-dark: 210 65% 45%;
+    --gold: 45 93% 47%;
+    --gold-light: 45 93% 60%;
+    --gold-dark: 45 93% 35%;
+  }
+
+  .dark {
+    --background: 218 47% 8%;
+    --foreground: 210 30% 98%;
+    --card: 218 44% 12%;
+    --card-foreground: 210 30% 98%;
+    --popover: 218 44% 12%;
+    --popover-foreground: 210 30% 98%;
+    
+    --primary: 45 93% 47%;
+    --primary-foreground: 218 47% 8%;
+    
+    --secondary: 218 38% 18%;
+    --secondary-foreground: 210 30% 98%;
+    
+    --muted: 218 38% 18%;
+    --muted-foreground: 215 20% 70%;
+    
+    --accent: 218 38% 18%;
+    --accent-foreground: 210 30% 98%;
+    
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 218 35% 25%;
+    --input: 218 38% 18%;
+    --ring: 45 93% 47%;
   }
 }
 
@@ -65,6 +99,10 @@
   .text-gold {
     color: hsl(var(--gold));
   }
+  
+  .fill-gold {
+    fill: hsl(var(--gold));
+  }
 
   .bg-gold {
     background-color: hsl(var(--gold));
@@ -88,5 +126,9 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  .dark-map-tiles {
+    filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(100%) grayscale(70%);
   }
 }

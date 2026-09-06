@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Об агентстве недвижимости АН </title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-9904025-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-9904025-2');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="keywords" content="ан харьков - риэлтер, история, отзывы, данные о компании, Харьков - Риэлтор,недвижимость харьков, агенство недвижимости харьков, АН, риэлтер, харьковская недвижимость, в Харькове" />
+    <meta name="description" content="О компании Харьков - Риэлтер," />
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Харьков-Риэлтер">
+    <meta property="og:title" content="Об агентстве недвижимости АН ">
+    <meta property="og:url" content="https://kharkov-realter.com.ua/o-korporatcii">
+    <meta property="og:locale" content="ru_RU">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Tinos:400,700&display=swap&subset=cyrillic">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900&display=swap&subset=cyrillic">
+    <meta property="og:image" content="https://kharkov-realter.com.ua/images/logo.png"/><meta property="og:image:type" content="image/png"/><meta property="og:image:width" content="1080"/><meta property="og:image:height" content="1080"/>    <link rel="stylesheet" type="text/css" href="/assets/static/css/2597.7c2b5128.css" /><link rel="stylesheet" type="text/css" href="/assets/static/css/infoPage.04e03dcb.css" />    <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-WJR5HX2');</script>
+<!-- End Google Tag Manager -->
+</head>
+<body data-spy="scroll" data-target="#object-navbar" data-offset="57">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WJR5HX2"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+                <div class="hotline">
+            <div class="container container_wide">
+                <div class="hotline__content">
+                    <span class="hotline__title">Телефон гарячої лінії</span>
+                    <a href="tel:+380507136363" class="hotline__link">
+                        050 713 63 63                    </a>
+                    <div class="hotline__buttons">
+                        <a class="hotline__btn" href="viber://chat?number=%2B380507136363">
+                            <svg class="icon icon_viber"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#viber"></use></svg>                        </a>
+                        <a class="hotline__btn" href="https://wa.me/380507136363" target="_blank">
+                            <svg class="icon icon_whatsapp"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#whatsapp"></use></svg>                        </a>
+                        <span class="hotline__btn"><svg class="icon icon_telegram"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#telegram"></use></svg></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <header class="header">
+        <div class="container container_wide">
+            <div class="header__wrap">
+                <div class="header__logo">
+                    <a class="logo" href="/" title="Нерухомість у Харкові">
+                        <img class="logo__img" src="/images/logo.svg" alt="Нерухомість у Харкові">
+                    </a>
+                </div>
+                <div class="header__menu">
+                    <button class="button header__toggle" type="button" id="navToggle">
+                        <svg class="icon icon_bars button__icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#bars"></use></svg>                    </button>
+                    <ul class="nav nav_responsive">
+                        
+                                                <li class="nav__item"><a class="nav__link" href="/o-korporatcii">Про компанію</a></li>
+                        <li class="nav__item"><a class="nav__link" href="/nashi-uslugi">Наші послуги</a></li>
+                        <li class="nav__item"><a class="nav__link" href="/novosti">Аналітика</a></li>
+                        <li class="nav__item"><a class="nav__link" href="/vakansii">Вакансії</a></li>
+                        <li class="nav__item"><a class="nav__link" href="/kontakty">Контакти</a></li>
+                        <li class="nav__item"><a class="nav__link" href="/otzivi">Відгуки</a></li>
+                        <li class="nav__item nav__item--telegram"><a class="nav__link" target="_blank" href="https://t.me/kharkov_realter">Telegram</a></li>
+                                            </ul>
+                </div>
+                <div class="header__search">
+                    <div id="search"></div>
+                </div>
+                <div class="header__add">
+                    <button class="button button_primary header__add-button" type="button"  data-toggle="modal" data-target="#addObjectModal">
+                        <svg class="icon icon_plus button__icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#plus"></use></svg><span class="button__text">Обрати послугу</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="page-content">
+        <div class="navbar">
+    <div class="container container_wide">
+        <div class="navbar__wrap">
+            <ul class="breadcrumb">
+    <li class="breadcrumb__item breadcrumb__return"><a class="breadcrumb__link" href="/"><span class="breadcrumb__text">Головна</span></a></li>
+                                            <li class="breadcrumb__item"><a class="breadcrumb__link" href="/o-korporatcii" title="О корпорации"><span class="breadcrumb__text">О корпорации</span></a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="info-page">
+    <div class="container container_narrow">
+        <div class="info-page__content">
+        <p align="justify">Агентство недвижимости &quot;Харьков-Риэлтер&quot; состоит в Союзе риэлтеров и Оценщиков г.Харькова (ХСРиО), является членом Ассоциации специалистов по недвижимости Украины (АСНУ), а также членом Центрально-Европейской Ассоциации специалистов по недвижимости (CEREAN), и уже более 20 лет прочно занимает одну из лидирующих позиций на рынке недвижимости Харькова и области. За время своего существования превратилось в развитую сеть агентств, объединенных в корпорацию, имеющих высокий профессионализм, большой авторитет и безупречную репутацию в городе.</p>
+<p align="justify"><b>Корпорация &quot;Харьков-Риэлтер&quot;</b>:</p>
+<p align="justify">- лауреат всеукраинского конкурса &quot;Визнання-2004&quot; в номинации &quot;Лучшая риэлтерская компания на региональном рынке недвижимости Украины-2004&quot; и &quot;Лучший риэлтер-2004&quot;</p>
+<p align="justify">- победитель конкурса &quot;Професiйне визнання-2005&quot; в номинации &quot;Лучшая риэлтерская компания на восточном регионе рынка недвижимости Украины-2005&quot;</p>
+<p align="justify">- лауреат ежегодного профессионального конкурса &quot;Визнання-2005&quot; в номинации &quot;Лучшая риэлтерская компания-2005&quot;</p>
+<p align="justify">- победитель ежегодного профессионального конкурса &quot;Визнання-2006&quot; в номинации &quot;Лучшая риэлтерская компания по ипотечному кредитованию на региональном рынке недвижимости Украины-2006&quot;</p>
+<p align="justify">- лучшая риэлтерская компания Украины 2007г. согласно Национального Рейтинга Ассоциации Специалистов по недвижимости Украины (АСНУ)</p>
+<p align="justify">- дипломант конкурса &quot;Професiйне визнання-2008&quot; в номинациях &quot;Лучшая риэлтерская компания-2008&quot; и &quot;За профессионализм&quot;</p>
+<p align="justify">- найкраща ріелторська компанія 2008 г. згідно національного рейтингу &quot;Спілки фахівців з нерухомого майна України&quot;</p>
+<p align="justify">- переможець конкурсу &quot;Антикризова програма ріелторської компанії 2009&quot; в рамках національного рейтингу  &quot;Найкраща ріелторська компанія&quot;</p>
+<p align="justify">- переможець IV Всеукраїнського ріелторського конкурсу &quot;Професійне визнання 2009&quot;  &quot;Найкраща ріелторська компанія на регіональному ринку&quot;</p>
+<p align="justify">- лауреат IV Всеукраїнського ріелторського конкурсу &quot;Професійне визнання 2009&quot; &quot;За професіонализм&quot;  -  Фурса Тетяна Володимирівна</p>
+<p align="justify">- лауреат IV Всеукраїнського ріелторського конкурсу &quot;Професійне визнання 2009&quot;  &quot;Найкращий керівник ріелторської компанії на регіональному ринку&quot; - Бурма Юрій Анатолійович</p>
+<p align="justify">- лауреат Всеукраїнського ріелторського конкурсу &quot;Професійне визнання 2011&quot;  &quot;Найкраща ріелторська компанія (кількість співробітників більше 100 осіб)&quot;</p>
+<p align="justify">- лауреат Всеукраїнського ріелторського конкурсу &quot;Професійне визнання 2011&quot;  &quot;Найдовша професійна діяльність&quot;</p>
+<p align="justify">- переможець Національного конкурсу &quot;Професійне визнання 2011&quot; в номінації &quot;За професіоналізм&quot;.</p>
+<p align="justify">&nbsp;</p>        </div>
+
+        
+
+        <div class="info-page__gallery">
+                                        <ul id='gallery' class='info-page__gallery-slider owl-carousel owl-theme'><li><a rel="example_group" href="/files/informatciya/14_1.jpg" title="">
+                        <img src="/files/informatciya/14_1_132x132.jpg" alt="Image1" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_2.jpg" title="">
+                        <img src="/files/informatciya/14_2_132x132.jpg" alt="Image2" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_3.jpg" title="">
+                        <img src="/files/informatciya/14_3_132x132.jpg" alt="Image3" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_4.jpg" title="">
+                        <img src="/files/informatciya/14_4_132x132.jpg" alt="Image4" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_5.jpg" title="">
+                        <img src="/files/informatciya/14_5_132x132.jpg" alt="Image5" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_6.jpg" title="">
+                        <img src="/files/informatciya/14_6_132x132.jpg" alt="Image6" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_7.jpg" title="">
+                        <img src="/files/informatciya/14_7_132x132.jpg" alt="Image7" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_8.jpg" title="">
+                        <img src="/files/informatciya/14_8_132x132.jpg" alt="Image8" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_9.jpg" title="">
+                        <img src="/files/informatciya/14_9_132x132.jpg" alt="Image9" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_10.jpg" title="">
+                        <img src="/files/informatciya/14_10_132x132.jpg" alt="Image10" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_11.jpg" title="">
+                        <img src="/files/informatciya/14_11_132x132.jpg" alt="Image11" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_12.jpg" title="">
+                        <img src="/files/informatciya/14_12_132x132.jpg" alt="Image12" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_13.jpg" title="">
+                        <img src="/files/informatciya/14_13_132x132.jpg" alt="Image13" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_14.jpg" title="">
+                        <img src="/files/informatciya/14_14_132x132.jpg" alt="Image14" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_15.jpg" title="">
+                        <img src="/files/informatciya/14_15_132x132.jpg" alt="Image15" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_16.jpg" title="">
+                        <img src="/files/informatciya/14_16_132x132.jpg" alt="Image16" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_17.jpg" title="">
+                        <img src="/files/informatciya/14_17_132x132.jpg" alt="Image17" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_18.jpg" title="">
+                        <img src="/files/informatciya/14_18_132x132.jpg" alt="Image18" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_19.jpg" title="">
+                        <img src="/files/informatciya/14_19_132x132.jpg" alt="Image19" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_20.jpg" title="">
+                        <img src="/files/informatciya/14_20_132x132.jpg" alt="Image20" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_21.jpg" title="">
+                        <img src="/files/informatciya/14_21_132x132.jpg" alt="Image21" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_22.jpg" title="">
+                        <img src="/files/informatciya/14_22_132x132.jpg" alt="Image22" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_23.jpg" title="">
+                        <img src="/files/informatciya/14_23_132x132.jpg" alt="Image23" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_24.jpg" title="">
+                        <img src="/files/informatciya/14_24_132x132.jpg" alt="Image24" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_25.jpg" title="">
+                        <img src="/files/informatciya/14_25_132x132.jpg" alt="Image25" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_26.jpg" title="">
+                        <img src="/files/informatciya/14_26_132x132.jpg" alt="Image26" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_27.jpg" title="">
+                        <img src="/files/informatciya/14_27_132x132.jpg" alt="Image27" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_28.jpg" title="">
+                        <img src="/files/informatciya/14_28_132x132.jpg" alt="Image28" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_29.jpg" title="">
+                        <img src="/files/informatciya/14_29_132x132.jpg" alt="Image29" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_30.jpg" title="">
+                        <img src="/files/informatciya/14_30_132x132.jpg" alt="Image30" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_31.jpg" title="">
+                        <img src="/files/informatciya/14_31_132x132.jpg" alt="Image31" />
+                        </a></li><li><a rel="example_group" href="/files/informatciya/14_32.jpg" title="">
+                        <img src="/files/informatciya/14_32_132x132.jpg" alt="Image32" />
+                        </a></li></ul>                    </div>
+    </div>
+</div>
+    </div>
+    <footer class="footer">
+        <div class="container container_medium">
+            <div class="footer__wrap">
+                <div class="footer__content">
+                    <div class="footer__menu">
+                        <ul class="nav">
+                            <li class="nav__item"><a class="nav__link" href="/flats">КВАРТИРИ У ХАРКОВІ</a></li>
+                            <li class="nav__item"><a class="nav__link" href="/houses">БУДИНКИ У ХАРКОВІ</a></li>
+                            <li class="nav__item"><a class="nav__link" href="/novostroiki-kharkova">НОВОБУДОВИ ХАРКОВА</a></li>
+                            <li class="nav__item"><a class="nav__link" href="/kontakty">КОНТАКТИ</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer__social">
+                        <div class="social">
+                            <div class="social__item">
+                                <a class="social__link" target="_blank" title="facebook" href="https://www.facebook.com/%D0%90-%D0%9D-%D0%A5%D0%B0%D1%80%D1%8C%D0%BA%D0%BE%D0%B2-%D0%A0%D0%B8%D1%8D%D0%BB%D1%82%D0%B5%D1%80-1028901617174770">
+                                    <svg class="icon icon_facebook social__icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#facebook"></use></svg>                                </a>
+                            </div>
+                            <div class="social__item">
+                                <a class="social__link" target="_blank" href="https://www.instagram.com/kharkov_realter/" title="instagram">
+                                    <svg class="icon icon_instagram social__icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#instagram"></use></svg>                                </a>
+                            </div>
+                            <div class="social__item">
+                                <a class="social__link" target="_blank" href="https://telegram.me/kharkovrealter_bot" title="telegram bot">
+                                    <svg class="icon icon_bot social__icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#bot"></use></svg>                                </a>
+                            </div>
+                            <div class="social__item">
+                                <a class="social__link" target="_blank" href="https://t.me/kharkov_realter" title="telegram channel">
+                                    <svg class="icon icon_telegram-bot social__icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#telegram-bot"></use></svg>                                </a>
+                            </div>
+                                                    </div>
+                    </div>
+                    <div class="footer__actions">
+                        <div
+                            class="button footer__feedback-button"
+                            data-toggle="modal"
+                            data-target="#directorFeedback"
+                        >
+                            <img src="/img/dir_new.jpg" width="54" height="54" alt="Директор" class="footer__feedback-photo">
+                            Написати<br>директору
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div class="footer-line">
+        <div class="container container_medium">
+            <div class="footer-line__wrap">
+                <div class="footer-line__copyright">1996&ndash;2026 © Нерухомість у Харкові "Харків-Ріелтер"</div>
+                <a href="https://rieltor.ua" id="rieltor_ua_305637" class="footer-partner"><script async src="https://rieltor.ua/js/level_status.js?v=0.000812769670010205&id=305637"></script></a>
+                <a href="https://dom.ria.com/uk/prodazha-kvartir/kharkov/" target="_blank" rel="nofollow" class="footer-partner">
+                    <img src="/images/dimria-partner.svg" alt="DIM.RIA" class="footer-partner__img">
+                </a>
+                <a href="/admin" class="footer-line__sign-in">Увійти</a>
+            </div>
+        </div>
+    </div>
+        <div class="tg-bot">
+        <a class="tg-bot__link" target="_blank" href="https://telegram.me/kharkovrealter_bot" title="Харків-Ріелтер Бот у Telegram">
+            <svg class="icon icon_telegram tg-bot__icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#telegram"></use></svg>        </a>
+    </div>
+        <div class="modal fade" id="addObjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Обрати послугу</div>
+                    <div class="close modal-close" data-dismiss="modal">
+                        <svg class="icon icon_close-alt modal-close-icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#close-alt"></use></svg>                    </div>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="jobApplication" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Залишити заявку</div>
+                    <div class="close modal-close" data-dismiss="modal">
+                        <svg class="icon icon_close-alt modal-close-icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#close-alt"></use></svg>                    </div>
+                </div>
+                <div class="modal-body">
+                    <form class="modal-form">
+                            <input type="hidden" name="data[Content][vacancy]" value="" id="jobApplicationVacancy" />    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="jobApplicationLastname">Прізвище</label>
+        </div>
+        <div class="modal-form__item-control">
+            <div class="modal-form__item-control"><input name="data[Content][lastname]" type="text" placeholder="" class="form-control modal-form__input" id="jobApplicationLastname" required="required" value="" /></div>        </div>
+    </div>
+    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="jobApplicationName">Ім'я</label>
+        </div>
+        <div class="modal-form__item-control">
+            <div class="modal-form__item-control"><input name="data[Content][name]" type="text" placeholder="" class="form-control modal-form__input" id="jobApplicationName" required="required" value="" /></div>        </div>
+    </div>
+    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="jobApplicationTel">Телефон</label>
+        </div>
+        <div class="modal-form__item-control">
+            <div class="modal-form__item-control"><input name="data[Content][tel]" type="tel" placeholder="" class="form-control modal-form__input" id="jobApplicationTel" required="required" value="" /></div>        </div>
+    </div>
+        <div class="modal-form__item modal-form__item_submit">
+        <div class="modal-form__item-control">
+            <div class="submit"><input type="submit" class="button modal-form__submit" value="Надіслати заявку" /></div>        </div>
+    </div>
+    </form>                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="suggestPrice">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Запропонувати свою ціну</div>
+                    <div class="close modal-close" data-dismiss="modal">
+                        <svg class="icon icon_close-alt modal-close-icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#close-alt"></use></svg>                    </div>
+                </div>
+                <div class="modal-body">
+                    <form class="modal-form">
+                            <input type="hidden" name="data[Content][id]" value="" id="suggestPriceId" />    <input type="hidden" name="data[Content][title]" value="" id="suggestPriceTitle" />    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="suggestPriceName">Ім'я</label>
+        </div>
+        <div class="modal-form__item-control"><input name="data[Content][name]" type="text" placeholder="Вкажіть ім&#039;я" class="form-control modal-form__input" id="suggestPriceName" required="required" value="" /></div>    </div>
+    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="suggestPriceTel">Телефон</label>
+        </div>
+        <div class="modal-form__item-control"><input name="data[Content][tel]" type="tel" placeholder="Вкажіть номер телефону" class="form-control modal-form__input" id="suggestPriceTel" required="required" value="" /></div>    </div>
+    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="suggestPricePrice">Ціна</label>
+        </div>
+        <div class="modal-form__item-control"><input name="data[Content][price]" type="text" placeholder="Ваша ціна" class="form-control modal-form__input" id="suggestPricePrice" required="required" value="" /></div>    </div>
+    <div class="modal-form__item modal-form__item_submit">
+        <div class="modal-form__item-control">
+            <div class="submit"><input type="submit" class="button button_primary modal-form__submit" value="Надіслати" /></div>        </div>
+    </div>
+
+    </form>                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="directorFeedback">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Написати директору</div>
+                    <div class="close modal-close" data-dismiss="modal">
+                        <svg class="icon icon_close-alt modal-close-icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#close-alt"></use></svg>                    </div>
+                </div>
+                <div class="modal-body">
+                    <form class="modal-form">
+                            <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="directorFeedbackName">Ім'я</label>
+        </div>
+        <div class="modal-form__item-control"><input name="data[Content][name]" type="text" placeholder="" class="form-control modal-form__input" id="directorFeedbackName" required="required" value="" /></div>    </div>
+    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="directorFeedbackTel">Телефон</label>
+        </div>
+        <div class="modal-form__item-control"><input name="data[Content][tel]" type="tel" placeholder="" class="form-control modal-form__input" id="directorFeedbackTel" required="required" value="" /></div>    </div>
+    <div class="modal-form__item">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="directorFeedbackEmail">Email</label>
+        </div>
+        <div class="modal-form__item-control"><input name="data[Content][email]" type="text" placeholder="" class="form-control modal-form__input" id="directorFeedbackEmail" maxlength="255" value="" /></div>    </div>
+    <div class="modal-form__item modal-form__item_required">
+        <div class="modal-form__item-label">
+            <label class="modal-form__label" for="directorFeedbackText">Текст листа</label>
+        </div>
+        <div class="modal-form__item-control"><textarea name="data[Content][text]" cols="30" rows="6" placeholder="" class="form-control modal-form__input" id="directorFeedbackText" required="required" ></textarea></div>    </div>
+    <div class="modal-form__item modal-form__item_submit">
+        <div class="modal-form__item-control">
+            <div class="submit"><input type="submit" class="button button_primary modal-form__submit" value="Надіслати" /></div>        </div>
+    </div>
+
+    </form>                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="addToSelections">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Додати до добірки</div>
+                    <div class="close modal-close" data-dismiss="modal">
+                        <svg class="icon icon_close-alt modal-close-icon"><use xlink:href="/assets/1de3ef76930eae23ccf6.svg#close-alt"></use></svg>                    </div>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div> 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="/assets/static/js/2701.35c35866.js"></script><script type="text/javascript" src="/assets/static/js/8143.38b851a9.js"></script><script type="text/javascript" src="/assets/static/js/7536.ed44038e.js"></script><script type="text/javascript" src="/assets/static/js/8987.280f0196.js"></script><script type="text/javascript" src="/assets/static/js/2597.517a8b35.js"></script><script type="text/javascript" src="/assets/static/js/7009.b04c2ca6.js"></script><script type="text/javascript" src="/assets/static/js/2066.cb0b1e39.js"></script><script type="text/javascript" src="/assets/static/js/infoPage.77ee801f.js"></script></body>
+</html>

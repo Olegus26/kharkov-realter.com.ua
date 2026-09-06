@@ -6,16 +6,15 @@ const values = [
   { icon: Shield, title: 'Надійність', desc: 'Повна юридична чистота кожної угоди. Працюємо лише з перевіреними об\'єктами.' },
   { icon: Star, title: 'Якість', desc: 'Ретельний відбір об\'єктів — тільки найкраще потрапляє до нашого каталогу.' },
   { icon: Clock, title: 'Оперативність', desc: 'Реагуємо на запити протягом години. Ваш час — наш пріоритет.' },
-  { icon: Globe, title: 'Масштаб', desc: 'Київ, область та закордонна нерухомість — допомагаємо скрізь.' },
+  { icon: Globe, title: 'Локальна експертиза', desc: 'Глибоке знання ринку нерухомості Харкова та області. Ми знаємо кожен будинок.' },
 ];
 
 const timeline = [
-  { year: '1994', event: 'Заснування агентства у Харкові' },
-  { year: '2009', event: 'Відкриття другого офісу на Салтівці' },
-  { year: '2013', event: 'Вихід на ринок заміської нерухомості' },
-  { year: '2018', event: '3000 успішних угод' },
-  { year: '2022', event: 'Лауреат премії "Краще агентство року" в Харкові' },
-  { year: '2026', event: 'Понад 3500 задоволених клієнтів' },
+  { year: '1996', event: 'Заснування агентства у Харкові.' },
+  { year: '2004', event: 'Лауреат всеукраїнського конкурсу "Визнання-2004" як "Краща ріелторська компанія на регіональному ринку".' },
+  { year: '2006', event: 'Краща компанія з іпотечного кредитування на регіональному ринку за підсумками "Визнання-2006".' },
+  { year: '2009', event: 'Переможець IV Всеукраїнського конкурсу "Професійне визнання" на регіональному ринку.' },
+  { year: '2011', event: 'Лауреат конкурсу "Професійне визнання" у номінаціях "За професіоналізм" та "Найдовша професійна діяльність".' },
 ];
 
 export default function AboutPage() {
@@ -24,7 +23,8 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="relative h-80 sm:h-96 overflow-hidden mb-20">
         <img src="/about-bg.jpg" alt="About" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-background/50" />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="bg-gradient-to-b rounded absolute inset-0 from-transparent via-background/40 to-background" aria-hidden="true" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
           <p className="text-xs tracking-[0.4em] uppercase text-gold mb-4 font-inter">Про компанію</p>
           <h1 className="font-cormorant text-6xl sm:text-7xl font-light">Харків Ріелтер</h1>
@@ -37,13 +37,16 @@ export default function AboutPage() {
           <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
             <p className="text-xs tracking-[0.3em] uppercase text-gold mb-5 font-inter">Наша історія</p>
             <h2 className="font-cormorant text-5xl font-light mb-8 leading-tight">
-              30 років створюємо історії про дім
+              30 років бездоганної репутації
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-5 font-inter text-sm">
-              Харків Ріелтер — провідне агентство преміальної нерухомості в Харкові. З 1994 року ми допомагаємо клієнтам знаходити об'єкти, що стають справжнім домом: пентхауси в центрі міста, заміські будинки, квартири в кращих житлових комплексах.
+              Корпорація «Харків-Ріелтер» — одна з лідируючих мереж на ринку нерухомості Харкова та області. За час свого існування з 1996 року ми перетворилися на потужну мережу агентств із високим професіоналізмом та великим авторитетом.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-5 font-inter text-sm">
+              Ми є дійсними членами Союзу ріелторів та Оцінювачів м. Харкова (ХСРіО), Асоціації фахівців з нерухомості України (АСНУ), а також Центрально-Європейської Асоціації (CEREAN).
             </p>
             <p className="text-muted-foreground leading-relaxed font-inter text-sm">
-              Наш підхід базується на глибокому розумінні ринку, чесності та персональній увазі до кожного клієнта. Ми не просто продаємо нерухомість — ми створюємо цінність.
+              Наш підхід базується на глибокому розумінні ринку, чесності та персональній увазі. Ми не просто продаємо нерухомість — ми створюємо цінність та будуємо довірчі відносини.
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
@@ -54,7 +57,7 @@ export default function AboutPage() {
                 className="w-full aspect-[4/3] object-cover"
               />
               <div className="absolute -bottom-6 -left-6 bg-gold p-6 hidden sm:block">
-                <p className="font-cormorant text-4xl font-bold text-background">30+</p>
+                <p className="font-cormorant text-4xl font-bold text-background">30</p>
                 <p className="text-background text-xs tracking-wider uppercase font-inter">років досвіду</p>
               </div>
             </div>
