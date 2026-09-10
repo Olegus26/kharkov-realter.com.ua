@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 
-export default function SeoMeta({ title, description, url, image, type = 'website' }) {
+const SeoMeta = ({ title, description, url, image, type = 'website' }) => {
   const defaultTitle = "Агентство нерухомості Харків Ріелтер"
   const defaultDescription = "Найбільша база актуальної нерухомості в Харкові. Купити чи орендувати квартиру, будинок, комерційні об'єкти з допомогою професіоналів агентства Харків Ріелтер."
   const defaultImage = "https://kharkov-realter.com.ua/og-image.jpg"
@@ -33,3 +33,5 @@ export default function SeoMeta({ title, description, url, image, type = 'websit
     </Helmet>
   )
 }
+
+export default SeoMeta

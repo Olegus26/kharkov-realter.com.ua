@@ -73,7 +73,7 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
         <div className="bg-gradient-to-b rounded absolute inset-0 from-transparent via-background/40 to-background" aria-hidden="true" />
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto mt-20">
+        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
           <motion.p
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-xs tracking-[0.4em] uppercase text-gold mb-6 font-inter drop-shadow-lg"
@@ -93,26 +93,38 @@ const HomePage = () => {
 
           <motion.p
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-            className="text-white/90 text-lg font-light mb-12 max-w-2xl mx-auto font-inter drop-shadow-lg"
+            className="text-[#94a3b8] text-lg font-light mb-8 max-w-2xl mx-auto font-inter drop-shadow-lg"
           >
-            Лауреат всеукраїнських конкурсів «Професійне визнання». Продаж, оренда та оцінка нерухомості у Харкові.
+            Чесність, порядок та безпека угод з будь-якою нерухомістю. З Агентством нерухомості «Харків-Ріелтер» вирішити житлове питання легко та надійно!
           </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+          >
+            <Link to="/flats" className="px-8 py-3.5 bg-gold text-[#0b121c] text-sm tracking-widest uppercase font-inter font-medium hover:bg-[#c59e2b] transition-colors rounded-lg">
+              Каталог об'єктів
+            </Link>
+            <Link to="/kontakty" className="px-8 py-3.5 border border-gold/50 text-gold text-sm tracking-widest uppercase font-inter font-medium hover:bg-gold/10 transition-colors rounded-lg">
+              Консультація
+            </Link>
+          </motion.div>
 
           <motion.form
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
             onSubmit={handleSearchSubmit}
             aria-label="Пошук нерухомості"
-            className="flex flex-col sm:flex-row gap-0 max-w-2xl mx-auto border border-gold/50 bg-background/80 backdrop-blur-md"
+            className="flex flex-col sm:flex-row gap-0 max-w-2xl mx-auto border border-white/10 bg-[#131d2a]/80 backdrop-blur-md rounded-xl overflow-hidden shadow-2xl"
           >
-            <div className="flex border-b sm:border-b-0 sm:border-r border-gold/30">
+            <div className="flex border-b sm:border-b-0 sm:border-r border-white/10">
               <button
                 type="button"
                 onClick={handleDealTypeClick('sale')}
                 aria-pressed={deal === 'sale'}
                 tabIndex={0}
                 className={cn(
-                  'flex-1 px-6 py-4 text-xs tracking-widest uppercase font-inter transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold',
-                  deal === 'sale' ? 'bg-gold/20 text-gold' : 'text-muted-foreground hover:text-foreground'
+                  'flex-1 px-6 py-4 text-xs tracking-widest uppercase font-inter transition-colors focus:outline-none',
+                  deal === 'sale' ? 'bg-gold/10 text-gold' : 'text-[#94a3b8] hover:text-[#e2e8f0]'
                 )}
               >
                 Купити
@@ -123,8 +135,8 @@ const HomePage = () => {
                 aria-pressed={deal === 'rent'}
                 tabIndex={0}
                 className={cn(
-                  'flex-1 px-6 py-4 text-xs tracking-widest uppercase font-inter transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold',
-                  deal === 'rent' ? 'bg-gold/20 text-gold' : 'text-muted-foreground hover:text-foreground'
+                  'flex-1 px-6 py-4 text-xs tracking-widest uppercase font-inter transition-colors focus:outline-none',
+                  deal === 'rent' ? 'bg-gold/10 text-gold' : 'text-[#94a3b8] hover:text-[#e2e8f0]'
                 )}
               >
                 Орендувати
@@ -136,12 +148,12 @@ const HomePage = () => {
               onChange={handleQueryChange}
               placeholder="Район, метро, вулиця..."
               aria-label="Введення району або вулиці для пошуку"
-              className="flex-1 px-6 py-4 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none font-inter"
+              className="flex-1 px-6 py-4 bg-transparent text-sm text-[#e2e8f0] placeholder:text-[#64748b] outline-none font-inter"
             />
             <button
               type="submit"
               tabIndex={0}
-              className="px-8 py-4 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium whitespace-nowrap hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-gold"
+              className="px-8 py-4 bg-gold text-[#0b121c] text-xs tracking-widest uppercase font-inter font-medium whitespace-nowrap hover:bg-[#c59e2b] transition-colors focus:outline-none"
             >
               Знайти
             </button>
@@ -225,11 +237,11 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="bg-card/40 border-y border-border py-20" aria-labelledby="advantages-heading">
+      <section className="border-y border-white/10 py-20" aria-labelledby="advantages-heading">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-14">
             <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter">Наші переваги</p>
-            <h2 id="advantages-heading" className="font-cormorant text-5xl font-light">Чому обирають нас</h2>
+            <h2 id="advantages-heading" className="font-cormorant text-5xl font-light text-[#e2e8f0]">Чому обирають нас</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -243,16 +255,16 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="p-8 border border-border bg-card hover:border-gold/40 transition-colors group rounded-sm"
+                className="p-8 border border-white/5 bg-[#131d2a] hover:border-white/10 transition-colors group rounded-xl"
               >
                 <p
                   aria-hidden="true"
-                  className="font-cormorant text-5xl font-light text-gold/30 mb-6 group-hover:text-gold/60 transition-colors"
+                  className="font-cormorant text-5xl font-light text-gold mb-6 opacity-70 group-hover:opacity-100 transition-opacity"
                 >
                   {item.num}
                 </p>
-                <h3 className="font-cormorant text-2xl mb-3">{item.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed font-inter">{item.desc}</p>
+                <h3 className="font-cormorant text-2xl mb-3 text-[#e2e8f0]">{item.title}</h3>
+                <p className="text-[#94a3b8] text-sm leading-relaxed font-inter">{item.desc}</p>
               </motion.div>
             )}
           </div>
@@ -264,28 +276,28 @@ const HomePage = () => {
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative overflow-hidden border border-gold/30 bg-card p-12 sm:p-16 text-center rounded-xl"
+          className="relative overflow-hidden border border-white/5 bg-[#131d2a] p-12 sm:p-16 text-center rounded-xl"
         >
           <div className="absolute top-0 right-0 w-96 h-96 bg-gold/5 rounded-full translate-x-1/2 -translate-y-1/2" aria-hidden="true" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-gold/5 rounded-full -translate-x-1/2 translate-y-1/2" aria-hidden="true" />
 
           <div className="relative">
             <p className="text-xs tracking-[0.3em] uppercase text-gold mb-4 font-inter">Безкоштовна консультація</p>
-            <h2 className="font-cormorant text-5xl sm:text-6xl font-light mb-6">Потрібна допомога з нерухомістю?</h2>
-            <p className="text-muted-foreground font-inter mb-10 max-w-md mx-auto text-sm leading-relaxed">
+            <h2 className="font-cormorant text-5xl sm:text-6xl font-light mb-6 text-[#e2e8f0]">Потрібна допомога з нерухомістю?</h2>
+            <p className="text-[#94a3b8] font-inter mb-10 max-w-md mx-auto text-sm leading-relaxed">
               Зателефонуйте на гарячу лінію або залиште заявку — наші спеціалісти проконсультують безкоштовно
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="tel:+380507136363"
-                className="inline-flex items-center justify-center gap-3 px-10 py-4 border border-gold/50 text-gold text-xs tracking-widest uppercase font-inter font-medium hover:bg-gold/10 transition-colors rounded"
+                className="inline-flex items-center justify-center gap-3 px-10 py-4 border border-gold/50 text-gold text-xs tracking-widest uppercase font-inter font-medium hover:bg-gold/10 transition-colors rounded-lg"
               >
                 050 713 63 63
               </a>
               <Link
-                to="/contact"
+                to="/kontakty"
                 tabIndex={0}
-                className="inline-flex items-center justify-center gap-3 px-10 py-4 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity rounded"
+                className="inline-flex items-center justify-center gap-3 px-10 py-4 bg-gold text-[#0b121c] text-xs tracking-widest uppercase font-inter font-medium hover:bg-[#c59e2b] transition-colors rounded-lg"
               >
                 Залишити заявку <ArrowRight aria-hidden="true" className="w-4 h-4" />
               </Link>

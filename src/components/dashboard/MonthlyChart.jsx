@@ -1,28 +1,28 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { format, startOfMonth, subMonths } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { format, startOfMonth, subMonths } from 'date-fns'
+import { ru } from 'date-fns/locale'
 
-export default function MonthlyChart({ transactions }) {
-  const now = new Date();
+const MonthlyChart = ({ transactions }) => {
+  const now = new Date()
   const months = Array.from({ length: 6 }, (_, i) => {
-    const date = subMonths(startOfMonth(now), 5 - i);
+    const date = subMonths(startOfMonth(now), 5 - i)
     return {
       month: format(date, 'LLL', { locale: ru }),
       key: format(date, 'yyyy-MM'),
       income: 0,
       expense: 0,
-    };
-  });
+    }
+  })
 
   transactions.forEach(t => {
-    if (!t.date) return;
-    const key = t.date.substring(0, 7);
-    const month = months.find(m => m.key === key);
+    if (!t.date) return
+    const key = t.date.substring(0, 7)
+    const month = months.find(m => m.key === key)
     if (month) {
-      if (t.type === 'income') month.income += t.amount || 0;
-      else month.expense += t.amount || 0;
+      if (t.type === 'income') month.income += t.amount || 0
+      else month.expense += t.amount || 0
     }
-  });
+  })
 
   return (
     <div className="h-56">
@@ -52,5 +52,6 @@ export default function MonthlyChart({ transactions }) {
         </BarChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }
+export default MonthlyChart

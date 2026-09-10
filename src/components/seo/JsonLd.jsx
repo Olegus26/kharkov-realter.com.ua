@@ -1,12 +1,12 @@
-export default function JsonLd({ data }) {
-  if (!data) return null;
+const JsonLd = ({ data }) => {
+  if (!data) return null
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
-  );
+  )
 }
 
 // Helpers for specific schema types
@@ -21,11 +21,11 @@ export const generateItemListSchema = (items, url) => {
       "position": index + 1,
       "url": `https://kharkov-realter.com.ua/property/${item.id}`
     }))
-  };
-};
+  }
+}
 
 export const generateRealEstateSchema = (property, url) => {
-  if (!property) return null;
+  if (!property) return null
   
   return {
     "@context": "https://schema.org",
@@ -54,5 +54,7 @@ export const generateRealEstateSchema = (property, url) => {
       "unitCode": "MTK" // Square meters
     },
     "numberOfRooms": property.rooms
-  };
-};
+  }
+}
+
+export default JsonLd

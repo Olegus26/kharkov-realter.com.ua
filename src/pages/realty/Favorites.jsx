@@ -1,24 +1,24 @@
-import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Heart } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import PropertyCard from '@/components/realty/PropertyCard';
-import { getAllObjects, mapObject } from '@/lib/novostoyApi';
-import { useFavorites } from '@/lib/FavoritesContext';
+import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { Heart } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import PropertyCard from '@/components/realty/PropertyCard'
+import { getAllObjects, mapObject } from '@/lib/novostoyApi'
+import { useFavorites } from '@/lib/FavoritesContext'
 
-export default function FavoritesPage() {
-  const { favorites } = useFavorites();
+const FavoritesPage = () => {
+  const { favorites } = useFavorites()
 
   const { data: allProperties = [], isLoading } = useQuery({
     queryKey: ['novostoy-objects', '', ''], 
     queryFn: async () => {
-      const allItems = await getAllObjects({});
-      return allItems.map(mapObject);
+      const allItems = await getAllObjects({})
+      return allItems.map(mapObject)
     },
     staleTime: 5 * 60 * 1000,
-  });
+  })
 
-  const favoriteProperties = allProperties.filter(p => favorites.includes(p.id));
+  const favoriteProperties = allProperties.filter(p => favorites.includes(p.id))
 
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
@@ -66,5 +66,7 @@ export default function FavoritesPage() {
         )}
       </div>
     </div>
-  );
+  )
 }
+
+export default FavoritesPage

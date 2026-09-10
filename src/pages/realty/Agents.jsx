@@ -6,13 +6,13 @@ const AgentsPage = () => {
   const agents = MOCK_AGENTS
 
   return (
-    <div className="pt-24 pb-20" aria-label="Сторінка експертів">
+    <div className="pt-28 pb-20" aria-label="Сторінка експертів">
       <div className="max-w-7xl mx-auto px-6">
-        <header className="py-16 text-center border-b border-border mb-16">
+        <header className="pb-10 text-center border-b border-white/10 mb-12">
           <p className="text-xs tracking-[0.4em] uppercase text-gold mb-4 font-inter">Наша команда</p>
-          <h1 className="font-cormorant text-6xl sm:text-7xl font-light mb-6 text-foreground">Експерти агентства</h1>
-          <p className="text-muted-foreground font-inter max-w-xl mx-auto leading-relaxed">
-            Команда професіоналів з багаторічним досвідом роботи на ринку елітної нерухомості
+          <h1 className="font-cormorant text-6xl sm:text-7xl font-light mb-6 text-[#e2e8f0]">Експерти агентства</h1>
+          <p className="text-muted-foreground mt-4 max-w-2xl mx-auto font-inter">
+            Команда професіоналів з багаторічним досвідом роботи на ринку нерухомості
           </p>
         </header>
 
@@ -31,7 +31,7 @@ const AgentsPage = () => {
                 viewport={{ once: true }} 
                 transition={{ delay: i * 0.1 }}
                 tabIndex={0}
-                className="group border border-border bg-card hover:border-gold/40 transition-all duration-500 overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-gold"
+                className="group border border-white/5 bg-[#131d2a] hover:border-white/10 transition-all duration-500 overflow-hidden rounded-xl focus:outline-none focus:ring-2 focus:ring-gold"
               >
                 <div className="relative aspect-[3/4] overflow-hidden">
                   <img
@@ -66,13 +66,13 @@ const AgentsPage = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-3 pt-5 border-t border-border">
+                  <div className="flex gap-3 pt-5 border-t border-white/5">
                     {agent.phone && (
                       <a 
                         href={`tel:${agent.phone}`} 
                         aria-label={`Зателефонувати ${agent.name}`}
                         tabIndex={0}
-                        className="flex items-center justify-center gap-2 flex-1 py-2.5 border border-border text-xs text-foreground hover:text-gold hover:border-gold transition-colors font-inter rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        className="flex items-center justify-center gap-2 flex-1 py-2.5 border border-white/5 text-xs text-[#e2e8f0] hover:text-gold hover:border-gold/30 transition-colors font-inter rounded-lg focus:outline-none"
                       >
                         <Phone aria-hidden="true" className="w-3.5 h-3.5" /> Зателефонувати
                       </a>
@@ -82,7 +82,7 @@ const AgentsPage = () => {
                         href={`mailto:${agent.email}`} 
                         aria-label={`Написати ${agent.name}`}
                         tabIndex={0}
-                        className="flex items-center justify-center gap-2 flex-1 py-2.5 border border-border text-xs text-foreground hover:text-gold hover:border-gold transition-colors font-inter rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        className="flex items-center justify-center gap-2 flex-1 py-2.5 border border-white/5 text-xs text-[#e2e8f0] hover:text-gold hover:border-gold/30 transition-colors font-inter rounded-lg focus:outline-none"
                       >
                         <Mail aria-hidden="true" className="w-3.5 h-3.5" /> Написати
                       </a>

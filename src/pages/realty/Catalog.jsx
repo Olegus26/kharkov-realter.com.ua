@@ -1,22 +1,23 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown } from 'lucide-react';
-import PropertyCard from '@/components/realty/PropertyCard';
-import MapView from '@/components/realty/MapView';
-import { getAllObjects, mapObject } from '@/lib/novostoyApi';
-import { useFavorites } from '@/lib/FavoritesContext';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import SeoMeta from '@/components/seo/SeoMeta';
-import JsonLd, { generateItemListSchema } from '@/components/seo/JsonLd';
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown } from 'lucide-react'
+import PropertyCard from '@/components/realty/PropertyCard'
+import MapView from '@/components/realty/MapView'
+import { getAllObjects, mapObject } from '@/lib/novostoyApi'
+import { useFavorites } from '@/lib/FavoritesContext'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import SeoMeta from '@/components/seo/SeoMeta'
+import JsonLd, { generateItemListSchema } from '@/components/seo/JsonLd'
+import { cn } from '@/lib/utils'
 
 
 const CATEGORIES = [
   { value: 'apartment', label: 'Квартири/Гостинки', path: '/flats' },
   { value: 'house', label: 'Будинки/Ділянки', path: '/houses' },
   { value: 'commercial', label: 'Комерція', path: '/realtys' },
-];
+]
 
 const SUBTYPES_BY_CATEGORY = {
   apartment: [
@@ -50,7 +51,7 @@ const SUBTYPES_BY_CATEGORY = {
     { value: 'cafe', label: 'кафе' },
     { value: 'kiosk', label: 'киоск' },
   ]
-};
+}
 
 const METRO_LINES = [
   {
@@ -68,178 +69,178 @@ const METRO_LINES = [
     color: 'text-green-500',
     stations: ['Метростроителей', 'Державинская', 'Защитников Украины', 'Архитектора Бекетова', 'Госпром', 'Научная', 'Ботанический сад', '23 Августа', 'Алексеевская', 'Победа']
   }
-];
+]
 
-export default function CatalogPage({ defaultCategory = 'apartment' }) {
-  const [searchParams, setSearchParams] = useSearchParams();
+const CatalogPage = ({ defaultCategory = 'apartment' }) => {
+  const [searchParams, setSearchParams] = useSearchParams()
   
-  const [deal, setDeal] = useState(searchParams.get('deal') || '');
-  const [category, setCategory] = useState(defaultCategory);
-  const [subTypes, setSubTypes] = useState(searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : []);
-  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
+  const [deal, setDeal] = useState(searchParams.get('deal') || '')
+  const [category, setCategory] = useState(defaultCategory)
+  const [subTypes, setSubTypes] = useState(searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : [])
+  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
 
-  const [minArea, setMinArea] = useState(searchParams.get('minArea') || '');
-  const [maxArea, setMaxArea] = useState(searchParams.get('maxArea') || '');
+  const [minArea, setMinArea] = useState(searchParams.get('minArea') || '')
+  const [maxArea, setMaxArea] = useState(searchParams.get('maxArea') || '')
 
-  const [searchBuilding, setSearchBuilding] = useState(searchParams.get('searchBuilding') || '');
-  const [metroStations, setMetroStations] = useState(searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : []);
+  const [searchBuilding, setSearchBuilding] = useState(searchParams.get('searchBuilding') || '')
+  const [metroStations, setMetroStations] = useState(searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : [])
 
-  const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list');
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
-  const itemsPerPage = 20;
+  const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1)
+  const itemsPerPage = 20
 
-  const { favorites } = useFavorites();
-  const isFirstRender = useRef(true);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const { favorites } = useFavorites()
+  const isFirstRender = useRef(true)
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    setCategory(defaultCategory);
-    setSubTypes([]);
-  }, [defaultCategory]);
+    setCategory(defaultCategory)
+    setSubTypes([])
+  }, [defaultCategory])
 
   // Load from sessionStorage if navigated without params
   useEffect(() => {
     if (!location.search) {
-      const saved = sessionStorage.getItem('catalogParams');
+      const saved = sessionStorage.getItem('catalogParams')
       if (saved) {
-        navigate(location.pathname + saved, { replace: true });
+        navigate(location.pathname + saved, { replace: true })
       }
     }
-  }, [location.search, navigate]);
+  }, [location.search, navigate])
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (deal) params.set('deal', deal);
-    if (subTypes.length > 0) params.set('subTypes', subTypes.join(','));
-    if (minPrice) params.set('minPrice', minPrice);
-    if (maxPrice) params.set('maxPrice', maxPrice);
-    if (minArea) params.set('minArea', minArea);
-    if (maxArea) params.set('maxArea', maxArea);
-    if (searchBuilding) params.set('searchBuilding', searchBuilding);
-    if (metroStations.length > 0) params.set('metroStations', metroStations.join(','));
-    if (viewMode !== 'list') params.set('viewMode', viewMode);
-    if (currentPage > 1) params.set('page', currentPage);
+    const params = new URLSearchParams()
+    if (deal) params.set('deal', deal)
+    if (subTypes.length > 0) params.set('subTypes', subTypes.join(','))
+    if (minPrice) params.set('minPrice', minPrice)
+    if (maxPrice) params.set('maxPrice', maxPrice)
+    if (minArea) params.set('minArea', minArea)
+    if (maxArea) params.set('maxArea', maxArea)
+    if (searchBuilding) params.set('searchBuilding', searchBuilding)
+    if (metroStations.length > 0) params.set('metroStations', metroStations.join(','))
+    if (viewMode !== 'list') params.set('viewMode', viewMode)
+    if (currentPage > 1) params.set('page', currentPage)
     
-    const searchString = params.toString();
+    const searchString = params.toString()
     if (searchString) {
-      sessionStorage.setItem('catalogParams', '?' + searchString);
+      sessionStorage.setItem('catalogParams', '?' + searchString)
     } else {
-      sessionStorage.removeItem('catalogParams');
+      sessionStorage.removeItem('catalogParams')
     }
     
-    setSearchParams(params, { replace: true });
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchBuilding, metroStations, viewMode, currentPage, setSearchParams]);
+    setSearchParams(params, { replace: true })
+  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchBuilding, metroStations, viewMode, currentPage, setSearchParams])
 
   // Reset page when filters change
   useEffect(() => {
     if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
+      isFirstRender.current = false
+      return
     }
-    setCurrentPage(1);
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchBuilding, metroStations, viewMode]);
+    setCurrentPage(1)
+  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchBuilding, metroStations, viewMode])
 
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+    setCurrentPage(newPage)
     setTimeout(() => {
-      const el = document.getElementById('catalog-top');
+      const el = document.getElementById('catalog-top')
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' })
       }
-    }, 50);
-  };
+    }, 50)
+  }
 
   const { data: properties = [], isLoading, error } = useQuery({
     queryKey: ['novostoy-objects', deal],
     queryFn: async () => {
-      const filters = {};
-      if (deal === 'sale') filters.sell_type = '2';
-      if (deal === 'rent') filters.sell_type = '1';
+      const filters = {}
+      if (deal === 'sale') filters.sell_type = '2'
+      if (deal === 'rent') filters.sell_type = '1'
 
-      const allItems = await getAllObjects(filters);
-      return allItems.map(mapObject);
+      const allItems = await getAllObjects(filters)
+      return allItems.map(mapObject)
     },
     staleTime: 5 * 60 * 1000,
-  });
+  })
 
   const filtered = useMemo(() => {
     return properties.filter(p => {
-      if (minPrice && p.price < Number(minPrice)) return false;
-      if (maxPrice && p.price > Number(maxPrice)) return false;
+      if (minPrice && p.price < Number(minPrice)) return false
+      if (maxPrice && p.price > Number(maxPrice)) return false
 
-      if (minArea && p.area < Number(minArea)) return false;
-      if (maxArea && p.area > Number(maxArea)) return false;
+      if (minArea && p.area < Number(minArea)) return false
+      if (maxArea && p.area > Number(maxArea)) return false
 
-      if (category && p.type !== category) return false;
+      if (category && p.type !== category) return false
 
       if (subTypes.length > 0) {
         const matches = subTypes.some(st => {
-          if (st === 'rooms_1') return p.rooms === 1;
-          if (st === 'rooms_2') return p.rooms === 2;
-          if (st === 'rooms_3') return p.rooms === 3;
-          if (st === 'rooms_4') return p.rooms === 4;
-          if (st === 'rooms_5+') return p.rooms >= 5;
-          return true; // Unmapped subtypes return true temporarily
-        });
-        if (!matches) return false;
+          if (st === 'rooms_1') return p.rooms === 1
+          if (st === 'rooms_2') return p.rooms === 2
+          if (st === 'rooms_3') return p.rooms === 3
+          if (st === 'rooms_4') return p.rooms === 4
+          if (st === 'rooms_5+') return p.rooms >= 5
+          return true // Unmapped subtypes return true temporarily
+        })
+        if (!matches) return false
       }
 
       if (searchBuilding) {
-        const query = searchBuilding.toLowerCase();
-        if (!p.building?.toLowerCase().includes(query) && !p.street?.toLowerCase().includes(query)) return false;
+        const query = searchBuilding.toLowerCase()
+        if (!p.building?.toLowerCase().includes(query) && !p.street?.toLowerCase().includes(query)) return false
       }
 
       if (metroStations.length > 0) {
-        if (!metroStations.some(s => p.mregion?.toLowerCase().includes(s.toLowerCase()))) return false;
+        if (!metroStations.some(s => p.mregion?.toLowerCase().includes(s.toLowerCase()))) return false
       }
 
-      return true;
-    });
-  }, [properties, minPrice, maxPrice, minArea, maxArea, category, subTypes, searchBuilding, metroStations]);
+      return true
+    })
+  }, [properties, minPrice, maxPrice, minArea, maxArea, category, subTypes, searchBuilding, metroStations])
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
   const currentItems = viewMode === 'list'
     ? filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-    : filtered; // map view shows all filtered
+    : filtered // map view shows all filtered
 
   const clearFilters = () => {
-    setDeal('');
-    setCategory('');
-    setSubTypes([]);
-    setMinPrice('');
-    setMaxPrice('');
-    setMinArea('');
-    setMaxArea('');
-    setSearchBuilding('');
-    setMetroStations([]);
-  };
-  const hasFilters = deal || category || subTypes.length > 0 || minPrice || maxPrice || minArea || maxArea || searchBuilding || metroStations.length > 0;
+    setDeal('')
+    setCategory('')
+    setSubTypes([])
+    setMinPrice('')
+    setMaxPrice('')
+    setMinArea('')
+    setMaxArea('')
+    setSearchBuilding('')
+    setMetroStations([])
+  }
+  const hasFilters = deal || category || subTypes.length > 0 || minPrice || maxPrice || minArea || maxArea || searchBuilding || metroStations.length > 0
 
   // Dynamic SEO calculation
   const getSeoTitle = () => {
-    let title = category === 'apartment' ? 'Квартири' : category === 'house' ? 'Будинки та ділянки' : category === 'commercial' ? 'Комерційна нерухомість' : 'Каталог нерухомості';
-    if (deal === 'sale') title = `Продаж: ${title.toLowerCase()}`;
-    if (deal === 'rent') title = `Оренда: ${title.toLowerCase()}`;
+    let title = category === 'apartment' ? 'Квартири' : category === 'house' ? 'Будинки та ділянки' : category === 'commercial' ? 'Комерційна нерухомість' : 'Каталог нерухомості'
+    if (deal === 'sale') title = `Продаж: ${title.toLowerCase()}`
+    if (deal === 'rent') title = `Оренда: ${title.toLowerCase()}`
     if (filtered.length > 0) {
-      const minP = minPrice ? Number(minPrice) : Math.min(...filtered.map(p => p.price));
-      title += ` в Харкові. ${filtered.length} об'єктів від $${minP.toLocaleString()}`;
+      const minP = minPrice ? Number(minPrice) : Math.min(...filtered.map(p => p.price))
+      title += ` в Харкові. ${filtered.length} об'єктів від $${minP.toLocaleString()}`
     } else {
-      title += ' в Харкові';
+      title += ' в Харкові'
     }
-    return title;
-  };
+    return title
+  }
   
   const getSeoDescription = () => {
-    const catName = category === 'apartment' ? 'квартир' : category === 'house' ? 'будинків' : category === 'commercial' ? 'комерційної нерухомості' : 'нерухомості';
-    const dealName = deal === 'rent' ? 'оренду' : 'продаж';
-    return `Актуальний каталог на ${dealName} ${catName} в Харкові та області від агентства Харків Ріелтер. Безпечні угоди, перевірені об'єкти.`;
-  };
+    const catName = category === 'apartment' ? 'квартир' : category === 'house' ? 'будинків' : category === 'commercial' ? 'комерційної нерухомості' : 'нерухомості'
+    const dealName = deal === 'rent' ? 'оренду' : 'продаж'
+    return `Актуальний каталог на ${dealName} ${catName} в Харкові та області від агентства Харків Ріелтер. Безпечні угоди, перевірені об'єкти.`
+  }
 
-  const schemaUrl = `https://kharkov-realter.com.ua${location.pathname}${location.search}`;
+  const schemaUrl = `https://kharkov-realter.com.ua${location.pathname}${location.search}`
 
   return (
     <div className="pt-24 pb-20" id="catalog-top">
@@ -262,14 +263,20 @@ export default function CatalogPage({ defaultCategory = 'apartment' }) {
               <div className="flex border border-border">
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase font-inter transition-colors ${viewMode === 'list' ? 'bg-gold text-background' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={cn('flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase font-inter transition-colors', {
+                    'bg-gold text-background': viewMode === 'list',
+                    'text-muted-foreground hover:text-foreground': viewMode !== 'list'
+                  })}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Список</span>
                 </button>
                 <button
                   onClick={() => setViewMode('map')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase font-inter transition-colors ${viewMode === 'map' ? 'bg-gold text-background' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={cn('flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase font-inter transition-colors', {
+                    'bg-gold text-background': viewMode === 'map',
+                    'text-muted-foreground hover:text-foreground': viewMode !== 'map'
+                  })}
                 >
                   <Map className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Карта</span>
@@ -288,7 +295,10 @@ export default function CatalogPage({ defaultCategory = 'apartment' }) {
                 <button
                   key={v}
                   onClick={() => setDeal(v)}
-                  className={`px-6 py-2.5 text-xs tracking-widest uppercase font-inter transition-colors ${deal === v ? 'bg-gold text-background' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter transition-colors', {
+                    'bg-gold text-background': deal === v,
+                    'text-muted-foreground hover:text-foreground': deal !== v
+                  })}
                 >
                   {l}
                 </button>
@@ -301,9 +311,12 @@ export default function CatalogPage({ defaultCategory = 'apartment' }) {
                 <button
                   key={c.value}
                   onClick={() => {
-                    navigate(c.path + location.search);
+                    navigate(c.path + location.search)
                   }}
-                  className={`px-6 py-2.5 text-xs tracking-widest uppercase font-inter transition-colors whitespace-nowrap ${category === c.value ? 'bg-gold text-background' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter transition-colors whitespace-nowrap', {
+                    'bg-gold text-background': category === c.value,
+                    'text-muted-foreground hover:text-foreground': category !== c.value
+                  })}
                 >
                   {c.label}
                 </button>
@@ -368,8 +381,8 @@ export default function CatalogPage({ defaultCategory = 'apartment' }) {
                           className="hidden"
                           checked={subTypes.includes(t.value)}
                           onChange={(e) => {
-                            if (e.target.checked) setSubTypes([...subTypes, t.value]);
-                            else setSubTypes(subTypes.filter(v => v !== t.value));
+                            if (e.target.checked) setSubTypes([...subTypes, t.value])
+                            else setSubTypes(subTypes.filter(v => v !== t.value))
                           }}
                         />
                         <span className="text-sm text-foreground group-hover:text-gold transition-colors">{t.label}</span>
@@ -421,8 +434,8 @@ export default function CatalogPage({ defaultCategory = 'apartment' }) {
                               className="hidden"
                               checked={metroStations.includes(st)}
                               onChange={(e) => {
-                                if (e.target.checked) setMetroStations([...metroStations, st]);
-                                else setMetroStations(metroStations.filter(v => v !== st));
+                                if (e.target.checked) setMetroStations([...metroStations, st])
+                                else setMetroStations(metroStations.filter(v => v !== st))
                               }}
                             />
                             <span className="text-sm text-foreground truncate group-hover:text-gold transition-colors" title={st}>{st}</span>
@@ -506,30 +519,30 @@ export default function CatalogPage({ defaultCategory = 'apartment' }) {
 
                   {/* Pagination logic */}
                   {Array.from({ length: totalPages }).map((_, i) => {
-                    const page = i + 1;
-                    const isCurrent = page === currentPage;
-                    const isNear = Math.abs(currentPage - page) <= 2;
-                    const isEdge = page === 1 || page === totalPages;
+                    const page = i + 1
+                    const isCurrent = page === currentPage
+                    const isNear = Math.abs(currentPage - page) <= 2
+                    const isEdge = page === 1 || page === totalPages
 
                     if (!isNear && !isEdge) {
                       if (page === 2 || page === totalPages - 1) {
-                        return <span key={page} className="px-2 text-muted-foreground">...</span>;
+                        return <span key={page} className="px-2 text-muted-foreground">...</span>
                       }
-                      return null;
+                      return null
                     }
 
                     return (
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors ${isCurrent
-                            ? 'bg-[#3B82F6] text-white'
-                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                          }`}
+                        className={cn('w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors', {
+                          'bg-gold text-white': isCurrent,
+                          'text-muted-foreground hover:bg-muted/50 hover:text-foreground': !isCurrent
+                        })}
                       >
                         {page}
                       </button>
-                    );
+                    )
                   })}
 
                   <button
@@ -551,5 +564,7 @@ export default function CatalogPage({ defaultCategory = 'apartment' }) {
         )}
       </div>
     </div>
-  );
+  )
 }
+
+export default CatalogPage

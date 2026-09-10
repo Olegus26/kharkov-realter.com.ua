@@ -5,68 +5,46 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root, .dark {
     --font-cormorant: 'Cormorant Garamond', serif;
     --font-inter: 'Inter', sans-serif;
 
-    --background: 0 0% 100%;
-    --foreground: 222 47% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 15%;
+    /* 60% Background: Deep Navy #0b121c */
+    --background: 215 44% 8%;
+    /* 30% Cards/Blocks: Dark Slate #131d2a */
+    --card: 214 38% 12%;
+    --popover: 214 38% 12%;
     
-    --primary: 222 47% 20%;
-    --primary-foreground: 0 0% 100%;
+    /* Text colors */
+    /* Main body text #94a3b8 */
+    --foreground: 215 28% 65%;
+    /* Headings #e2e8f0 */
+    --heading: 210 40% 91%;
+    /* Secondary #64748b */
+    --muted: 215 25% 47%;
+    --muted-foreground: 215 25% 47%;
     
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222 47% 15%;
+    --primary: 46 65% 52%;
+    --primary-foreground: 215 44% 8%;
     
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
+    --secondary: 214 38% 12%;
+    --secondary-foreground: 215 28% 65%;
     
-    --accent: 45 93% 47%;
-    --accent-foreground: 222 47% 15%;
-    
-    --destructive: 0 72% 56%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 20%;
-    --radius: 0.5rem;
-
-    --gold: 45 93% 47%;
-    --gold-light: 45 93% 60%;
-    --gold-dark: 45 93% 35%;
-  }
-
-  .dark {
-    --background: 218 47% 8%;
-    --foreground: 210 30% 98%;
-    --card: 218 44% 12%;
-    --card-foreground: 210 30% 98%;
-    --popover: 218 44% 12%;
-    --popover-foreground: 210 30% 98%;
-    
-    --primary: 45 93% 47%;
-    --primary-foreground: 218 47% 8%;
-    
-    --secondary: 218 38% 18%;
-    --secondary-foreground: 210 30% 98%;
-    
-    --muted: 218 38% 18%;
-    --muted-foreground: 215 20% 70%;
-    
-    --accent: 218 38% 18%;
-    --accent-foreground: 210 30% 98%;
+    --accent: 214 38% 12%;
+    --accent-foreground: 210 40% 91%;
     
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 218 35% 25%;
-    --input: 218 38% 18%;
-    --ring: 45 93% 47%;
+    /* Default borders */
+    --border: 214 38% 20%;
+    --input: 214 38% 20%;
+    --ring: 46 65% 52%;
+    --radius: 0.5rem;
+
+    /* 10% Accent: Gold #d4af37 */
+    --gold: 46 65% 52%;
+    --gold-hover: 45 64% 47%;
   }
 }
 
@@ -84,6 +62,7 @@
   h3,
   h4 {
     @apply font-cormorant;
+    color: hsl(var(--heading));
   }
 }
 

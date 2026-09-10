@@ -1,13 +1,13 @@
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Star, Clock, Globe } from 'lucide-react';
+import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
+import { ArrowRight, Shield, Star, Clock, Globe } from 'lucide-react'
 
 const values = [
   { icon: Shield, title: 'Надійність', desc: 'Повна юридична чистота кожної угоди. Працюємо лише з перевіреними об\'єктами.' },
   { icon: Star, title: 'Якість', desc: 'Ретельний відбір об\'єктів — тільки найкраще потрапляє до нашого каталогу.' },
   { icon: Clock, title: 'Оперативність', desc: 'Реагуємо на запити протягом години. Ваш час — наш пріоритет.' },
   { icon: Globe, title: 'Локальна експертиза', desc: 'Глибоке знання ринку нерухомості Харкова та області. Ми знаємо кожен будинок.' },
-];
+]
 
 const timeline = [
   { year: '1996', event: 'Заснування агентства у Харкові.' },
@@ -15,9 +15,9 @@ const timeline = [
   { year: '2006', event: 'Краща компанія з іпотечного кредитування на регіональному ринку за підсумками "Визнання-2006".' },
   { year: '2009', event: 'Переможець IV Всеукраїнського конкурсу "Професійне визнання" на регіональному ринку.' },
   { year: '2011', event: 'Лауреат конкурсу "Професійне визнання" у номінаціях "За професіоналізм" та "Найдовша професійна діяльність".' },
-];
+]
 
-export default function AboutPage() {
+const AboutPage = () => {
   return (
     <div className="pt-24 pb-20">
       {/* Hero */}
@@ -122,5 +122,7 @@ export default function AboutPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
+
+export default AboutPage

@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Instagram, Facebook, Send as Telegram } from 'lucide-react';
+import { Link } from 'react-router-dom'
+import { Phone, Mail, MapPin, Instagram, Facebook, Send as Telegram } from 'lucide-react'
 
-export default function Footer() {
+const Footer = () => {
   return (
     <footer className="bg-card border-t border-border mt-24">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -95,5 +95,6 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  );
+  )
 }
+export default Footer

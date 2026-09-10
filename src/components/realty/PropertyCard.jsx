@@ -19,7 +19,7 @@ const formatPrice = (p) => {
   return `$${p?.toLocaleString('uk-UA')}`
 }
 
-const PropertyCard = memo(function PropertyCard({ property, className = '' }) {
+const PropertyCard = memo(({ property, className = '' }) => {
   const { isFavorite, toggleFavorite } = useFavorites()
   const liked = isFavorite(property.id)
 
@@ -31,7 +31,7 @@ const PropertyCard = memo(function PropertyCard({ property, className = '' }) {
 
   return (
     <div
-      className={cn('group bg-card border border-border flex flex-col h-full hover:border-gold/50 transition-all hover:-translate-y-1 duration-300', className)}
+      className={cn('group bg-[#131d2a] border border-white/5 rounded-xl overflow-hidden flex flex-col h-full hover:border-white/10 transition-all hover:-translate-y-1 duration-300', className)}
     >
       <Link to={`/property/${property.id}`} className="relative aspect-[4/3] overflow-hidden block">
         <img
@@ -46,54 +46,57 @@ const PropertyCard = memo(function PropertyCard({ property, className = '' }) {
         {/* Badges */}
         <div className="absolute top-4 left-4 flex gap-2">
           {property.featured && (
-            <span className="px-3 py-1 gradient-gold text-background text-[10px] tracking-widest uppercase font-inter font-medium">
+            <span className="px-3 py-1 bg-gold text-[#0b121c] text-[10px] tracking-widest uppercase font-inter font-medium rounded">
               Топ
             </span>
           )}
           {property.new_building && (
-            <span className="px-3 py-1 bg-background/80 text-foreground text-[10px] tracking-widest uppercase font-inter">
+            <span className="px-3 py-1 bg-[#0b121c]/80 text-[#e2e8f0] text-[10px] tracking-widest uppercase font-inter rounded">
               Новостройка
             </span>
           )}
         </div>
         
         <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
-          <span className="px-3 py-1 bg-background/80 text-foreground text-[10px] tracking-widest uppercase font-inter">
+          <span className="px-3 py-1 bg-[#0b121c]/80 text-[#e2e8f0] text-[10px] tracking-widest uppercase font-inter rounded">
             {property.deal === 'sale' ? 'Продажа' : 'Аренда'}
           </span>
           <motion.button 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleToggleFavorite}
-            className="p-2 bg-background/80 hover:bg-background rounded-full transition-colors group/btn flex items-center justify-center"
+            className="p-2 bg-[#0b121c]/80 hover:bg-[#0b121c] rounded-full transition-colors group/btn flex items-center justify-center"
             aria-label={liked ? 'Видалити з обраного' : 'Додати в обране'}
           >
             <motion.div animate={{ scale: liked ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
-              <Heart className={cn("w-4 h-4 transition-colors", liked ? "text-gold fill-gold" : "text-muted-foreground group-hover/btn:text-gold")} />
+              <Heart className={cn("w-4 h-4 transition-colors", {
+                "text-gold fill-gold": liked,
+                "text-muted-foreground group-hover/btn:text-gold": !liked
+              })} />
             </motion.div>
           </motion.button>
         </div>
 
         {/* Price on image */}
         <div className="absolute bottom-4 left-4">
-          <p className="font-cormorant text-2xl font-semibold text-white">{formatPrice(property.price)}</p>
-          {property.deal === 'rent' && <p className="text-xs text-white/70 font-inter">/месяц</p>}
+          <p className="font-cormorant text-2xl font-semibold text-[#e2e8f0]">{formatPrice(property.price)}</p>
+          {property.deal === 'rent' && <p className="text-xs text-[#94a3b8] font-inter">/месяц</p>}
         </div>
       </Link>
 
       {/* Info */}
       <div className="p-5 flex flex-col flex-grow">
         <p className="text-[10px] tracking-[0.2em] uppercase text-gold mb-1">{TYPE_LABELS[property.type]}</p>
-        <h3 className="font-cormorant text-xl font-medium mb-3 group-hover:text-gold transition-colors line-clamp-1">
+        <h3 className="font-cormorant text-xl font-medium mb-3 text-[#e2e8f0] group-hover:text-gold transition-colors line-clamp-1">
           {property.title}
         </h3>
 
-        <div className="flex items-center gap-1 text-muted-foreground text-xs mb-4">
+        <div className="flex items-center gap-1 text-[#94a3b8] text-xs mb-4">
           <MapPin className="w-3 h-3" />
           <span className="truncate">{property.location}</span>
         </div>
 
-        <div className="flex items-center gap-4 pt-4 border-t border-border text-xs text-muted-foreground font-inter mt-auto">
+        <div className="flex items-center gap-4 pt-4 border-t border-white/5 text-xs text-[#64748b] font-inter mt-auto">
           {property.rooms && (
             <span className="flex items-center gap-1.5">
               <BedDouble className="w-3.5 h-3.5" />

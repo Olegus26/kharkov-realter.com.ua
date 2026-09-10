@@ -1,41 +1,41 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CATEGORY_LABELS } from '@/lib/constants';
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { CATEGORY_LABELS } from '@/lib/constants'
 
-const incomeCategories = ['salary', 'freelance', 'investments', 'gifts', 'other_income'];
-const expenseCategories = ['food', 'transport', 'housing', 'utilities', 'entertainment', 'health', 'education', 'clothing', 'subscriptions', 'other_expense'];
+const incomeCategories = ['salary', 'freelance', 'investments', 'gifts', 'other_income']
+const expenseCategories = ['food', 'transport', 'housing', 'utilities', 'entertainment', 'health', 'education', 'clothing', 'subscriptions', 'other_expense']
 
-export default function TransactionForm({ open, onClose, onSubmit }) {
-  const [type, setType] = useState('expense');
+const TransactionForm = ({ open, onClose, onSubmit }) => {
+  const [type, setType] = useState('expense')
   const [form, setForm] = useState({
     title: '',
     amount: '',
     category: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
-  });
-  const [saving, setSaving] = useState(false);
+  })
+  const [saving, setSaving] = useState(false)
 
-  const categories = type === 'income' ? incomeCategories : expenseCategories;
+  const categories = type === 'income' ? incomeCategories : expenseCategories
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
+    e.preventDefault()
+    setSaving(true)
     await onSubmit({
       ...form,
       type,
       amount: parseFloat(form.amount),
-    });
-    setSaving(false);
-    setForm({ title: '', amount: '', category: '', date: new Date().toISOString().split('T')[0], notes: '' });
-    onClose();
-  };
+    })
+    setSaving(false)
+    setForm({ title: '', amount: '', category: '', date: new Date().toISOString().split('T')[0], notes: '' })
+    onClose()
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -45,7 +45,7 @@ export default function TransactionForm({ open, onClose, onSubmit }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <Tabs value={type} onValueChange={(v) => { setType(v); setForm(f => ({ ...f, category: '' })); }}>
+          <Tabs value={type} onValueChange={(v) => { setType(v); setForm(f => ({ ...f, category: '' })) }}>
             <TabsList className="w-full">
               <TabsTrigger value="expense" className="flex-1">Расход</TabsTrigger>
               <TabsTrigger value="income" className="flex-1">Доход</TabsTrigger>
@@ -117,5 +117,6 @@ export default function TransactionForm({ open, onClose, onSubmit }) {
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
+export default TransactionForm

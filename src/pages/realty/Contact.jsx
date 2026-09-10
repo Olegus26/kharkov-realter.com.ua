@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react'
 
-export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', type: 'buy' });
-  const [sent, setSent] = useState(false);
-  const [sending, setSending] = useState(false);
+const ContactPage = () => {
+  const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', type: 'buy' })
+  const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSending(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setSending(false);
-    setSent(true);
-  };
+    e.preventDefault()
+    setSending(true)
+    await new Promise(r => setTimeout(r, 1200))
+    setSending(false)
+    setSent(true)
+  }
 
   return (
     <div className="pt-24 pb-20">
@@ -32,7 +32,7 @@ export default function ContactPage() {
                 <CheckCircle className="w-16 h-16 text-gold mb-6" />
                 <h2 className="font-cormorant text-4xl mb-3">Дякуємо!</h2>
                 <p className="text-muted-foreground font-inter text-sm">Ми отримали вашу заявку і зв'яжемося з вами найближчим часом.</p>
-                <button onClick={() => { setSent(false); setForm({ name: '', phone: '', email: '', message: '', type: 'buy' }); }}
+                <button onClick={() => { setSent(false); setForm({ name: '', phone: '', email: '', message: '', type: 'buy' }) }}
                   className="mt-8 text-sm text-gold hover:text-gold/70 transition-colors font-inter">
                   Відправити ще раз
                 </button>
@@ -103,7 +103,7 @@ export default function ContactPage() {
               <p className="text-xs tracking-[0.3em] uppercase text-gold mb-6 font-inter">Наші офіси</p>
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#CCA565 transparent' }}>
                 {[
-                  { title: 'Центр-1 (Головний)', addr: 'вул. Пушкінська, 65, оф. 3' },
+                  { title: 'Центр-1 (Головний)', addr: 'вул. Григорія Сковороди, 65, оф. 3' },
                   { title: 'Центр-2', addr: 'вул. Сумська, 80' },
                   { title: 'Салтівка-1', addr: 'вул. Героїв Праці, 20/321' },
                   { title: 'Салтівка-2', addr: 'просп. Тракторобудівників, 108' },
@@ -156,5 +156,7 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
+
+export default ContactPage

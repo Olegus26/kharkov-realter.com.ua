@@ -1,5 +1,5 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { CATEGORY_LABELS } from '@/lib/constants';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { CATEGORY_LABELS } from '@/lib/constants'
 
 const COLORS = [
   'hsl(234, 62%, 55%)',
@@ -10,28 +10,28 @@ const COLORS = [
   'hsl(190, 60%, 45%)',
   'hsl(20, 80%, 55%)',
   'hsl(160, 50%, 50%)',
-];
+]
 
-export default function CategoryChart({ transactions }) {
-  const expenses = transactions.filter(t => t.type === 'expense');
+const CategoryChart = ({ transactions }) => {
+  const expenses = transactions.filter(t => t.type === 'expense')
 
-  const categoryTotals = {};
+  const categoryTotals = {}
   expenses.forEach(t => {
-    const cat = t.category || 'other_expense';
-    categoryTotals[cat] = (categoryTotals[cat] || 0) + (t.amount || 0);
-  });
+    const cat = t.category || 'other_expense'
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + (t.amount || 0)
+  })
 
   const data = Object.entries(categoryTotals)
     .map(([name, value]) => ({ name: CATEGORY_LABELS[name] || name, value }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
+    .slice(0, 8)
 
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
         Нет данных о расходах
       </div>
-    );
+    )
   }
 
   return (
@@ -80,5 +80,6 @@ export default function CategoryChart({ transactions }) {
         ))}
       </div>
     </div>
-  );
+  )
 }
+export default CategoryChart

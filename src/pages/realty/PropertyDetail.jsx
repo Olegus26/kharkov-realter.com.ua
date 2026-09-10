@@ -9,10 +9,10 @@ import { cn } from '@/lib/utils'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
 
-const DEAL_LABELS = { sale: 'Продаж', rent: 'Оренда' };
-const TYPE_LABELS = { apartment: 'Квартира', house: 'Будинок', penthouse: 'Пентхаус', villa: 'Вілла', commercial: 'Комерційна' };
+const DEAL_LABELS = { sale: 'Продаж', rent: 'Оренда' }
+const TYPE_LABELS = { apartment: 'Квартира', house: 'Будинок', penthouse: 'Пентхаус', villa: 'Вілла', commercial: 'Комерційна' }
 
-export default function PropertyDetail() {
+const PropertyDetail = () => {
   const { id } = useParams()
   const [activeImg, setActiveImg] = useState(0)
   const thumbnailRefs = useRef([])
@@ -94,18 +94,18 @@ export default function PropertyDetail() {
         </div>
       </div>
     </div>
-  );
+  )
 
   if (!property) return (
     <div className="pt-32 text-center min-h-screen flex flex-col items-center justify-center">
       <p className="font-cormorant text-4xl mb-4">Об'єкт не знайдено</p>
       <Link to="/flats" className="text-gold text-sm font-inter">← Повернутися до каталогу</Link>
     </div>
-  );
+  )
 
   const images = property.images?.length
     ? property.images
-    : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80'];
+    : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80']
 
   const handlePrevImage = () => {
     setActiveImg(prev => (prev === 0 ? images.length - 1 : prev - 1))
@@ -115,10 +115,10 @@ export default function PropertyDetail() {
     setActiveImg(prev => (prev === images.length - 1 ? 0 : prev + 1))
   }
 
-  const pricePerM2 = property.area ? Math.round(property.price / property.area) : null;
+  const pricePerM2 = property.area ? Math.round(property.price / property.area) : null
 
-  const schemaUrl = `https://kharkov-realter.com.ua/property/${property.id}`;
-  const seoTitle = `${TYPE_LABELS[property.type] || 'Об\'єкт'} ${property.rooms ? property.rooms + '-кімн., ' : ''}${property.area} м² за $${property.price.toLocaleString()}`;
+  const schemaUrl = `https://kharkov-realter.com.ua/property/${property.id}`
+  const seoTitle = `${TYPE_LABELS[property.type] || 'Об\'єкт'} ${property.rooms ? property.rooms + '-кімн., ' : ''}${property.area} м² за $${property.price.toLocaleString()}`
 
   return (
     <div className="pt-24 pb-20">
@@ -367,5 +367,6 @@ export default function PropertyDetail() {
         </div>
       </div>
     </div>
-  );
+  )
 }
+export default PropertyDetail

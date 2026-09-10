@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
-export default function StatCard({ title, value, icon: Icon, trend, className, iconClassName }) {
+const StatCard = ({ title, value, icon: Icon, trend, className, iconClassName }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -21,5 +21,6 @@ export default function StatCard({ title, value, icon: Icon, trend, className, i
         </div>
       </div>
     </motion.div>
-  );
+  )
 }
+export default StatCard

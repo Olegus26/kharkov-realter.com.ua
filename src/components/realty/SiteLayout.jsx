@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import Navbar from './Navbar'
 import Footer from './Footer'
 
-export default function SiteLayout() {
+const SiteLayout = () => {
   const location = useLocation()
 
   return (
@@ -25,3 +25,4 @@ export default function SiteLayout() {
     </div>
   )
 }
+export default SiteLayout

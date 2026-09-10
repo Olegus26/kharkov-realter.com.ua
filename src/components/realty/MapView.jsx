@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
-import { Link } from 'react-router-dom';
-import { BedDouble, Maximize2, X, MapPin, Phone } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { getFallbackCoords } from '@/lib/geocode';
+import { useState, useEffect, useRef } from 'react'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
+import { Link } from 'react-router-dom'
+import { BedDouble, Maximize2, X, MapPin, Phone } from 'lucide-react'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import { getFallbackCoords } from '@/lib/geocode'
 
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl
@@ -29,47 +29,47 @@ function createCustomIcon(isSelected) {
     "></div>`,
         iconSize: [isSelected ? 18 : 13, isSelected ? 18 : 13],
         iconAnchor: [isSelected ? 9 : 6.5, isSelected ? 9 : 6.5],
-    });
+    })
 }
 
 function formatPrice(p, deal) {
-    if (!p) return '—';
-    return `$${p.toLocaleString('uk-UA')}${deal === 'rent' ? '/міс' : ''}`;
+    if (!p) return '—'
+    return `$${p.toLocaleString('uk-UA')}${deal === 'rent' ? '/міс' : ''}`
 }
 
 function FitBounds({ coords }) {
-    const map = useMap();
-    const fitted = useRef(false);
+    const map = useMap()
+    const fitted = useRef(false)
     useEffect(() => {
         if (!fitted.current && coords.length > 0) {
-            const bounds = L.latLngBounds(coords);
-            map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
-            fitted.current = true;
+            const bounds = L.latLngBounds(coords)
+            map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 })
+            fitted.current = true
         }
-    }, [coords.length]);
-    return null;
+    }, [coords.length])
+    return null
 }
 
-export default function MapView({ properties }) {
-    const [selected, setSelected] = useState(null);
-    const [markers, setMarkers] = useState([]);
+const MapView = ({ properties }) => {
+    const [selected, setSelected] = useState(null)
+    const [markers, setMarkers] = useState([])
 
     // Instantly map to fallback coordinates since we don't have accurate API coords
     // and client-side bulk geocoding is rate-limited and very slow.
     useEffect(() => {
         if (!properties.length) {
-            setMarkers([]);
-            return;
+            setMarkers([])
+            return
         }
         
         const results = properties.map((p, i) => ({
             property: p,
             coords: getFallbackCoords(p.region, i)
-        }));
-        setMarkers(results);
-    }, [properties]);
+        }))
+        setMarkers(results)
+    }, [properties])
 
-    const allCoords = markers.map(m => m.coords);
+    const allCoords = markers.map(m => m.coords)
 
     return (
         <div className="relative w-full h-[calc(100vh-220px)] min-h-[500px] border border-border overflow-hidden rounded-md z-0">
@@ -169,5 +169,6 @@ export default function MapView({ properties }) {
                 {properties.length} об'єктів на карті
             </div>
         </div>
-    );
+    )
 }
+export default MapView

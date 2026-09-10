@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Phone, Moon, Sun } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { Menu, X, Phone } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const links = [
   { to: '/', label: 'Головна' },
@@ -10,26 +9,25 @@ const links = [
   { to: '/agents', label: 'Експерти' },
   { to: '/o-korporatcii', label: 'Про нас' },
   { to: '/kontakty', label: 'Контакти' },
-];
+]
 
-export default function Navbar() {
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
-  const { theme, setTheme } = useTheme();
+const Navbar = () => {
+  const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const location = useLocation()
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', fn);
-    return () => window.removeEventListener('scroll', fn);
-  }, []);
+    const fn = () => setScrolled(window.scrollY > 40)
+    window.addEventListener('scroll', fn)
+    return () => window.removeEventListener('scroll', fn)
+  }, [])
 
-  useEffect(() => setOpen(false), [location]);
+  useEffect(() => setOpen(false), [location])
 
   return (
     <header className={cn(
       'fixed top-0 inset-x-0 z-50 transition-all duration-500',
-      scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'
+      scrolled ? 'bg-[#0b121c]/80 backdrop-blur-md border-b border-white/10' : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
@@ -63,18 +61,11 @@ export default function Navbar() {
 
         {/* CTA */}
         <div className="hidden lg:flex items-center gap-4">
-          <button 
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-2 text-muted-foreground hover:text-gold transition-colors"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
           <a href="tel:+380501234567" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors">
             <Phone className="w-4 h-4" />
             +380 (50) 123-45-67
           </a>
-          <Link to="/kontakty" className="px-5 py-2.5 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity">
+          <Link to="/kontakty" className="px-5 py-2.5 bg-gold text-[#0b121c] text-xs tracking-widest uppercase font-inter font-medium hover:bg-[#c59e2b] transition-colors rounded">
             Консультація
           </Link>
         </div>
@@ -87,7 +78,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {open && (
-        <div className="lg:hidden bg-card border-t border-border px-6 py-6 space-y-4">
+        <div className="lg:hidden bg-[#131d2a] border-t border-white/10 px-6 py-6 space-y-4">
           {links.map(l => (
             <Link key={l.to} to={l.to} className={cn(
               'block text-sm tracking-widest uppercase py-2 transition-colors',
@@ -96,20 +87,12 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
-            <span className="text-sm tracking-widest uppercase text-muted-foreground">Тема</span>
-            <button 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 text-muted-foreground hover:text-gold transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-          </div>
-          <Link to="/kontakty" className="block mt-4 px-5 py-3 gradient-gold text-background text-xs tracking-widest uppercase font-medium text-center">
+          <Link to="/kontakty" className="block mt-4 px-5 py-3 bg-gold text-[#0b121c] text-xs tracking-widest uppercase font-medium text-center rounded">
             Консультація
           </Link>
         </div>
       )}
     </header>
-  );
+  )
 }
+export default Navbar
