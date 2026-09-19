@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown } from 'lucide-react'
+import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown, Filter } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import MapView from '@/components/realty/MapView'
 import { getAllObjects, mapObject } from '@/lib/novostoyApi'
@@ -10,12 +10,12 @@ import { useFavorites } from '@/lib/FavoritesContext'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateItemListSchema } from '@/components/seo/JsonLd'
+import { Autocomplete } from '@/components/ui/autocomplete'
 import { cn } from '@/lib/utils'
 
-
 const CATEGORIES = [
-  { value: 'apartment', label: 'Квартири/Гостинки', path: '/flats' },
-  { value: 'house', label: 'Будинки/Ділянки', path: '/houses' },
+  { value: 'apartment', label: 'Квартири', path: '/flats' },
+  { value: 'house', label: 'Будинки', path: '/houses' },
   { value: 'commercial', label: 'Комерція', path: '/realtys' },
 ]
 
@@ -74,7 +74,7 @@ const METRO_LINES = [
 const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   
-  const [deal, setDeal] = useState(searchParams.get('deal') || '')
+  const [deal, setDeal] = useState(searchParams.get('deal') || 'sale')
   const [category, setCategory] = useState(defaultCategory)
   const [subTypes, setSubTypes] = useState(searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : [])
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
@@ -83,8 +83,36 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [minArea, setMinArea] = useState(searchParams.get('minArea') || '')
   const [maxArea, setMaxArea] = useState(searchParams.get('maxArea') || '')
 
-  const [searchBuilding, setSearchBuilding] = useState(searchParams.get('searchBuilding') || '')
+  const [searchComplex, setSearchComplex] = useState(searchParams.get('searchComplex') || '')
+  const [searchStreet, setSearchStreet] = useState(searchParams.get('searchStreet') || '')
+  const [searchHouse, setSearchHouse] = useState(searchParams.get('searchHouse') || '')
+  const [geoData, setGeoData] = useState({ streets: [], houses: {}, complexes: [] })
+  
   const [metroStations, setMetroStations] = useState(searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : [])
+
+  useEffect(() => {
+    Promise.all([
+      import('@/data/streets.json').then(m => m.default),
+      import('@/data/houses.json').then(m => m.default),
+      import('@/data/complexes.json').then(m => m.default)
+    ]).then(([streets, houses, complexes]) => {
+      setGeoData({ streets, houses, complexes })
+    }).catch(e => console.error("Error loading geo data", e))
+  }, [])
+
+  const streetOptions = useMemo(() => geoData.streets.map(s => ({ label: s.current_name, value: s.current_name })), [geoData.streets])
+  const complexOptions = useMemo(() => geoData.complexes.map(c => ({ label: c.jk_name, value: c.jk_name })), [geoData.complexes])
+
+  const handleComplexSelect = (val) => {
+    setSearchComplex(val)
+    if (!val) return
+    const c = geoData.complexes.find(x => x.jk_name === val)
+    if (c && c.address) {
+      const parts = c.address.split(',')
+      if (parts.length > 0) setSearchStreet(parts[0].replace(/вул\.|пров\.|просп\.|пр-т/g, '').trim())
+      if (parts.length > 1) setSearchHouse(parts[1].trim())
+    }
+  }
 
   const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
   const [showMapFilters, setShowMapFilters] = useState(false)
@@ -119,7 +147,9 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     if (maxPrice) params.set('maxPrice', maxPrice)
     if (minArea) params.set('minArea', minArea)
     if (maxArea) params.set('maxArea', maxArea)
-    if (searchBuilding) params.set('searchBuilding', searchBuilding)
+    if (searchComplex) params.set('searchComplex', searchComplex)
+    if (searchStreet) params.set('searchStreet', searchStreet)
+    if (searchHouse) params.set('searchHouse', searchHouse)
     if (metroStations.length > 0) params.set('metroStations', metroStations.join(','))
     if (viewMode !== 'list') params.set('viewMode', viewMode)
     if (currentPage > 1) params.set('page', currentPage)
@@ -132,7 +162,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
     
     setSearchParams(params, { replace: true })
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchBuilding, metroStations, viewMode, currentPage, setSearchParams])
+  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, viewMode, currentPage, setSearchParams])
 
   // Reset page when filters change
   useEffect(() => {
@@ -141,7 +171,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       return
     }
     setCurrentPage(1)
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchBuilding, metroStations, viewMode])
+  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, viewMode])
 
   // Lock body scroll in map view to prevent seeing footer
   useEffect(() => {
@@ -214,9 +244,14 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
         if (!matches) return false
       }
 
-      if (searchBuilding) {
-        const query = searchBuilding.toLowerCase()
-        if (!p.building?.toLowerCase().includes(query) && !p.street?.toLowerCase().includes(query)) return false
+      if (searchStreet) {
+        const query = searchStreet.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim()
+        if (!p.street?.toLowerCase().includes(query)) return false
+      }
+
+      if (searchHouse) {
+        const houseQuery = searchHouse.toLowerCase()
+        if (p.building?.toLowerCase() !== houseQuery && !p.building?.toLowerCase().includes(houseQuery)) return false
       }
 
       if (metroStations.length > 0) {
@@ -225,7 +260,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
       return true
     })
-  }, [properties, minPrice, maxPrice, minArea, maxArea, category, subTypes, searchBuilding, metroStations])
+  }, [properties, minPrice, maxPrice, minArea, maxArea, category, subTypes, searchStreet, searchHouse, metroStations])
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
   const currentItems = viewMode === 'list'
@@ -233,17 +268,17 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     : filtered // map view shows all filtered
 
   const clearFilters = () => {
-    setDeal('')
-    setCategory('')
     setSubTypes([])
     setMinPrice('')
     setMaxPrice('')
     setMinArea('')
     setMaxArea('')
-    setSearchBuilding('')
+    setSearchComplex('')
+    setSearchStreet('')
+    setSearchHouse('')
     setMetroStations([])
   }
-  const hasFilters = deal || category || subTypes.length > 0 || minPrice || maxPrice || minArea || maxArea || searchBuilding || metroStations.length > 0
+  const hasFilters = subTypes.length > 0 || minPrice || maxPrice || minArea || maxArea || searchComplex || searchStreet || searchHouse || metroStations.length > 0
 
   // Dynamic SEO calculation
   const getSeoTitle = () => {
@@ -276,10 +311,10 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       />
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40">
         {/* Toggle Filters Button for Mobile Map View */}
         {viewMode === 'map' && (
-          <div className="lg:hidden mb-4 relative z-20">
+          <div className="lg:hidden mb-4 relative z-50">
             <button 
               onClick={() => setShowMapFilters(!showMapFilters)}
               className="w-full py-3 bg-card backdrop-blur-md border border-border rounded-2xl shadow-md text-sm font-inter font-semibold text-foreground flex items-center justify-center gap-2"
@@ -297,13 +332,13 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
           viewMode === 'map' && !showMapFilters ? "hidden lg:block" : "block"
         )}>
           <div className="flex flex-col gap-5">
-            {/* Top row: Deal & Category Tabs + View Toggle */}
+            {/* Top row: Deal Tabs + View Toggle */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-border/50 pb-5">
               
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
                 {/* Deal tabs */}
                 <div className="flex p-1 bg-muted rounded-full shrink-0">
-                  {[['', 'Усі'], ['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
+                  {[['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
                     <button
                       key={v}
                       onClick={() => setDeal(v)}
@@ -316,9 +351,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                     </button>
                   ))}
                 </div>
-
                 {/* Category tabs */}
-                <div className="flex p-1 bg-muted rounded-full w-fit overflow-x-auto custom-scrollbar">
+                <div className="flex p-1 bg-muted rounded-full w-fit overflow-x-auto no-scrollbar">
                   {CATEGORIES.map(c => (
                     <button
                       key={c.value}
@@ -332,10 +366,15 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                     </button>
                   ))}
                 </div>
-              </div>
+                  {hasFilters && (
+                    <button onClick={clearFilters} className="text-sm font-inter font-semibold text-destructive hover:text-destructive/80 transition-colors flex items-center justify-center gap-1.5 shrink-0 px-4 py-2 bg-destructive/10 rounded-full h-[40px]">
+                      <X className="w-4 h-4 shrink-0" /> <span>Скинути</span>
+                    </button>
+                  )}
+                </div>
 
               {/* View Toggle (Moved from Header) */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4 lg:gap-6">
                 <p className="text-muted-foreground text-sm font-inter hidden xl:block font-medium">{filtered.length} об'єктів</p>
                 <div className="flex p-1 bg-muted rounded-full">
                   <button
@@ -365,14 +404,52 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
             {/* Bottom row: Inputs & Popovers */}
             <div className="flex flex-wrap items-center gap-3 w-full font-inter">
-              {/* Search by address */}
-              <div className="relative flex-1 min-w-[200px]">
-                <input 
-                  type="text" 
-                  placeholder="Пошук за адресою..."
-                  value={searchBuilding}
-                  onChange={e => setSearchBuilding(e.target.value)}
-                  className="w-full bg-muted text-foreground text-sm px-6 py-3.5 rounded-full outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-muted-foreground"
+              {/* Complex */}
+              <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                <Autocomplete
+                  placeholder="Оберіть ЖК..."
+                  options={complexOptions}
+                  value={searchComplex}
+                  onChange={handleComplexSelect}
+                  onInputChange={setSearchComplex}
+                />
+              </div>
+
+              {/* Street */}
+              <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                <Autocomplete
+                  placeholder="Вулиця..."
+                  options={streetOptions}
+                  value={searchStreet}
+                  onChange={(val) => { setSearchStreet(val); setSearchHouse('') }}
+                  onInputChange={(val) => { setSearchStreet(val); setSearchHouse('') }}
+                  minChars={1}
+                />
+              </div>
+
+              {/* House */}
+              <div className="relative flex-1 min-w-[100px] lg:max-w-[120px] z-50">
+                <Autocomplete
+                  placeholder="Дім..."
+                  disabled={!searchStreet}
+                  options={(() => {
+                    if (!searchStreet) return []
+                    const q = searchStreet.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim()
+                    const st = geoData.streets.find(s => {
+                        const cur = s.current_name.toLowerCase()
+                        if (cur.length > 2 && (q.includes(cur) || cur.includes(q))) return true
+                        if (s.old_names) return s.old_names.some(o => {
+                            const old = o.toLowerCase()
+                            return old.length > 2 && (q.includes(old) || old.includes(q))
+                        })
+                        return false
+                    })
+                    if (!st || !geoData.houses[st.street_id]) return []
+                    return Object.keys(geoData.houses[st.street_id]).map(h => ({ label: h, value: h }))
+                  })()}
+                  value={searchHouse}
+                  onChange={setSearchHouse}
+                  onInputChange={setSearchHouse}
                 />
               </div>
 
@@ -480,13 +557,6 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   </div>
                 </PopoverContent>
               </Popover>
-
-              {/* Clear All */}
-              {hasFilters && (
-                <button onClick={clearFilters} className="px-6 py-3.5 text-sm flex items-center gap-2 hover:bg-muted/80 rounded-full transition-colors text-muted-foreground">
-                  <X className="w-3.5 h-3.5" /> Очистити все
-                </button>
-              )}
 
             </div>
           </div>

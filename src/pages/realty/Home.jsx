@@ -55,7 +55,7 @@ export default function HomePage() {
         <img
           src={HERO_IMAGES[0]}
           alt="Харків Ріелтер - елітна нерухомість"
-          fetchpriority="high"
+          fetchPriority="high"
           decoding="sync"
           className="absolute inset-0 w-full h-full object-cover"
         />

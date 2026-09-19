@@ -59,7 +59,54 @@ const MapView = ({ properties }) => {
     const [selectedGroup, setSelectedGroup] = useState(null)
     const [markers, setMarkers] = useState([])
 
-    // Instantly map to fallback coordinates since we don't have accurate API coords
+    // Instantly map to fallback coordinates
+    const [geoData, setGeoData] = useState({ streets: [], houses: {} })
+
+    // Load geo mapping files
+    useEffect(() => {
+        Promise.all([
+            import('@/data/streets.json').then(m => m.default),
+            import('@/data/houses.json').then(m => m.default)
+        ]).then(([streets, houses]) => {
+            setGeoData({ streets, houses })
+        }).catch(err => console.error("Error loading geo data", err))
+    }, [])
+
+    const getExactCoords = (p) => {
+        if (!geoData.streets.length || !geoData.houses) return null;
+        if (!p.street || !p.building) return null;
+        
+        // Clean up street name
+        const q = p.street.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim();
+        
+        const matchingStreets = geoData.streets.filter(s => {
+            const curName = s.current_name.toLowerCase();
+            if (curName.length > 2 && (q.includes(curName) || curName.includes(q))) return true;
+            if (s.old_names) {
+                return s.old_names.some(o => {
+                    const oldName = o.toLowerCase();
+                    return oldName.length > 2 && (q.includes(oldName) || oldName.includes(q));
+                });
+            }
+            return false;
+        });
+
+        for (const street of matchingStreets) {
+            const houseCoords = geoData.houses[street.street_id];
+            if (!houseCoords) continue;
+            
+            // Exact match
+            if (houseCoords[p.building]) return houseCoords[p.building];
+            
+            // Try without letters (e.g. "10А" -> "10")
+            const numberOnly = p.building.replace(/[^\d]/g, '');
+            if (houseCoords[numberOnly]) return houseCoords[numberOnly];
+        }
+
+        return null;
+    }
+
+    // Since we don't have lat/lng in the API response yet, we group properties by location
     // and client-side bulk geocoding is rate-limited and very slow.
     useEffect(() => {
         if (!properties.length) {
@@ -73,17 +120,18 @@ const MapView = ({ properties }) => {
         properties.forEach(p => {
             const key = p.location || 'Unknown';
             if (!groups[key]) {
+                const exactCoords = getExactCoords(p);
                 groups[key] = {
                     key,
                     properties: [],
-                    coords: getFallbackCoords(p.region, groupIndex++)
+                    coords: exactCoords || getFallbackCoords(p.region, groupIndex++)
                 };
             }
             groups[key].properties.push(p);
         });
         
         setMarkers(Object.values(groups))
-    }, [properties])
+    }, [properties, geoData])
 
     const allCoords = markers.map(m => m.coords)
 
@@ -106,7 +154,7 @@ const MapView = ({ properties }) => {
                 center={[49.9935, 36.2304]}
                 zoom={13}
                 style={{ width: '100%', height: '100%' }}
-                zoomControl={true}
+                zoomControl={false}
                 className="z-0"
             >
                 <TileLayer
