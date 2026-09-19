@@ -31,7 +31,7 @@ const PropertyCard = memo(({ property, className = '' }) => {
 
   return (
     <div
-      className={cn('group bg-[#131d2a] border border-white/5 rounded-xl overflow-hidden flex flex-col h-full hover:border-white/10 transition-all hover:-translate-y-1 duration-300', className)}
+      className={cn('group bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-xl transition-all hover:-translate-y-1 duration-300', className)}
     >
       <Link to={`/property/${property.id}`} className="relative aspect-[4/3] overflow-hidden block">
         <img
@@ -41,76 +41,80 @@ const PropertyCard = memo(({ property, className = '' }) => {
           decoding="async"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 will-change-transform"
         />
-        <div className="absolute inset-0 gradient-dark opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent opacity-90" />
 
         {/* Badges */}
         <div className="absolute top-4 left-4 flex gap-2">
           {property.featured && (
-            <span className="px-3 py-1 bg-gold text-[#0b121c] text-[10px] tracking-widest uppercase font-inter font-medium rounded">
+            <span className="px-3 py-1 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full">
               Топ
             </span>
           )}
           {property.new_building && (
-            <span className="px-3 py-1 bg-[#0b121c]/80 text-[#e2e8f0] text-[10px] tracking-widest uppercase font-inter rounded">
-              Новостройка
+            <span className="px-3 py-1 bg-white/20 backdrop-blur text-white text-[10px] tracking-widest uppercase font-inter rounded-full">
+              Новобудова
             </span>
           )}
         </div>
         
-        <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
-          <span className="px-3 py-1 bg-[#0b121c]/80 text-[#e2e8f0] text-[10px] tracking-widest uppercase font-inter rounded">
-            {property.deal === 'sale' ? 'Продажа' : 'Аренда'}
-          </span>
+        <div className="absolute top-4 right-4">
           <motion.button 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleToggleFavorite}
-            className="p-2 bg-[#0b121c]/80 hover:bg-[#0b121c] rounded-full transition-colors group/btn flex items-center justify-center"
+            className="p-2 bg-black/20 backdrop-blur hover:bg-black/40 rounded-full transition-colors group/btn flex items-center justify-center"
             aria-label={liked ? 'Видалити з обраного' : 'Додати в обране'}
           >
             <motion.div animate={{ scale: liked ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
               <Heart className={cn("w-4 h-4 transition-colors", {
-                "text-gold fill-gold": liked,
-                "text-muted-foreground group-hover/btn:text-gold": !liked
+                "text-white fill-white": liked,
+                "text-white/70 group-hover/btn:text-white": !liked
               })} />
             </motion.div>
           </motion.button>
         </div>
 
-        {/* Price on image */}
-        <div className="absolute bottom-4 left-4">
-          <p className="font-cormorant text-2xl font-semibold text-[#e2e8f0]">{formatPrice(property.price)}</p>
-          {property.deal === 'rent' && <p className="text-xs text-[#94a3b8] font-inter">/месяц</p>}
+        {/* Price on image and Deal badge */}
+        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+          <div>
+            <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price)}</p>
+            {property.deal === 'rent' && <p className="text-[10px] text-white/70 font-inter">/місяць</p>}
+          </div>
+          <span className="px-3 py-1 bg-black/50 backdrop-blur text-white/90 text-[9px] tracking-widest uppercase font-inter rounded-full">
+            {property.deal === 'sale' ? 'Продаж' : 'Оренда'}
+          </span>
         </div>
       </Link>
 
       {/* Info */}
-      <div className="p-5 flex flex-col flex-grow">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-gold mb-1">{TYPE_LABELS[property.type]}</p>
-        <h3 className="font-cormorant text-xl font-medium mb-3 text-[#e2e8f0] group-hover:text-gold transition-colors line-clamp-1">
+      <div className="p-5 flex flex-col flex-grow bg-card">
+        <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-2 font-medium">{TYPE_LABELS[property.type]}</p>
+        <h3 className="font-inter text-lg font-semibold mb-2 text-foreground group-hover:text-navy transition-colors line-clamp-1 tracking-tight">
           {property.title}
         </h3>
 
-        <div className="flex items-center gap-1 text-[#94a3b8] text-xs mb-4">
-          <MapPin className="w-3 h-3" />
+        <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-4">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{property.location}</span>
         </div>
 
-        <div className="flex items-center gap-4 pt-4 border-t border-white/5 text-xs text-[#64748b] font-inter mt-auto">
-          {property.rooms && (
-            <span className="flex items-center gap-1.5">
-              <BedDouble className="w-3.5 h-3.5" />
-              {property.rooms} комн.
-            </span>
-          )}
-          {property.area && (
-            <span className="flex items-center gap-1.5">
-              <Maximize2 className="w-3.5 h-3.5" />
-              {property.area} м²
-            </span>
-          )}
+        <div className="flex items-center justify-between pt-4 border-t border-border/50 text-xs text-muted-foreground font-inter mt-auto">
+          <div className="flex items-center gap-4">
+            {property.rooms && (
+              <span className="flex items-center gap-1.5">
+                <BedDouble className="w-3.5 h-3.5 shrink-0" />
+                {property.rooms} кімн.
+              </span>
+            )}
+            {property.area && (
+              <span className="flex items-center gap-1.5">
+                <Maximize2 className="w-3.5 h-3.5 shrink-0" />
+                {property.area} м²
+              </span>
+            )}
+          </div>
           {property.floor && (
-            <span>{property.floor}/{property.floors_total} эт.</span>
+            <span>{property.floor}/{property.floors_total} пов.</span>
           )}
         </div>
       </div>

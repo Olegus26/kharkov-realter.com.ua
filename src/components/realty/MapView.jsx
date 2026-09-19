@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Link } from 'react-router-dom'
@@ -17,24 +18,28 @@ L.Icon.Default.mergeOptions({
 })
 
 function createCustomIcon(isSelected) {
+    const size = isSelected ? 18 : 13;
+    const bg = isSelected ? '#ff7a00' : '#60a5fa';
+    const border = isSelected ? 'white' : '#bfdbfe';
+    
     return L.divIcon({
-        className: '',
+        className: 'custom-dot-marker',
         html: `<div style="
-      width: ${isSelected ? 18 : 13}px; height: ${isSelected ? 18 : 13}px;
-      background: hsl(210,70%,${isSelected ? 70 : 55}%);
-      border: 2px solid ${isSelected ? 'white' : 'hsl(210,70%,80%)'};
-      border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-      transition: all 0.2s;
-    "></div>`,
-        iconSize: [isSelected ? 18 : 13, isSelected ? 18 : 13],
-        iconAnchor: [isSelected ? 9 : 6.5, isSelected ? 9 : 6.5],
+            width: ${size}px; height: ${size}px;
+            background: ${bg};
+            border: 2px solid ${border};
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        "></div>`,
+        iconSize: [size, size],
+        iconAnchor: [size/2, size/2],
     })
 }
 
 function formatPrice(p, deal) {
     if (!p) return '—'
-    return `$${p.toLocaleString('uk-UA')}${deal === 'rent' ? '/міс' : ''}`
+    return `$${p.toLocaleString('en-US').replace(/,/g, ' ')}`
 }
 
 function FitBounds({ coords }) {
@@ -43,15 +48,15 @@ function FitBounds({ coords }) {
     useEffect(() => {
         if (!fitted.current && coords.length > 0) {
             const bounds = L.latLngBounds(coords)
-            map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 })
+            map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 })
             fitted.current = true
         }
-    }, [coords.length])
+    }, [coords.length, map])
     return null
 }
 
 const MapView = ({ properties }) => {
-    const [selected, setSelected] = useState(null)
+    const [selectedGroup, setSelectedGroup] = useState(null)
     const [markers, setMarkers] = useState([])
 
     // Instantly map to fallback coordinates since we don't have accurate API coords
@@ -62,111 +67,147 @@ const MapView = ({ properties }) => {
             return
         }
         
-        const results = properties.map((p, i) => ({
-            property: p,
-            coords: getFallbackCoords(p.region, i)
-        }))
-        setMarkers(results)
+        const groups = {};
+        let groupIndex = 0;
+        
+        properties.forEach(p => {
+            const key = p.location || 'Unknown';
+            if (!groups[key]) {
+                groups[key] = {
+                    key,
+                    properties: [],
+                    coords: getFallbackCoords(p.region, groupIndex++)
+                };
+            }
+            groups[key].properties.push(p);
+        });
+        
+        setMarkers(Object.values(groups))
     }, [properties])
 
     const allCoords = markers.map(m => m.coords)
 
+    // Helper to render icon based on count
+    const getGroupIcon = (count, isSelected) => {
+        if (count > 1) {
+            return L.divIcon({
+                html: `<div class="w-8 h-8 ${isSelected ? 'bg-[#ff7a00]' : 'bg-blue-500'} text-white flex items-center justify-center rounded-full font-bold shadow-[0_2px_8px_rgba(0,0,0,0.5)] border-2 border-white text-xs transition-colors">${count}</div>`,
+                className: 'custom-group-icon',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+            });
+        }
+        return createCustomIcon(isSelected);
+    }
+
     return (
-        <div className="relative w-full h-[calc(100vh-220px)] min-h-[500px] border border-border overflow-hidden rounded-md z-0">
+        <div className="w-full h-full min-h-[500px] z-0">
             <MapContainer
                 center={[49.9935, 36.2304]}
-                zoom={12}
+                zoom={13}
                 style={{ width: '100%', height: '100%' }}
                 zoomControl={true}
+                className="z-0"
             >
                 <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    attribution='&copy; OpenStreetMap contributors | 3D by OSMBuildings'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    className="dark-map-tiles"
+                    className="map-tiles-grayscale"
                 />
 
-                {allCoords.length > 0 && <FitBounds coords={allCoords} />}
-
                 {markers.length > 0 && (
-                    <MarkerClusterGroup chunkedLoading maxClusterRadius={60}>
-                        {markers.map(({ property, coords }) => (
+                    <MarkerClusterGroup 
+                        chunkedLoading 
+                        maxClusterRadius={60} 
+                        showCoverageOnHover={false}
+                        spiderfyOnMaxZoom={false}
+                        disableClusteringAtZoom={15}
+                        iconCreateFunction={(cluster) => {
+                            const count = cluster.getChildCount()
+                            return L.divIcon({
+                                html: `<div class="w-10 h-10 bg-navy text-white flex items-center justify-center rounded-full font-bold shadow-lg border-2 border-white">${count}</div>`,
+                                className: 'custom-cluster-icon',
+                                iconSize: [40, 40],
+                            })
+                        }}
+                    >
+                        {markers.map((group) => (
                             <Marker
-                                key={property.id}
-                                position={coords}
-                                icon={createCustomIcon(selected?.id === property.id)}
-                                eventHandlers={{ click: () => setSelected(property) }}
+                                key={group.key}
+                                position={group.coords}
+                                icon={getGroupIcon(group.properties.length, selectedGroup?.key === group.key)}
+                                eventHandlers={{ click: () => setSelectedGroup(group) }}
                             />
                         ))}
                     </MarkerClusterGroup>
                 )}
             </MapContainer>
 
-
-            {/* Property popup */}
-            {selected && (
-                <div className="absolute bottom-6 left-6 z-[1000] w-80 bg-card border border-gold/40 shadow-2xl overflow-hidden">
-                    <button
-                        onClick={() => setSelected(null)}
-                        className="absolute top-3 right-3 z-10 w-7 h-7 bg-background/80 flex items-center justify-center hover:bg-background transition-colors"
-                    >
-                        <X className="w-3.5 h-3.5 text-foreground" />
-                    </button>
-
-                    <div className="relative h-44 overflow-hidden">
-                        <img
-                            src={selected.image_url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'}
-                            alt={selected.title}
-                            className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                        <div className="absolute bottom-3 left-4">
-                            <p className="font-cormorant text-2xl font-semibold text-white">
-                                {formatPrice(selected.price, selected.deal)}
-                            </p>
+            {/* Property popup sidebar (like dim.ria) - rendered via Portal to escape z-index context */}
+            {selectedGroup && createPortal(
+                <div 
+                    key={selectedGroup.key}
+                    className="fixed bottom-6 left-6 z-[60] w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50" 
+                    style={{ height: '480px' }}
+                >
+                    <div className="p-4 flex items-center justify-between border-b border-border bg-white z-10 shrink-0">
+                        <div className="pr-2 flex-1">
+                            <h3 className="font-inter font-bold text-sm text-foreground leading-tight line-clamp-1">{selectedGroup.key}</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">{selectedGroup.properties.length} об'єктів за цією адресою</p>
                         </div>
-                        <div className="absolute top-3 left-3">
-                            <span className="px-2 py-0.5 text-[10px] tracking-widest uppercase font-inter bg-background/80 text-foreground">
-                                {selected.deal === 'sale' ? 'Продаж' : 'Оренда'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="p-4">
-                        <h3 className="font-cormorant text-lg font-medium mb-1 line-clamp-1">{selected.title}</h3>
-                        <div className="flex items-center gap-1 text-muted-foreground text-xs mb-3">
-                            <MapPin className="w-3 h-3 shrink-0" />
-                            <span className="line-clamp-1">{selected.location}</span>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3 pb-3 border-b border-border">
-                            {selected.rooms && <span className="flex items-center gap-1"><BedDouble className="w-3.5 h-3.5" />{selected.rooms} кімн.</span>}
-                            {selected.area && <span className="flex items-center gap-1"><Maximize2 className="w-3.5 h-3.5" />{selected.area} м²</span>}
-                            {selected.floor && <span>{selected.floor}/{selected.floors_total} пов.</span>}
-                        </div>
-
-                        {selected.agent_phones?.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-3">
-                                {selected.agent_phones.map(phone => (
-                                    <a key={phone} href={`tel:+38${phone}`}
-                                        className="flex items-center gap-1 text-xs text-gold hover:text-gold/70 font-inter transition-colors">
-                                        <Phone className="w-3 h-3" />+38 {phone}
-                                    </a>
-                                ))}
-                            </div>
-                        )}
-
-                        <Link
-                            to={`/property/${selected.id}`}
-                            className="block w-full py-2.5 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium text-center hover:opacity-90 transition-opacity"
+                        <button
+                            onClick={() => setSelectedGroup(null)}
+                            className="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground shrink-0"
                         >
-                            Детальніше
-                        </Link>
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
-                </div>
+
+                    <div className="overflow-y-auto flex-1 custom-scrollbar snap-y snap-mandatory">
+                        {selectedGroup.properties.map((p, index) => (
+                            <div key={p.id} className="p-4 h-full w-full shrink-0 snap-start snap-always flex flex-col justify-between">
+                                <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative" style={{ height: '180px' }}>
+                                    <img
+                                        src={p.image_url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'}
+                                        alt={p.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+
+                                <div className="mb-4">
+                                    <p className="font-inter font-bold text-2xl text-foreground mb-1">
+                                        {formatPrice(p.price, p.deal)}
+                                    </p>
+                                    
+                                    <p className="font-inter font-medium text-sm text-foreground line-clamp-2 leading-relaxed mb-2.5">
+                                        {p.title}
+                                    </p>
+
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-inter">
+                                        {p.rooms && <span>{p.rooms} кім.</span>}
+                                        {p.rooms && <span className="opacity-30">•</span>}
+                                        {p.area && <span>{p.area} м²</span>}
+                                        {p.floor && <span className="opacity-30">•</span>}
+                                        {p.floor && <span>{p.floor}/{p.floors_total} пов.</span>}
+                                    </div>
+                                </div>
+
+                                <Link
+                                    to={`/property/${p.id}`}
+                                    className="flex items-center justify-center w-full py-3.5 bg-navy text-white text-sm font-inter font-medium rounded-xl hover:bg-navy-light transition-colors mt-auto shrink-0"
+                                >
+                                    Дивитися оголошення
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </div>,
+                document.body
             )}
 
-            <div className="absolute top-4 right-4 z-[1000] px-3 py-1.5 bg-card/90 backdrop-blur border border-border text-xs font-inter text-muted-foreground">
-                {properties.length} об'єктів на карті
+            {/* Overlay objects count */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 bg-white/90 backdrop-blur rounded-full shadow-md text-sm font-inter font-semibold text-navy">
+                {properties.length} об'єктів
             </div>
         </div>
     )

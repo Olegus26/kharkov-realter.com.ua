@@ -1,113 +1,81 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+.map-tiles-grayscale {
+  filter: grayscale(1) opacity(0.8) sepia(0.2) hue-rotate(180deg) brightness(1.05) contrast(0.95);
+}
+
 @layer base {
-  :root, .dark {
-    --font-cormorant: 'Cormorant Garamond', serif;
-    --font-inter: 'Inter', sans-serif;
+  :root {
+    --font-heading: 'Manrope', sans-serif;
+    --font-body: 'Manrope', sans-serif;
+    --font-cormorant: var(--font-heading);
+    --font-inter: var(--font-body);
 
-    /* 60% Background: Deep Navy #0b121c */
-    --background: 215 44% 8%;
-    /* 30% Cards/Blocks: Dark Slate #131d2a */
-    --card: 214 38% 12%;
-    --popover: 214 38% 12%;
-    
-    /* Text colors */
-    /* Main body text #94a3b8 */
-    --foreground: 215 28% 65%;
-    /* Headings #e2e8f0 */
-    --heading: 210 40% 91%;
-    /* Secondary #64748b */
-    --muted: 215 25% 47%;
-    --muted-foreground: 215 25% 47%;
-    
-    --primary: 46 65% 52%;
-    --primary-foreground: 215 44% 8%;
-    
-    --secondary: 214 38% 12%;
-    --secondary-foreground: 215 28% 65%;
-    
-    --accent: 214 38% 12%;
-    --accent-foreground: 210 40% 91%;
-    
-    --destructive: 0 62% 40%;
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Default borders */
-    --border: 214 38% 20%;
-    --input: 214 38% 20%;
-    --ring: 46 65% 52%;
-    --radius: 0.5rem;
+    --background: 220 14% 97%;
+    --foreground: 222 47% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 12%;
+    --primary: 222 55% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 222 47% 12%;
+    --muted: 220 13% 94%;
+    --muted-foreground: 222 15% 44%;
+    --accent: 222 55% 20%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 12% 88%;
+    --input: 220 12% 92%;
+    --ring: 222 55% 20%;
+    --radius: 1rem;
 
-    /* 10% Accent: Gold #d4af37 */
-    --gold: 46 65% 52%;
-    --gold-hover: 45 64% 47%;
+    --gold: 222 55% 20%;
+    --gold-light: 222 50% 28%;
+    --gold-dark: 222 60% 15%;
+    --gold-foreground: 0 0% 100%;
+    --navy: 222 55% 14%;
+    --cream: 40 20% 96%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-inter;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4 {
-    @apply font-cormorant;
-    color: hsl(var(--heading));
-  }
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-background text-foreground font-inter antialiased; }
+  h1, h2, h3, h4 { @apply font-cormorant tracking-tight; }
+  ::selection { background: hsl(222 55% 20% / 0.12); }
 }
 
 @layer utilities {
-  .font-cormorant {
-    font-family: var(--font-cormorant);
-  }
+  .font-heading { font-family: var(--font-heading); }
+  .font-body { font-family: var(--font-body); }
+  .font-cormorant { font-family: var(--font-heading); }
+  .font-inter { font-family: var(--font-body); }
 
-  .font-inter {
-    font-family: var(--font-inter);
-  }
-
-  .text-gold {
-    color: hsl(var(--gold));
-  }
-  
-  .fill-gold {
-    fill: hsl(var(--gold));
-  }
-
-  .bg-gold {
-    background-color: hsl(var(--gold));
-  }
-
-  .border-gold {
-    border-color: hsl(var(--gold));
+  .glass {
+    background: hsl(0 0% 100% / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(222 47% 12% / 0.08);
   }
 
   .gradient-gold {
-    background: linear-gradient(135deg, hsl(210, 70%, 55%), hsl(215, 65%, 40%));
+    background: linear-gradient(135deg, hsl(var(--gold-light)), hsl(var(--gold-dark)));
+    color: hsl(var(--gold-foreground)) !important;
   }
-
   .gradient-dark {
-    background: linear-gradient(180deg, transparent, hsl(20, 10%, 6%) 80%);
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .dark-map-tiles {
-    filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(100%) grayscale(70%);
+    background: linear-gradient(180deg, transparent, hsl(var(--background)) 80%);
   }
 }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(220 12% 80%); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(222 55% 35%); }

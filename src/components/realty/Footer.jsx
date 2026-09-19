@@ -3,7 +3,7 @@ import { Phone, Mail, MapPin, Instagram, Facebook, Send as Telegram } from 'luci
 
 const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border mt-24">
+    <footer className="bg-card border-t border-border">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
@@ -39,7 +39,7 @@ const Footer = () => {
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-gold mb-5">Навігація</p>
             <ul className="space-y-3">
-              {[['/', 'Головна'], ['/flats?deal=sale', 'Каталог'], ['/agents', 'Експерти'], ['/o-korporatcii', 'Про нас'], ['/kontakty', 'Контакти']].map(([to, label]) => (
+              {[['/', 'Головна'], ['/flats?deal=sale', 'Каталог'], ['/agents', 'Експерти'], ['/o-korporatcii', 'Про нас'], ['/kontakty', 'Контакти'], ['/vakansii', 'Вакансії']].map(([to, label]) => (
                 <li key={to}>
                   <Link to={to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
                 </li>
@@ -84,12 +84,21 @@ const Footer = () => {
             <p>© 2026 Харків Ріелтер. Всі права захищені.</p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 lg:gap-8">
-            <img src="/rieltor_logo.png" alt="РІЕЛТОР.ua Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
-            <img src="/lun_logo_386.svg" alt="ЛУН Партнер" className="h-6 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
-            <img src="/flatfy.svg" alt="Flatfy Партнер" className="h-6 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
-            <img src="/olx_logo.svg" alt="OLX Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
-            <img src="/dimria-partner.svg" alt="dim RIA Партнер" className="h-7 object-contain grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all duration-300 dark:invert-0 invert" />
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 lg:gap-4">
+            {[
+              { src: '/rieltor_logo.png', alt: 'РІЕЛТОР.ua Партнер', h: 'h-6' },
+              { src: '/lun_logo_386.svg', alt: 'ЛУН Партнер', h: 'h-5' },
+              { src: '/flatfy.svg', alt: 'Flatfy Партнер', h: 'h-5' },
+              { src: '/olx_logo.svg', alt: 'OLX Партнер', h: 'h-5' },
+              { src: '/dimria-partner.svg', alt: 'dim RIA Партнер', h: 'h-6' },
+            ].map((logo, i) => (
+              <div 
+                key={i} 
+                className="bg-navy rounded-xl px-5 py-3 flex items-center justify-center opacity-90 hover:opacity-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              >
+                <img src={logo.src} alt={logo.alt} className={`${logo.h} w-auto object-contain`} />
+              </div>
+            ))}
           </div>
 
         </div>

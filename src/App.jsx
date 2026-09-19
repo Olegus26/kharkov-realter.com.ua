@@ -20,6 +20,8 @@ const AgentsPage = lazy(() => import('@/pages/realty/Agents'))
 const AboutPage = lazy(() => import('@/pages/realty/About'))
 const ContactPage = lazy(() => import('@/pages/realty/Contact'))
 const FavoritesPage = lazy(() => import('@/pages/realty/Favorites'))
+const UtilitiesPage = lazy(() => import('@/pages/realty/Utilities'))
+const VacanciesPage = lazy(() => import('@/pages/realty/Vacancies'))
 
 // Minimal loading fallback — just a subtle pulse, no layout shift
 const PageLoader = () => (
@@ -80,6 +82,12 @@ const AuthenticatedApp = () => {
           <Suspense fallback={<PageLoader />}>
             <FavoritesPage />
           </Suspense>
+        } />
+        <Route path="/utilities" element={
+          <Suspense fallback={<PageLoader />}><UtilitiesPage /></Suspense>
+        } />
+        <Route path="/vakansii" element={
+          <Suspense fallback={<PageLoader />}><VacanciesPage /></Suspense>
         } />
       </Route>
       <Route path="*" element={<PageNotFound />} />

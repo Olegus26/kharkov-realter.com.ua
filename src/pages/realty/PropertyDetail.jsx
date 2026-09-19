@@ -143,21 +143,17 @@ const PropertyDetail = () => {
           {/* Left: Gallery + Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Main image */}
-            <div className="relative aspect-[16/9] overflow-hidden bg-card border border-border group">
-              <motion.img
-                key={activeImg}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
+            <div className="relative aspect-[16/9] overflow-hidden bg-card border border-border rounded-2xl group shadow-sm">
+              <img
                 src={images[activeImg]}
                 alt={property.title}
                 className="w-full h-full object-cover select-none"
                 onError={e => { e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80' }}
               />
               {property.new_building && (
-                <div className="absolute top-4 left-4 px-3 py-1 gradient-gold text-background text-[10px] tracking-widest uppercase font-inter z-10">Новобудова</div>
+                <div className="absolute top-4 left-4 px-4 py-1.5 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full z-10">Новобудова</div>
               )}
-              <div className="absolute bottom-4 right-4 px-3 py-1 bg-background/80 text-foreground text-[10px] tracking-widest uppercase font-inter z-10">
+              <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/50 backdrop-blur text-white text-[10px] tracking-widest uppercase font-inter rounded-full z-10">
                 {activeImg + 1} / {images.length}
               </div>
 
@@ -191,13 +187,13 @@ const PropertyDetail = () => {
                       key={i}
                       ref={el => { thumbnailRefs.current[i] = el }}
                       onClick={() => setActiveImg(i)}
-                      className={`shrink-0 w-24 h-16 overflow-hidden border-2 transition-all duration-300 ${
+                      className={`shrink-0 w-24 h-16 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                         activeImg === i 
-                          ? 'border-gold scale-95 shadow-md shadow-gold/20' 
-                          : 'border-border opacity-70 hover:opacity-100 hover:border-border/80'
+                          ? 'border-navy scale-95 shadow-md shadow-navy/20' 
+                          : 'border-transparent opacity-70 hover:opacity-100 hover:border-border'
                       }`}
                     >
-                      <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover pointer-events-none"
+                      <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover pointer-events-none rounded-lg"
                         onError={e => { e.currentTarget.style.display = 'none' }} />
                     </button>
                   ))}
@@ -216,47 +212,47 @@ const PropertyDetail = () => {
               </div>
 
               {/* Specs grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-border border-y border-border py-6 mb-10">
                 {property.area && (
-                  <div className="bg-card text-center p-5">
-                    <Maximize2 className="w-5 h-5 text-gold mx-auto mb-2" />
-                    <p className="font-cormorant text-2xl">{property.area}</p>
-                    <p className="text-xs text-muted-foreground font-inter mt-0.5">Загальна м²</p>
+                  <div className="text-center px-4 py-2">
+                    <Maximize2 className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-inter font-medium text-2xl text-foreground">{property.area}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Загальна м²</p>
                   </div>
                 )}
                 {property.area_live && (
-                  <div className="bg-card text-center p-5">
-                    <BedDouble className="w-5 h-5 text-gold mx-auto mb-2" />
-                    <p className="font-cormorant text-2xl">{property.area_live}</p>
-                    <p className="text-xs text-muted-foreground font-inter mt-0.5">Житлова м²</p>
+                  <div className="text-center px-4 py-2">
+                    <BedDouble className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-inter font-medium text-2xl text-foreground">{property.area_live}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Житлова м²</p>
                   </div>
                 )}
                 {property.area_kitchen && (
-                  <div className="bg-card text-center p-5">
-                    <UtensilsCrossed className="w-5 h-5 text-gold mx-auto mb-2" />
-                    <p className="font-cormorant text-2xl">{property.area_kitchen}</p>
-                    <p className="text-xs text-muted-foreground font-inter mt-0.5">Кухня м²</p>
-                  </div>
-                )}
-                {property.floor && (
-                  <div className="bg-card text-center p-5">
-                    <Building className="w-5 h-5 text-gold mx-auto mb-2" />
-                    <p className="font-cormorant text-2xl">{property.floor}/{property.floors_total}</p>
-                    <p className="text-xs text-muted-foreground font-inter mt-0.5">Поверх</p>
+                  <div className="text-center px-4 py-2">
+                    <UtensilsCrossed className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-inter font-medium text-2xl text-foreground">{property.area_kitchen}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кухня м²</p>
                   </div>
                 )}
                 {property.rooms && (
-                  <div className="bg-card text-center p-5">
-                    <BedDouble className="w-5 h-5 text-gold mx-auto mb-2" />
-                    <p className="font-cormorant text-2xl">{property.rooms}</p>
-                    <p className="text-xs text-muted-foreground font-inter mt-0.5">Кімнат</p>
+                  <div className="text-center px-4 py-2">
+                    <BedDouble className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-inter font-medium text-2xl text-foreground">{property.rooms}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кімнат</p>
                   </div>
                 )}
-                {property.year_built && (
-                  <div className="bg-card text-center p-5">
-                    <Calendar className="w-5 h-5 text-gold mx-auto mb-2" />
-                    <p className="font-cormorant text-2xl">{property.year_built}</p>
-                    <p className="text-xs text-muted-foreground font-inter mt-0.5">Рік будівництва</p>
+                {property.floor && (
+                  <div className="text-center px-4 py-2">
+                    <Building className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-inter font-medium text-2xl text-foreground">{property.floor}/{property.floors_total}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Поверх</p>
+                  </div>
+                )}
+                {!property.floor && property.year_built && (
+                  <div className="text-center px-4 py-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-inter font-medium text-2xl text-foreground">{property.year_built}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Рік будівн.</p>
                   </div>
                 )}
               </div>
@@ -310,57 +306,58 @@ const PropertyDetail = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-28 space-y-5">
               {/* Price card */}
-              <div className="border border-gold/40 bg-card p-7">
-                <p className="text-xs tracking-[0.2em] uppercase text-gold mb-1 font-inter">
+              <div className="border border-border bg-card p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1 font-inter">
                   {DEAL_LABELS[property.deal]}
                 </p>
-                <p className="font-cormorant text-5xl font-semibold mb-1">
+                <p className="font-inter font-bold text-4xl mb-1 tracking-tight text-foreground">
                   ${property.price.toLocaleString('uk-UA')}
                 </p>
                 {pricePerM2 && (
-                  <p className="text-muted-foreground text-xs font-inter mb-6">
+                  <p className="text-muted-foreground text-xs font-inter mb-8">
                     ${pricePerM2.toLocaleString('uk-UA')}/м²
                   </p>
                 )}
 
                 {/* Agent phones */}
                 {property.agent_phones?.length > 0 && (
-                  <div className="space-y-2 mb-6">
+                  <div className="space-y-2 mb-8">
                     <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-3">Контакти агента</p>
                     {property.agent_phones.map(phone => (
                       <a key={phone} href={`tel:+38${phone}`}
-                        className="flex items-center gap-3 w-full py-3 px-4 border border-border bg-background hover:border-gold/50 hover:text-gold transition-colors group font-inter">
-                        <Phone className="w-4 h-4 text-gold" />
-                        <span className="text-sm group-hover:text-gold transition-colors">+38 {phone}</span>
+                        className="flex items-center gap-3 w-full py-3 px-4 border border-border bg-card rounded-xl hover:border-navy hover:shadow-sm transition-all group font-inter">
+                        <Phone className="w-4 h-4 text-muted-foreground group-hover:text-navy transition-colors" />
+                        <span className="text-sm font-medium group-hover:text-navy transition-colors">+38 {phone}</span>
                       </a>
                     ))}
                   </div>
                 )}
 
                 <Link to="/contact"
-                  className="block w-full py-3.5 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium text-center hover:opacity-90 transition-opacity">
-                  Записатись на перегляд
+                  className="flex items-center justify-center w-full py-4 gradient-gold text-xs tracking-widest uppercase font-inter font-semibold hover:opacity-90 transition-opacity rounded-full shadow-md">
+                  <Phone className="w-4 h-4 mr-2" />
+                  Подзвонити агенту
                 </Link>
 
                 <motion.button 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => toggleFavorite(property.id)}
-                  className="w-full mt-3 py-3.5 border border-border bg-background flex items-center justify-center gap-2 hover:border-gold/50 transition-colors group font-inter"
+                  className="w-full mt-3 py-4 border border-border bg-transparent flex items-center justify-center gap-2 hover:bg-muted transition-colors group font-inter rounded-full"
                 >
                   <motion.div animate={{ scale: isFavorite(property.id) ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
-                    <Heart className={cn("w-4 h-4 transition-colors", isFavorite(property.id) ? "text-gold fill-gold" : "text-muted-foreground group-hover:text-gold")} />
+                    <Heart className={cn("w-4 h-4 transition-colors", isFavorite(property.id) ? "text-navy fill-navy" : "text-muted-foreground group-hover:text-navy")} />
                   </motion.div>
                   <span className="text-xs tracking-widest uppercase font-medium text-foreground">
-                    {isFavorite(property.id) ? 'В обраному' : 'В обране'}
+                    {isFavorite(property.id) ? 'В обраному' : 'Записатись на перегляд'}
                   </span>
                 </motion.button>
               </div>
 
               {/* ID */}
-              <div className="border border-border bg-card p-5 text-center">
-                <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-1">ID об'єкта</p>
-                <p className="font-cormorant text-lg text-gold">{property.id}</p>
+              <div className="border border-border bg-card p-6 text-center rounded-2xl shadow-sm">
+                <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-2">ID об'єкта</p>
+                <p className="font-inter text-lg text-foreground font-medium">{property.id}</p>
               </div>
             </div>
           </div>

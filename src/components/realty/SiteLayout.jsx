@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from './Navbar'
 import Footer from './Footer'
+import FloatingTelegram from './FloatingTelegram'
 
 const SiteLayout = () => {
   const location = useLocation()
@@ -22,6 +23,7 @@ const SiteLayout = () => {
         <Outlet />
       </motion.main>
       <Footer />
+      <FloatingTelegram />
     </div>
   )
 }

@@ -19,15 +19,17 @@ const timeline = [
 
 const AboutPage = () => {
   return (
-    <div className="pt-24 pb-20">
+    <div className="pb-20">
       {/* Hero */}
-      <section className="relative h-80 sm:h-96 overflow-hidden mb-20">
-        <img src="/about-bg.jpg" alt="About" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="bg-gradient-to-b rounded absolute inset-0 from-transparent via-background/40 to-background" aria-hidden="true" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-          <p className="text-xs tracking-[0.4em] uppercase text-gold mb-4 font-inter">Про компанію</p>
-          <h1 className="font-cormorant text-6xl sm:text-7xl font-light">Харків Ріелтер</h1>
+      <section className="relative h-80 sm:h-[450px] overflow-hidden mb-20 rounded-b-3xl pt-24">
+        <img src="/about-bg.jpg" alt="About" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent z-0" aria-hidden="true" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-10 pt-16">
+          <p className="text-xs tracking-[0.4em] uppercase text-white/70 mb-4 font-inter">Про компанію</p>
+          <h1 className="font-inter font-bold text-6xl sm:text-7xl tracking-tight text-white mb-2">
+            Харків <span className="text-[#8cd1ff]">Ріелтер</span>
+          </h1>
         </div>
       </section>
 
@@ -54,11 +56,13 @@ const AboutPage = () => {
               <img
                 src="/story-image.jpg"
                 alt="Office"
+                loading="lazy"
+                decoding="async"
                 className="w-full aspect-[4/3] object-cover"
               />
-              <div className="absolute -bottom-6 -left-6 bg-gold p-6 hidden sm:block">
-                <p className="font-cormorant text-4xl font-bold text-background">30</p>
-                <p className="text-background text-xs tracking-wider uppercase font-inter">років досвіду</p>
+              <div className="absolute -bottom-6 -left-6 bg-navy rounded-2xl p-6 hidden sm:flex flex-col items-center shadow-xl border border-white/5">
+                <p className="font-cormorant text-5xl font-bold text-white leading-none mb-1">30+</p>
+                <p className="text-white/80 text-[10px] tracking-widest uppercase font-inter">років досвіду</p>
               </div>
             </div>
           </motion.div>

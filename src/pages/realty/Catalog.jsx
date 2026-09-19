@@ -88,7 +88,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
   const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1)
-  const itemsPerPage = 20
+  const itemsPerPage = 18
 
   const { favorites } = useFavorites()
   const isFirstRender = useRef(true)
@@ -141,6 +141,19 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
     setCurrentPage(1)
   }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchBuilding, metroStations, viewMode])
+
+  // Lock body scroll in map view to prevent seeing footer
+  useEffect(() => {
+    if (viewMode === 'map') {
+      document.body.style.overflow = 'hidden'
+      window.scrollTo(0, 0)
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [viewMode])
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage)
@@ -243,7 +256,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const schemaUrl = `https://kharkov-realter.com.ua${location.pathname}${location.search}`
 
   return (
-    <div className="pt-24 pb-20" id="catalog-top">
+    <div className={cn("pt-24 flex flex-col", viewMode === 'list' ? 'pb-8 min-h-screen' : 'h-screen overflow-hidden pb-0')} id="catalog-top">
       <SeoMeta 
         title={getSeoTitle()} 
         description={getSeoDescription()} 
@@ -251,220 +264,201 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       />
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
-        {/* Header */}
-        <div className="py-12 border-b border-border mb-10">
-          <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter">Наші об'єкти</p>
-          <div className="flex items-end justify-between">
-            <h1 className="font-cormorant text-5xl sm:text-6xl font-light">Каталог</h1>
-            <div className="flex items-center gap-4">
-              <p className="text-muted-foreground text-sm font-inter hidden sm:block">Знайдено {filtered.length} об'єктів</p>
-              {/* View Toggle */}
-              <div className="flex border border-border">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn('flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase font-inter transition-colors', {
-                    'bg-gold text-background': viewMode === 'list',
-                    'text-muted-foreground hover:text-foreground': viewMode !== 'list'
-                  })}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Список</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('map')}
-                  className={cn('flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase font-inter transition-colors', {
-                    'bg-gold text-background': viewMode === 'map',
-                    'text-muted-foreground hover:text-foreground': viewMode !== 'map'
-                  })}
-                >
-                  <Map className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Карта</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-10">
         {/* Filters */}
-        <div className="mb-8 sticky top-20 z-40 bg-background pt-4 pb-4">
-          <div className="flex flex-wrap gap-4 mb-4">
-            {/* Deal tabs */}
-            <div className="flex gap-0 border border-border w-fit">
-              {[['', 'Усі'], ['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
-                <button
-                  key={v}
-                  onClick={() => setDeal(v)}
-                  className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter transition-colors', {
-                    'bg-gold text-background': deal === v,
-                    'text-muted-foreground hover:text-foreground': deal !== v
-                  })}
-                >
-                  {l}
-                </button>
-              ))}
+        <div className={cn("z-40 bg-card p-4 sm:p-6 shadow-md border border-border transition-all flex-shrink-0 w-full", viewMode === 'map' ? "rounded-3xl mt-6 sticky top-[120px]" : "rounded-3xl mb-10 sticky top-24 mt-6")}>
+          <div className="flex flex-col gap-5">
+            {/* Top row: Deal & Category Tabs + View Toggle */}
+            <div className="flex flex-wrap gap-4 border-b border-border/50 pb-5 justify-between items-center">
+              
+              <div className="flex flex-wrap gap-4">
+                {/* Deal tabs */}
+                <div className="flex p-1 bg-muted rounded-full w-fit">
+                  {[['', 'Усі'], ['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
+                    <button
+                      key={v}
+                      onClick={() => setDeal(v)}
+                      className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full', {
+                        'gradient-gold shadow-md': deal === v,
+                        'text-muted-foreground hover:text-foreground': deal !== v
+                      })}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Category tabs */}
+                <div className="flex p-1 bg-muted rounded-full w-fit overflow-x-auto custom-scrollbar">
+                  {CATEGORIES.map(c => (
+                    <button
+                      key={c.value}
+                      onClick={() => navigate(c.path + location.search)}
+                      className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full whitespace-nowrap', {
+                        'gradient-gold shadow-md': category === c.value,
+                        'text-muted-foreground hover:text-foreground': category !== c.value
+                      })}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* View Toggle (Moved from Header) */}
+              <div className="flex items-center gap-6">
+                <p className="text-muted-foreground text-sm font-inter hidden xl:block font-medium">{filtered.length} об'єктів</p>
+                <div className="flex p-1 bg-muted rounded-full">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={cn('flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full', {
+                      'gradient-gold shadow-md': viewMode === 'list',
+                      'text-muted-foreground hover:text-foreground': viewMode !== 'list'
+                    })}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                    <span className="hidden sm:inline">Список</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('map')}
+                    className={cn('flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full', {
+                      'gradient-gold shadow-md': viewMode === 'map',
+                      'text-muted-foreground hover:text-foreground': viewMode !== 'map'
+                    })}
+                  >
+                    <Map className="w-4 h-4" />
+                    <span className="hidden sm:inline">Карта</span>
+                  </button>
+                </div>
+              </div>
+
             </div>
 
-            {/* Category tabs */}
-            <div className="flex gap-0 border border-border w-fit overflow-x-auto">
-              {CATEGORIES.map(c => (
-                <button
-                  key={c.value}
-                  onClick={() => {
-                    navigate(c.path + location.search)
-                  }}
-                  className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter transition-colors whitespace-nowrap', {
-                    'bg-gold text-background': category === c.value,
-                    'text-muted-foreground hover:text-foreground': category !== c.value
-                  })}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </div>
+            {/* Bottom row: Inputs & Popovers */}
+            <div className="flex flex-wrap items-center gap-3 w-full font-inter">
+              {/* Search by address */}
+              <div className="relative flex-1 min-w-[200px]">
+                <input 
+                  type="text" 
+                  placeholder="Пошук за адресою..."
+                  value={searchBuilding}
+                  onChange={e => setSearchBuilding(e.target.value)}
+                  className="w-full bg-muted text-foreground text-sm px-6 py-3.5 rounded-full outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-muted-foreground"
+                />
+              </div>
 
-          <div className="flex flex-col md:flex-row items-stretch md:items-center bg-card border border-border divide-y md:divide-y-0 md:divide-x divide-border shadow-sm w-full font-inter">
-            {/* Ціна */}
-            <Popover>
-              <PopoverTrigger className="relative px-5 py-3.5 text-sm flex items-center justify-between gap-2 hover:text-gold transition-colors text-foreground">
-                Ціна <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                {(minPrice || maxPrice) && <span className="absolute top-2 right-2 w-2 h-2 bg-gold rounded-full" />}
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-4 border-border bg-card" align="start">
-                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3 font-medium">Ціна ($)</p>
-                <div className="flex items-center gap-2 mb-4">
-                  <input type="number" placeholder="від" value={minPrice} onChange={e => setMinPrice(e.target.value)}
-                    className="w-full border border-border bg-background text-sm px-3 py-2 outline-none focus:border-gold transition-colors text-foreground" />
-                  <span className="text-muted-foreground">–</span>
-                  <input type="number" placeholder="до" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
-                    className="w-full border border-border bg-background text-sm px-3 py-2 outline-none focus:border-gold transition-colors text-foreground" />
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Площа */}
-            <Popover>
-              <PopoverTrigger className="relative px-5 py-3.5 text-sm flex items-center justify-between gap-2 hover:text-gold transition-colors text-foreground">
-                Площа <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                {(minArea || maxArea) && <span className="absolute top-2 right-2 w-2 h-2 bg-gold rounded-full" />}
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-4 border-border bg-card" align="start">
-                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3 font-medium">Площа (кв.м)</p>
-                <div className="flex items-center gap-2 mb-4">
-                  <input type="number" placeholder="від" value={minArea} onChange={e => setMinArea(e.target.value)}
-                    className="w-full border border-border bg-background text-sm px-3 py-2 outline-none focus:border-gold transition-colors text-foreground" />
-                  <span className="text-muted-foreground">–</span>
-                  <input type="number" placeholder="до" value={maxArea} onChange={e => setMaxArea(e.target.value)}
-                    className="w-full border border-border bg-background text-sm px-3 py-2 outline-none focus:border-gold transition-colors text-foreground" />
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Тип нерухомості */}
-            {category && SUBTYPES_BY_CATEGORY[category] && (
+              {/* Ціна */}
               <Popover>
-                <PopoverTrigger className="relative px-5 py-3.5 text-sm flex items-center justify-between gap-2 hover:text-gold transition-colors text-foreground">
-                  Тип нерухомості <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  {subTypes.length > 0 && <span className="absolute top-1 right-2 w-4 h-4 bg-gold text-background flex items-center justify-center text-[10px] rounded-full font-bold">{subTypes.length}</span>}
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px]">
+                  <span className="truncate">Ціна</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {(minPrice || maxPrice) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
                 </PopoverTrigger>
-                <PopoverContent className="w-[420px] p-5 border-border bg-card" align="start">
-                  <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4 font-medium">Тип нерухомості</p>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                    {SUBTYPES_BY_CATEGORY[category].map(t => (
-                      <label key={t.value} className="flex items-center gap-3 cursor-pointer group">
-                        <div className="w-4 h-4 border border-border flex items-center justify-center group-hover:border-gold transition-colors">
-                          {subTypes.includes(t.value) && <div className="w-2 h-2 bg-gold" />}
+                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Ціна ($)</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input type="number" placeholder="від" value={minPrice} onChange={e => setMinPrice(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                    <span className="text-muted-foreground">–</span>
+                    <input type="number" placeholder="до" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Площа */}
+              <Popover>
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px]">
+                  <span className="truncate">Площа</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {(minArea || maxArea) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Площа (кв.м)</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input type="number" placeholder="від" value={minArea} onChange={e => setMinArea(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                    <span className="text-muted-foreground">–</span>
+                    <input type="number" placeholder="до" value={maxArea} onChange={e => setMaxArea(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Тип нерухомості */}
+              {category && SUBTYPES_BY_CATEGORY[category] && (
+                <Popover>
+                  <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground">
+                    <span className="truncate">Тип нерухомості</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    {subTypes.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{subTypes.length}</span>}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[420px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
+                    <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Тип нерухомості</p>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      {SUBTYPES_BY_CATEGORY[category].map(t => (
+                        <label key={t.value} className="flex items-center gap-3 cursor-pointer group">
+                          <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", subTypes.includes(t.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
+                            {subTypes.includes(t.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                          </div>
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={subTypes.includes(t.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) setSubTypes([...subTypes, t.value])
+                              else setSubTypes(subTypes.filter(v => v !== t.value))
+                            }}
+                          />
+                          <span className={cn("text-sm transition-colors", subTypes.includes(t.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")}>{t.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+
+              {/* Станція метро */}
+              <Popover>
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground">
+                  <span className="truncate">Станція метро</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {metroStations.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{metroStations.length}</span>}
+                </PopoverTrigger>
+                <PopoverContent className="w-[500px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Оберіть станції</p>
+                  <div className="max-h-[60vh] overflow-y-auto pr-3 custom-scrollbar">
+                    {METRO_LINES.map(line => (
+                      <div key={line.name} className="mb-6 last:mb-0">
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-4 ${line.color}`}>{line.name}</p>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                          {line.stations.map(st => (
+                            <label key={st} className="flex items-center gap-3 cursor-pointer group">
+                              <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", metroStations.includes(st) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
+                                {metroStations.includes(st) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                              </div>
+                              <input
+                                type="checkbox"
+                                className="hidden"
+                                checked={metroStations.includes(st)}
+                                onChange={(e) => {
+                                  if (e.target.checked) setMetroStations([...metroStations, st])
+                                  else setMetroStations(metroStations.filter(v => v !== st))
+                                }}
+                              />
+                              <span className={cn("text-sm truncate transition-colors", metroStations.includes(st) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")} title={st}>{st}</span>
+                            </label>
+                          ))}
                         </div>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={subTypes.includes(t.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) setSubTypes([...subTypes, t.value])
-                            else setSubTypes(subTypes.filter(v => v !== t.value))
-                          }}
-                        />
-                        <span className="text-sm text-foreground group-hover:text-gold transition-colors">{t.label}</span>
-                      </label>
+                      </div>
                     ))}
                   </div>
                 </PopoverContent>
               </Popover>
-            )}
 
-            {/* ЖК/Орієнтир */}
-            <Popover>
-              <PopoverTrigger className="relative px-5 py-3.5 text-sm flex items-center justify-between gap-2 hover:text-gold transition-colors text-foreground">
-                ЖК / Вулиця <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                {searchBuilding && <span className="absolute top-2 right-2 w-2 h-2 bg-gold rounded-full" />}
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-4 border-border bg-card" align="start">
-                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3 font-medium">Пошук за назвою або адресою</p>
-                <input
-                  type="text"
-                  placeholder="Введіть назву..."
-                  value={searchBuilding}
-                  onChange={e => setSearchBuilding(e.target.value)}
-                  className="w-full border border-border bg-background text-sm px-3 py-2 outline-none focus:border-gold transition-colors text-foreground mb-2"
-                />
-              </PopoverContent>
-            </Popover>
+              {/* Clear All */}
+              {hasFilters && (
+                <button onClick={clearFilters} className="px-6 py-3.5 text-sm flex items-center gap-2 hover:bg-muted/80 rounded-full transition-colors text-muted-foreground">
+                  <X className="w-3.5 h-3.5" /> Очистити все
+                </button>
+              )}
 
-            {/* Станція метро */}
-            <Popover>
-              <PopoverTrigger className="relative px-5 py-3.5 text-sm flex items-center justify-between gap-2 hover:text-gold transition-colors text-foreground">
-                Станція метро <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                {metroStations.length > 0 && <span className="absolute top-1 right-2 w-4 h-4 bg-gold text-background flex items-center justify-center text-[10px] rounded-full font-bold">{metroStations.length}</span>}
-              </PopoverTrigger>
-              <PopoverContent className="w-[500px] p-5 border-border bg-card" align="start">
-                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4 font-medium">Оберіть станції</p>
-                <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                  {METRO_LINES.map(line => (
-                    <div key={line.name} className="mb-6 last:mb-0">
-                      <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${line.color}`}>{line.name}</p>
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-                        {line.stations.map(st => (
-                          <label key={st} className="flex items-center gap-3 cursor-pointer group">
-                            <div className="w-4 h-4 shrink-0 border border-border flex items-center justify-center group-hover:border-gold transition-colors">
-                              {metroStations.includes(st) && <div className="w-2 h-2 bg-gold" />}
-                            </div>
-                            <input
-                              type="checkbox"
-                              className="hidden"
-                              checked={metroStations.includes(st)}
-                              onChange={(e) => {
-                                if (e.target.checked) setMetroStations([...metroStations, st])
-                                else setMetroStations(metroStations.filter(v => v !== st))
-                              }}
-                            />
-                            <span className="text-sm text-foreground truncate group-hover:text-gold transition-colors" title={st}>{st}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Clear All */}
-            {hasFilters && (
-              <button onClick={clearFilters} className="px-5 py-3.5 text-sm flex items-center gap-2 hover:text-gold transition-colors text-muted-foreground">
-                <X className="w-3.5 h-3.5" /> Очистити все
-              </button>
-            )}
-
-            {/* Favorites Icon */}
-            <div className="md:ml-auto px-5 py-3.5 flex items-center justify-center md:border-l border-border hover:bg-muted/20 transition-colors">
-              <Link to="/favorites" className="relative text-muted-foreground hover:text-gold transition-colors">
-                <Heart className="w-5 h-5" />
-                {favorites.length > 0 && (
-                  <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-gold text-background text-[10px] font-bold flex items-center justify-center rounded-full">
-                    {favorites.length}
-                  </span>
-                )}
-              </Link>
             </div>
           </div>
         </div>
@@ -476,20 +470,27 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
             Помилка завантаження: {error.message}
           </div>
         )}
+      </div>
 
-        {/* Content: Map or List */}
-        {viewMode === 'map' ? (
-          isLoading ? (
-            <div className="w-full h-[500px] bg-card border border-border animate-pulse flex items-center justify-center">
+      {/* Content: Map or List */}
+      {viewMode === 'map' && (
+        <div className="fixed inset-0 top-[80px] z-0">
+          {isLoading ? (
+            <div className="w-full h-full animate-pulse bg-muted flex items-center justify-center">
               <p className="text-muted-foreground font-inter text-sm">Завантаження карти...</p>
             </div>
           ) : (
             <MapView properties={filtered} />
-          )
-        ) : isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => <div key={i} className="bg-card border border-border aspect-[4/5] animate-pulse" />)}
-          </div>
+          )}
+        </div>
+      )}
+
+      {viewMode === 'list' && (
+        <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => <div key={i} className="bg-card border border-border aspect-[4/5] animate-pulse rounded-2xl" />)}
+            </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-24">
             <p className="font-cormorant text-3xl text-muted-foreground mb-2">Об'єкти не знайдено</p>
@@ -506,11 +507,11 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
             </div>
 
             {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 border-t border-border mt-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 border-t border-border">
 
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                     className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
                   >
@@ -534,10 +535,10 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                     return (
                       <button
                         key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={cn('w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors', {
-                          'bg-gold text-white': isCurrent,
-                          'text-muted-foreground hover:bg-muted/50 hover:text-foreground': !isCurrent
+                        onClick={() => handlePageChange(page)}
+                        className={cn('w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors rounded-full', {
+                          'gradient-gold': isCurrent,
+                          'text-muted-foreground hover:bg-muted hover:text-foreground': !isCurrent
                         })}
                       >
                         {page}
@@ -546,7 +547,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   })}
 
                   <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
                     className="flex items-center gap-1 p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors text-sm"
                   >
@@ -562,7 +563,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
             )}
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
