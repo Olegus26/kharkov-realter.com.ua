@@ -87,6 +87,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [metroStations, setMetroStations] = useState(searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : [])
 
   const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
+  const [showMapFilters, setShowMapFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1)
   const itemsPerPage = 18
 
@@ -154,6 +155,17 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       document.body.style.overflow = ''
     }
   }, [viewMode])
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode)
+    setSearchParams(prev => {
+      if (mode === 'list') prev.delete('viewMode')
+      else prev.set('viewMode', mode)
+      return prev
+    })
+    // Auto-hide map filters when entering map mode on mobile for better UX
+    if (mode === 'map') setShowMapFilters(false)
+  }
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage)
@@ -265,15 +277,32 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-10">
+        {/* Toggle Filters Button for Mobile Map View */}
+        {viewMode === 'map' && (
+          <div className="lg:hidden mb-4 relative z-20">
+            <button 
+              onClick={() => setShowMapFilters(!showMapFilters)}
+              className="w-full py-3 bg-card backdrop-blur-md border border-border rounded-2xl shadow-md text-sm font-inter font-semibold text-foreground flex items-center justify-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              {showMapFilters ? 'Сховати фільтри' : 'Показати фільтри'}
+            </button>
+          </div>
+        )}
+
         {/* Filters */}
-        <div className={cn("z-40 bg-card p-4 sm:p-6 shadow-md border border-border transition-all flex-shrink-0 w-full", viewMode === 'map' ? "rounded-3xl mt-6 sticky top-[120px]" : "rounded-3xl mb-10 sticky top-24 mt-6")}>
+        <div className={cn(
+          "z-40 bg-card p-4 sm:p-6 shadow-md border border-border transition-all flex-shrink-0 w-full",
+          viewMode === 'map' ? "rounded-3xl mt-6 sticky top-[120px]" : "rounded-3xl mb-10 sticky top-24 mt-6",
+          viewMode === 'map' && !showMapFilters ? "hidden lg:block" : "block"
+        )}>
           <div className="flex flex-col gap-5">
             {/* Top row: Deal & Category Tabs + View Toggle */}
-            <div className="flex flex-wrap gap-4 border-b border-border/50 pb-5 justify-between items-center">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-border/50 pb-5">
               
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
                 {/* Deal tabs */}
-                <div className="flex p-1 bg-muted rounded-full w-fit">
+                <div className="flex p-1 bg-muted rounded-full shrink-0">
                   {[['', 'Усі'], ['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
                     <button
                       key={v}

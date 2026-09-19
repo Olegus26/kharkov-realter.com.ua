@@ -284,9 +284,9 @@ const PropertyDetail = () => {
               {/* Description */}
               {property.description && (
                 <div className="mb-8">
-                  <h3 className="font-cormorant text-2xl mb-4">Опис</h3>
+                  <h3 className="font-cormorant text-2xl mb-4 font-bold">Опис</h3>
                   <div 
-                    className="text-muted-foreground leading-relaxed text-sm font-inter"
+                    className="text-foreground leading-relaxed text-sm font-inter space-y-3"
                     dangerouslySetInnerHTML={{ __html: property.description }}
                   />
                 </div>

@@ -48,7 +48,12 @@
 @layer base {
   * { @apply border-border; }
   html { scroll-behavior: smooth; }
-  body { @apply bg-background text-foreground font-inter antialiased; }
+  body { 
+    @apply bg-background text-foreground font-inter antialiased font-medium;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
   h1, h2, h3, h4 { @apply font-cormorant tracking-tight; }
   ::selection { background: hsl(222 55% 20% / 0.12); }
 }

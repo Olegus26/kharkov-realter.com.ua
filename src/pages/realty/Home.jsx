@@ -52,9 +52,13 @@ export default function HomePage() {
     <div>
       {/* Hero — cinematic, left-aligned */}
       <section className="relative min-h-screen flex items-end sm:items-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${HERO_IMAGES[0]})` }} />
+        <img
+          src={HERO_IMAGES[0]}
+          alt="Харків Ріелтер - елітна нерухомість"
+          fetchpriority="high"
+          decoding="sync"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-navy" />
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-32 pb-28 sm:py-40 text-left">

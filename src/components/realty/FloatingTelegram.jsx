@@ -19,7 +19,7 @@ export default function FloatingTelegram() {
 
   return (
     <div 
-      className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
+      className="fixed bottom-6 right-6 z-50 flex flex-col items-end"
       ref={containerRef}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -27,7 +27,7 @@ export default function FloatingTelegram() {
       {/* Menu items */}
       <div 
         className={cn(
-          "flex flex-col items-end gap-3 transition-all duration-300 origin-bottom",
+          "absolute bottom-full right-0 mb-3 flex flex-col items-end gap-3 transition-all duration-300 origin-bottom",
           open ? "opacity-100 scale-100 pointer-events-auto translate-y-0" : "opacity-0 scale-90 pointer-events-none translate-y-4"
         )}
       >

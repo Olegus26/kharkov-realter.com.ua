@@ -147,7 +147,7 @@ const MapView = ({ properties }) => {
             {selectedGroup && createPortal(
                 <div 
                     key={selectedGroup.key}
-                    className="fixed bottom-6 left-6 z-[60] w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50" 
+                    className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-auto z-[60] w-auto sm:w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50" 
                     style={{ height: '480px' }}
                 >
                     <div className="p-4 flex items-center justify-between border-b border-border bg-white z-10 shrink-0">
@@ -170,6 +170,8 @@ const MapView = ({ properties }) => {
                                     <img
                                         src={p.image_url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'}
                                         alt={p.title}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
