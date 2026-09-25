@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
 import { Phone, Mail, MapPin, Instagram, Facebook, Send as Telegram } from 'lucide-react'
+import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
+import { cn } from '@/lib/utils'
 
 const Footer = () => {
+  const phones = getPhonesForToday();
   return (
     <footer className="bg-card border-t border-border">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -70,11 +73,15 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex gap-3 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4 text-gold mt-0.5 shrink-0" />
-                Харків, пр. Науки, 14
+                Харків, вул. Григорія Сковороди, 65, 2-й поверх, оф. 3
               </li>
-              <li className="flex gap-3 text-sm text-muted-foreground">
-                <Phone className="w-4 h-4 text-gold shrink-0" />
-                +380 (50) 123-45-67
+              <li className="flex flex-col gap-2">
+                {phones.map((p, idx) => (
+                  <a key={idx} href={getPhoneLink(p)} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-gold transition-colors">
+                    <Phone className={cn("w-4 h-4 text-gold shrink-0", idx > 0 && "opacity-0")} />
+                    {p}
+                  </a>
+                ))}
               </li>
               <li className="flex gap-3 text-sm text-muted-foreground">
                 <Mail className="w-4 h-4 text-gold shrink-0" />

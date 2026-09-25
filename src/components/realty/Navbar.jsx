@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Phone, Heart, Home as HomeIcon, Building2, Users, Info, LifeBuoy, Contact as ContactIcon, ChevronDown, MessageSquare, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFavorites } from '@/lib/FavoritesContext';
+import { getPhonesForToday, getPhoneLink } from '@/lib/phones';
+import PhoneRevolver from './PhoneRevolver';
 
 const links = [
   { to: '/', label: 'Головна', icon: HomeIcon },
@@ -38,6 +40,7 @@ export default function Navbar() {
   const { favorites } = useFavorites();
   const count = favorites.length;
   const reviewsRef = useRef(null);
+  const phones = getPhonesForToday();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -146,10 +149,7 @@ export default function Navbar() {
           </Link>
 
           {/* Phone + CTA — desktop only */}
-          <a href="tel:+380501234567" className="hidden xl:flex items-center gap-2 text-sm text-foreground/60 hover:text-gold transition-colors">
-            <Phone className="w-4 h-4" />
-            +380 (50) 123-45-67
-          </a>
+          <PhoneRevolver phones={phones} />
           <Link to="/kontakty" className="hidden lg:block px-6 py-2.5 gradient-gold rounded-full text-xs tracking-wide uppercase font-inter font-semibold hover:opacity-90 transition-opacity text-white">
             Консультація
           </Link>
@@ -230,10 +230,14 @@ export default function Navbar() {
             </div>
 
           </nav>
-          <a href="tel:+380501234567" className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-medium text-foreground/70 active:bg-black/5">
-            <Phone className="w-5 h-5" />
-            +380 (50) 123-45-67
-          </a>
+          <div className="flex flex-col gap-1 mt-2">
+            {phones.map((p, idx) => (
+              <a key={idx} href={getPhoneLink(p)} className="flex items-center gap-4 px-4 py-2.5 rounded-xl text-base font-medium text-foreground/70 active:bg-black/5">
+                <Phone className={cn("w-5 h-5", idx > 0 && "opacity-0")} />
+                {p}
+              </a>
+            ))}
+          </div>
           <Link to="/kontakty" className="block mt-2 mb-2 px-5 py-4 gradient-gold rounded-2xl text-sm tracking-wide uppercase font-semibold text-center text-white">
             Консультація
           </Link>

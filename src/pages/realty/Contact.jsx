@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react'
-import { formatPhone } from '@/lib/utils'
+import { formatPhone, cn } from '@/lib/utils'
+import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
 
 const ContactPage = () => {
+  const phones = getPhonesForToday();
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', type: 'buy' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -123,7 +125,7 @@ const ContactPage = () => {
               <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-4 font-inter">Наші офіси</p>
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent' }}>
                 {[
-                  { title: 'Центр-1', addr: 'вулиця Григорія Сковороди, 65' },
+                  { title: 'Центр-1', addr: 'вулиця Григорія Сковороди, 65, 2-й поверх, офіс № 3' },
                   { title: 'Центр-2', addr: 'вулиця Сумська, 80' },
                   { title: 'Левада', addr: 'Аерокосмічний проспект, 48' },
                   { title: 'Нові Будинки', addr: 'проспект Петра Григоренка, 7' },
@@ -155,13 +157,15 @@ const ContactPage = () => {
             </div>
 
             <div className="space-y-4">
-              <a href="tel:+380501234567" className="flex items-center gap-4 p-5 border border-border bg-card rounded-2xl hover:border-navy/40 hover:shadow-md transition-all group">
-                <Phone className="w-5 h-5 text-muted-foreground group-hover:text-navy transition-colors" />
-                <div>
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-0.5">Телефон</p>
-                  <p className="font-inter font-medium text-lg group-hover:text-navy transition-colors">+380 (50) 123-45-67</p>
-                </div>
-              </a>
+              <div className="flex flex-col gap-2 p-5 border border-border bg-card rounded-2xl hover:border-navy/40 hover:shadow-md transition-all group">
+                <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter">Телефон</p>
+                {phones.map((p, idx) => (
+                  <a key={idx} href={getPhoneLink(p)} className="flex items-center gap-4">
+                    <Phone className={cn("w-5 h-5 text-muted-foreground group-hover:text-navy transition-colors", idx > 0 && "opacity-0")} />
+                    <p className="font-inter font-medium text-lg group-hover:text-navy transition-colors">{p}</p>
+                  </a>
+                ))}
+              </div>
               <a href="mailto:info@kharkiv-realty.ua" className="flex items-center gap-4 p-5 border border-border bg-card rounded-2xl hover:border-navy/40 hover:shadow-md transition-all group">
                 <Mail className="w-5 h-5 text-muted-foreground group-hover:text-navy transition-colors" />
                 <div>
