@@ -10,7 +10,26 @@ const ContactPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSending(true)
-    await new Promise(r => setTimeout(r, 1200))
+    
+    // WARNING: Storing bot token in frontend is not secure for production.
+    const BOT_TOKEN = '8682779916:AAHs83CU6whQibCqugxPf7cWZAcFCeLuv38'
+    const CHAT_ID = '575765030' 
+    
+    const types = { buy: 'Купівля', rent: 'Оренда', sell: 'Продаж', consult: 'Консультація' }
+    const typeLabel = types[form.type] || form.type
+    
+    const text = `Новая заявка с сайта! 🏢\nТема: ${typeLabel}\nИмя: ${form.name}\nТелефон: ${form.phone}\nEmail: ${form.email || '—'}\nПожелания: ${form.message || '—'}`
+
+    try {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+      })
+    } catch (err) {
+      console.error('Telegram error:', err)
+    }
+
     setSending(false)
     setSent(true)
   }
