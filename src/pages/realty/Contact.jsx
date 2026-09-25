@@ -14,7 +14,7 @@ const ContactPage = () => {
     
     // WARNING: Storing bot token in frontend is not secure for production.
     const BOT_TOKEN = '8682779916:AAHs83CU6whQibCqugxPf7cWZAcFCeLuv38'
-    const CHAT_ID = '-5119703724' 
+    const CHAT_ID = '-1004492752360' 
     
     const types = { buy: 'Купівля', rent: 'Оренда', sell: 'Продаж', consult: 'Консультація' }
     const typeLabel = types[form.type] || form.type
