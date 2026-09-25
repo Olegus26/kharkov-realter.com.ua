@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react'
+import { formatPhone } from '@/lib/utils'
 
 const ContactPage = () => {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', type: 'buy' })
@@ -79,7 +80,7 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-2">Телефон *</label>
-                    <input required type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                    <input required type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: formatPhone(e.target.value) }))}
                       className="w-full border border-border bg-card text-foreground px-5 py-4 text-sm outline-none focus:border-navy transition-colors font-inter placeholder:text-muted-foreground rounded-2xl"
                       placeholder="+380 (50) 000-00-00" />
                   </div>
@@ -122,28 +123,33 @@ const ContactPage = () => {
               <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-4 font-inter">Наші офіси</p>
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent' }}>
                 {[
-                  { title: 'Центр-1 (Головний)', addr: 'вул. Григорія Сковороди, 65, оф. 3' },
-                  { title: 'Центр-2', addr: 'вул. Сумська, 80' },
-                  { title: 'Салтівка-1', addr: 'вул. Героїв Праці, 20/321' },
-                  { title: 'Салтівка-2', addr: 'просп. Тракторобудівників, 108' },
-                  { title: 'Салтівка-3', addr: 'вул. Героїв Праці, 30' },
-                  { title: 'Салтівка-4', addr: 'вул. Амосова, 25' },
-                  { title: 'Салтівка-5', addr: 'вул. Героїв Праці, 30' },
-                  { title: 'Павлове Поле', addr: 'вул. 23-го Серпня, 38' },
-                  { title: 'Олексіївка', addr: 'просп. Людвіга Свободи, 39' },
-                  { title: 'Холодна Гора', addr: 'вул. Холодногірська, 3' },
-                  { title: 'Одеська', addr: 'просп. Гагаріна, 176' },
-                  { title: 'Нові Будинки', addr: 'просп. Маршала Жукова, 7' },
-                  { title: 'ХТЗ', addr: 'просп. Олександрівський, 154' },
-                  { title: 'Аерокосмічний', addr: 'просп. Гагаріна, 48' },
+                  { title: 'Центр-1', addr: 'вулиця Григорія Сковороди, 65' },
+                  { title: 'Центр-2', addr: 'вулиця Сумська, 80' },
+                  { title: 'Левада', addr: 'Аерокосмічний проспект, 48' },
+                  { title: 'Нові Будинки', addr: 'проспект Петра Григоренка, 7' },
+                  { title: 'Одеська', addr: 'Аерокосмічний проспект, 176' },
+                  { title: 'Олексіївка', addr: 'проспект Людвіга Свободи, 39' },
+                  { title: 'Павлове Поле', addr: 'вулиця 23-го Серпня, 38' },
+                  { title: 'Салтівка-2', addr: 'проспект Тракторобудівників, 108' },
+                  { title: 'Салтівка-3', addr: 'вул. Нескорених, 30' },
+                  { title: 'Салтівка-4', addr: 'вулиця Амосова, 25' },
+                  { title: 'Салтівка-5', addr: 'вул. Нескорених, 30' },
+                  { title: 'Холодна Гора', addr: 'вулиця Холодногірська, 3' },
+                  { title: 'ХТЗ', addr: 'проспект Олександрівський, 154' },
                 ].map(o => (
-                  <div key={o.title} className="flex gap-4 p-5 border border-border bg-card rounded-2xl hover:shadow-md transition-shadow">
-                    <MapPin className="w-5 h-5 text-navy shrink-0 mt-0.5" />
+                  <a 
+                    key={o.title} 
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('АН "Харків-Ріелтер" ' + o.title)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex gap-4 p-5 border border-border bg-card rounded-2xl hover:border-navy/40 hover:shadow-md transition-all group cursor-pointer"
+                  >
+                    <MapPin className="w-5 h-5 text-navy group-hover:text-navy/70 shrink-0 mt-0.5 transition-colors" />
                     <div>
-                      <p className="font-inter font-medium text-base leading-tight mb-1 text-foreground">{o.title}</p>
+                      <p className="font-inter font-medium text-base leading-tight mb-1 text-foreground group-hover:text-navy transition-colors">{o.title}</p>
                       <p className="text-muted-foreground text-sm font-inter">{o.addr}</p>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>

@@ -14,28 +14,20 @@ const links = [
   { to: '/vakansii', label: 'Вакансії', icon: Briefcase },
 ];
 
-const REVIEW_GROUPS = [
-  [
-    { name: 'АЛЕКСЕЕВКА', subtitle: 'Філія «АЛЕКСЕЕВКА»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Алексеевка#lrd=0x4127a41b8c5ed819:0x6b2dee6f3b93e37f,1' },
-    { name: 'ГАГАРИНА', subtitle: 'Філія «ГАГАРИНА»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Гагарина#lrd=0x4127a08797907619:0x5dfb221d2bc5d778,1' },
-    { name: 'НОВЫЕ ДОМА', subtitle: 'Філія «НОВЫЕ ДОМА»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Новые+Дома#lrd=0x41270a4fb908a46d:0xadacdcb1f20dcf3b,1' },
-    { name: 'ОДЕССКАЯ', subtitle: 'Філія «ОДЕССКАЯ»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Одесская#lrd=0x41270a9632008db3:0x44a76c12d3ce7f5e,1' },
-    { name: 'ПАВЛОВО ПОЛЕ', subtitle: 'Філія «ПАВЛОВО ПОЛЕ»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Павлово+Поле#lrd=0x4127a6b576c30355:0x94796041da45487c,1' },
-  ],
-  [
-    { name: 'САЛТОВКА-2', subtitle: 'Філія «САЛТОВКА-2»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Салтовка-2#lrd=0x412709f3ac950a27:0x9631459d2d056b8d,1' },
-    { name: 'САЛТОВКА-3', subtitle: 'Філія «САЛТОВКА-3»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Салтовка-3#lrd=0x412709d8835a2725:0x58aee67da27117b6,1' },
-    { name: 'САЛТОВКА-4', subtitle: 'Філія «САЛТОВКА-4»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Салтовка-4#lrd=0x412709872feacc21:0x4b60e810c9bccc8d,1' },
-    { name: 'САЛТОВКА-5', subtitle: 'Філія «САЛТОВКА-5»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Салтовка-5#lrd=0x412709e08d68d3f7:0x53dee34e1ca75e2e,1' },
-  ],
-  [
-    { name: 'ХОЛОДНАЯ ГОРА', subtitle: 'Філія «ХОЛОДНАЯ ГОРА»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Холодная+Гора#lrd=0x4127a1b6fbe26829:0x8e70d5c0fe3ae2e2,1' },
-    { name: 'ХТЗ', subtitle: 'Філія «ХТЗ»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+ХТЗ#lrd=0x41270b8516e70c1b:0x69aaf2d405f83757,1' },
-  ],
-  [
-    { name: 'ЦЕНТР-1', subtitle: 'Філія «ЦЕНТР-1»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Центр-1#lrd=0x4127a0c2c79f564f:0x335f80521ccbe442,1' },
-    { name: 'ЦЕНТР-2', subtitle: 'Філія «ЦЕНТР-2»', url: 'https://www.google.com/search?q=АН+Харків-Ріелтер+Центр-2#lrd=0x4127a0de66af253f:0xa9e390a3fab4e824,1' },
-  ]
+const REVIEW_LINKS = [
+  { name: 'Центр-1', subtitle: 'вулиця Григорія Сковороди, 65', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Центр-1#lrd=0x4127a0c2c79f564f:0x335f80521ccbe442,1' },
+  { name: 'Центр-2', subtitle: 'вулиця Сумська, 80', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Центр-2#lrd=0x4127a0de66af253f:0xa9e390a3fab4e824,1' },
+  { name: 'Левада', subtitle: 'Аерокосмічний проспект, 48', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Левада#lrd=0x4127a08797907619:0x5dfb221d2bc5d778,1' },
+  { name: 'Нові Будинки', subtitle: 'проспект Петра Григоренка, 7', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Нові+Будинки#lrd=0x41270a4fb908a46d:0xadacdcb1f20dcf3b,1' },
+  { name: 'Одеська', subtitle: 'Аерокосмічний проспект, 176', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Одеська#lrd=0x41270a9632008db3:0x44a76c12d3ce7f5e,1' },
+  { name: 'Олексіївка', subtitle: 'проспект Людвіга Свободи, 39', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Олексіївка#lrd=0x4127a41b8c5ed819:0x6b2dee6f3b93e37f,1' },
+  { name: 'Павлове Поле', subtitle: 'вулиця 23-го Серпня, 38', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Павлове+Поле#lrd=0x4127a6b576c30355:0x94796041da45487c,1' },
+  { name: 'Салтівка-2', subtitle: 'проспект Тракторобудівників, 108', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-2#lrd=0x412709f3ac950a27:0x9631459d2d056b8d,1' },
+  { name: 'Салтівка-3', subtitle: 'вул. Нескорених, 30', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-3#lrd=0x412709d8835a2725:0x58aee67da27117b6,1' },
+  { name: 'Салтівка-4', subtitle: 'вулиця Амосова, 25', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-4#lrd=0x412709872feacc21:0x4b60e810c9bccc8d,1' },
+  { name: 'Салтівка-5', subtitle: 'вул. Нескорених, 30', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-5#lrd=0x412709e08d68d3f7:0x53dee34e1ca75e2e,1' },
+  { name: 'Холодна Гора', subtitle: 'вулиця Холодногірська, 3', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Холодна+Гора#lrd=0x4127a1b6fbe26829:0x8e70d5c0fe3ae2e2,1' },
+  { name: 'ХТЗ', subtitle: 'проспект Олександрівський, 154', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+ХТЗ#lrd=0x41270b8516e70c1b:0x69aaf2d405f83757,1' },
 ];
 
 export default function Navbar() {
@@ -116,24 +108,19 @@ export default function Navbar() {
             </button>
 
             {reviewsOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 min-w-[240px] bg-white rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.16)] border border-border/50 py-2 animate-in fade-in slide-in-from-top-2 z-50">
-                {REVIEW_GROUPS.map((group, idx) => (
-                  <div key={idx}>
-                    {group.map(link => (
-                      <a
-                        key={link.name}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-col px-4 py-2 hover:bg-navy/5 transition-colors"
-                        onClick={() => setReviewsOpen(false)}
-                      >
-                        <span className="font-semibold text-sm text-foreground">{link.name}</span>
-                        <span className="text-[11px] text-muted-foreground">{link.subtitle}</span>
-                      </a>
-                    ))}
-                    {idx < REVIEW_GROUPS.length - 1 && <div className="mx-4 my-2 border-t border-border/50 border-dashed" />}
-                  </div>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 min-w-[240px] max-h-[300px] overflow-y-auto custom-scrollbar bg-white rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.16)] border border-border/50 py-2 animate-in fade-in slide-in-from-top-2 z-50">
+                {REVIEW_LINKS.map(link => (
+                  <a
+                    key={link.name}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col px-4 py-2 hover:bg-navy/5 transition-colors"
+                    onClick={() => setReviewsOpen(false)}
+                  >
+                    <span className="font-semibold text-sm text-foreground">{link.name}</span>
+                    <span className="text-[11px] text-muted-foreground">{link.subtitle}</span>
+                  </a>
                 ))}
               </div>
             )}
@@ -224,24 +211,19 @@ export default function Navbar() {
               </button>
               
               {reviewsOpen && (
-                <div className="px-4 py-2 mt-1 space-y-4 bg-muted/30 rounded-xl ml-4">
-                  {REVIEW_GROUPS.map((group, idx) => (
-                    <div key={idx} className="space-y-1">
-                      {group.map(link => (
-                        <a
-                          key={link.name}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex flex-col py-2 px-3 hover:bg-navy/5 rounded-lg transition-colors"
-                          onClick={() => setOpen(false)}
-                        >
-                          <span className="font-semibold text-sm text-foreground">{link.name}</span>
-                          <span className="text-[11px] text-muted-foreground">{link.subtitle}</span>
-                        </a>
-                      ))}
-                      {idx < REVIEW_GROUPS.length - 1 && <div className="border-t border-border/50 border-dashed my-2 mx-3" />}
-                    </div>
+                <div className="px-4 py-2 mt-1 space-y-1 bg-muted/30 rounded-xl ml-4 max-h-[300px] overflow-y-auto custom-scrollbar">
+                  {REVIEW_LINKS.map(link => (
+                    <a
+                      key={link.name}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col py-2 px-3 hover:bg-navy/5 rounded-lg transition-colors"
+                      onClick={() => setOpen(false)}
+                    >
+                      <span className="font-semibold text-sm text-foreground">{link.name}</span>
+                      <span className="text-[11px] text-muted-foreground">{link.subtitle}</span>
+                    </a>
                   ))}
                 </div>
               )}

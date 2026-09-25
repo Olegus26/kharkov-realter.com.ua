@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
-import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown, Filter } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown, Filter, ChevronUp } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import MapView from '@/components/realty/MapView'
 import { getAllObjects, mapObject } from '@/lib/novostoyApi'
@@ -311,7 +311,10 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       />
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40">
+      <div className={cn(
+        "max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40 transition-all",
+        viewMode === 'map' ? "mt-2" : ""
+      )}>
         {/* Toggle Filters Button for Mobile Map View */}
         {viewMode === 'map' && (
           <div className="lg:hidden mb-4 relative z-50">
@@ -326,12 +329,19 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
         )}
 
         {/* Filters */}
-        <div className={cn(
-          "z-40 bg-card p-4 sm:p-6 shadow-md border border-border transition-all flex-shrink-0 w-full",
-          viewMode === 'map' ? "rounded-3xl mt-6 sticky top-[120px]" : "rounded-3xl mb-10 sticky top-24 mt-6",
-          viewMode === 'map' && !showMapFilters ? "hidden lg:block" : "block"
-        )}>
-          <div className="flex flex-col gap-5">
+        <AnimatePresence initial={false}>
+          {!(viewMode === 'map' && !showMapFilters) && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className={cn(
+                "bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 overflow-hidden",
+                viewMode === 'map' ? "rounded-3xl" : "rounded-3xl mb-10 mt-6 sticky top-24"
+              )}
+            >
+              <div className="p-4 sm:p-6 flex flex-col gap-5">
             {/* Top row: Deal Tabs + View Toggle */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-border/50 pb-5">
               
@@ -560,11 +570,25 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
             </div>
           </div>
-        </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+        {/* Desktop Toggle Map Filters Button */}
+        {viewMode === 'map' && (
+          <div className="hidden lg:flex justify-center absolute left-1/2 -bottom-5 -translate-x-1/2 z-50">
+             <button 
+                onClick={() => setShowMapFilters(!showMapFilters)}
+                className="bg-white border border-border shadow-md rounded-full p-1.5 text-muted-foreground hover:text-navy hover:shadow-lg transition-all flex items-center justify-center"
+             >
+                 <ChevronUp className={cn("w-5 h-5 transition-transform duration-300", !showMapFilters && "rotate-180")} />
+             </button>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-3 p-4 border border-destructive/40 bg-destructive/10 text-destructive text-sm font-inter mb-6">
+          <div className="flex items-center gap-3 p-4 border border-destructive/40 bg-destructive/10 text-destructive text-sm font-inter mb-6 mt-4">
             <AlertCircle className="w-4 h-4 shrink-0" />
             Помилка завантаження: {error.message}
           </div>

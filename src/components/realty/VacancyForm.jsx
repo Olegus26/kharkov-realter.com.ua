@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Send, CheckCircle } from 'lucide-react'
+import { formatPhone } from '@/lib/utils'
 
 export default function VacancyForm() {
   const [form, setForm] = useState({ name: '', phone: '', about: '' })
@@ -40,7 +41,7 @@ export default function VacancyForm() {
         </div>
         <div>
           <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-2">Телефон *</label>
-          <input required type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+          <input required type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: formatPhone(e.target.value) }))}
             className="w-full border border-border bg-card text-foreground px-5 py-4 text-sm outline-none focus:border-navy transition-colors font-inter placeholder:text-muted-foreground rounded-2xl"
             placeholder="+380 (50) 000-00-00" />
         </div>
