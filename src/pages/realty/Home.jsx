@@ -59,7 +59,7 @@ export default function HomePage() {
           decoding="sync"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-navy" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-navy/90" />
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-32 pb-28 sm:py-40 text-left">
           <motion.p
@@ -70,15 +70,15 @@ export default function HomePage() {
 
           <motion.h1
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-            className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-7xl lg:text-8xl text-white mb-6 max-w-4xl">
+            className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-7xl lg:text-8xl text-white mb-6 max-w-4xl drop-shadow-xl">
             Харків
             <br />
-            <span className="text-sky-300">Ріелтер</span>
+            <span className="text-sky-300 drop-shadow-lg">Ріелтер</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className="text-white/70 text-lg font-light mb-10 max-w-xl font-inter">
+            className="text-white/95 text-lg font-normal mb-10 max-w-xl font-inter drop-shadow-md">
             Чесність, порядок та безпека угод з будь-якою нерухомістю. З Агентством нерухомості «Харків-Ріелтер» вирішити житлове питання легко та надійно!
           </motion.p>
 

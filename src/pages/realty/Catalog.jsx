@@ -337,7 +337,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className={cn(
-                "bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 overflow-hidden",
+                "bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40",
                 viewMode === 'map' ? "rounded-3xl" : "rounded-3xl mb-10 mt-6 sticky top-24"
               )}
             >
