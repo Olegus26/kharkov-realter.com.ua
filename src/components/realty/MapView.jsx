@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Link } from 'react-router-dom'
-import { BedDouble, Maximize2, X, MapPin, Phone } from 'lucide-react'
+import { X } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { getFallbackCoords } from '@/lib/geocode'
+import { useVisited } from '@/lib/useVisited'
 
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl
@@ -17,10 +18,10 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 })
 
-function createCustomIcon(isSelected) {
-    const size = isSelected ? 18 : 13;
-    const bg = isSelected ? '#ff7a00' : '#60a5fa';
-    const border = isSelected ? 'white' : '#bfdbfe';
+function createCustomIcon(isSelected, isVisited) {
+    const size = isSelected ? 18 : 13
+    const bg = isSelected ? '#ff7a00' : isVisited ? '#10b981' : '#60a5fa'
+    const border = isSelected ? 'white' : isVisited ? '#a7f3d0' : '#bfdbfe'
     
     return L.divIcon({
         className: 'custom-dot-marker',
@@ -58,6 +59,7 @@ function FitBounds({ coords }) {
 const MapView = ({ properties }) => {
     const [selectedGroup, setSelectedGroup] = useState(null)
     const [markers, setMarkers] = useState([])
+    const { isVisited, markVisited } = useVisited()
 
     // Instantly map to fallback coordinates
     const [geoData, setGeoData] = useState({ streets: [], houses: {} })
@@ -73,37 +75,37 @@ const MapView = ({ properties }) => {
     }, [])
 
     const getExactCoords = (p) => {
-        if (!geoData.streets.length || !geoData.houses) return null;
-        if (!p.street || !p.building) return null;
+        if (!geoData.streets.length || !geoData.houses) return null
+        if (!p.street || !p.building) return null
         
         // Clean up street name
-        const q = p.street.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim();
+        const q = p.street.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim()
         
         const matchingStreets = geoData.streets.filter(s => {
-            const curName = s.current_name.toLowerCase();
-            if (curName.length > 2 && (q.includes(curName) || curName.includes(q))) return true;
+            const curName = s.current_name.toLowerCase()
+            if (curName.length > 2 && (q.includes(curName) || curName.includes(q))) return true
             if (s.old_names) {
                 return s.old_names.some(o => {
-                    const oldName = o.toLowerCase();
-                    return oldName.length > 2 && (q.includes(oldName) || oldName.includes(q));
-                });
+                    const oldName = o.toLowerCase()
+                    return oldName.length > 2 && (q.includes(oldName) || oldName.includes(q))
+                })
             }
-            return false;
-        });
+            return false
+        })
 
         for (const street of matchingStreets) {
-            const houseCoords = geoData.houses[street.street_id];
-            if (!houseCoords) continue;
+            const houseCoords = geoData.houses[street.street_id]
+            if (!houseCoords) continue
             
             // Exact match
-            if (houseCoords[p.building]) return houseCoords[p.building];
+            if (houseCoords[p.building]) return houseCoords[p.building]
             
             // Try without letters (e.g. "10А" -> "10")
-            const numberOnly = p.building.replace(/[^\d]/g, '');
-            if (houseCoords[numberOnly]) return houseCoords[numberOnly];
+            const numberOnly = p.building.replace(/[^\d]/g, '')
+            if (houseCoords[numberOnly]) return houseCoords[numberOnly]
         }
 
-        return null;
+        return null
     }
 
     // Since we don't have lat/lng in the API response yet, we group properties by location
@@ -114,38 +116,42 @@ const MapView = ({ properties }) => {
             return
         }
         
-        const groups = {};
-        let groupIndex = 0;
+        const groups = {}
+        let groupIndex = 0
         
         properties.forEach(p => {
-            const key = p.location || 'Unknown';
-            if (!groups[key]) {
-                const exactCoords = getExactCoords(p);
-                groups[key] = {
-                    key,
+            const exactCoords = getExactCoords(p)
+            const coords = exactCoords || getFallbackCoords(p.region, groupIndex++)
+            // Group by EXACT coordinates if available, otherwise fallback to location string
+            const groupKey = exactCoords ? coords.join(',') : (p.location || 'Unknown')
+
+            if (!groups[groupKey]) {
+                const title = (p.street && p.building) ? `${p.street}, ${p.building}` : (p.location || "Об'єкти за адресою")
+                groups[groupKey] = {
+                    key: title,
+                    groupKey: groupKey,
                     properties: [],
-                    coords: exactCoords || getFallbackCoords(p.region, groupIndex++)
-                };
+                    coords: coords
+                }
             }
-            groups[key].properties.push(p);
-        });
+            groups[groupKey].properties.push(p)
+        })
         
         setMarkers(Object.values(groups))
     }, [properties, geoData])
 
-    const allCoords = markers.map(m => m.coords)
-
     // Helper to render icon based on count
-    const getGroupIcon = (count, isSelected) => {
+    const getGroupIcon = (count, isSelected, isVisited) => {
         if (count > 1) {
+            const bgClass = isSelected ? 'bg-[#ff7a00]' : isVisited ? 'bg-emerald-500' : 'bg-blue-500'
             return L.divIcon({
-                html: `<div class="w-8 h-8 ${isSelected ? 'bg-[#ff7a00]' : 'bg-blue-500'} text-white flex items-center justify-center rounded-full font-bold shadow-[0_2px_8px_rgba(0,0,0,0.5)] border-2 border-white text-xs transition-colors">${count}</div>`,
+                html: `<div class="w-8 h-8 ${bgClass} text-white flex items-center justify-center rounded-full font-bold shadow-[0_2px_8px_rgba(0,0,0,0.5)] border-2 border-white text-xs transition-colors">${count}</div>`,
                 className: 'custom-group-icon',
                 iconSize: [32, 32],
                 iconAnchor: [16, 16],
-            });
+            })
         }
-        return createCustomIcon(isSelected);
+        return createCustomIcon(isSelected, isVisited)
     }
 
     return (
@@ -179,14 +185,22 @@ const MapView = ({ properties }) => {
                             })
                         }}
                     >
-                        {markers.map((group) => (
-                            <Marker
-                                key={group.key}
-                                position={group.coords}
-                                icon={getGroupIcon(group.properties.length, selectedGroup?.key === group.key)}
-                                eventHandlers={{ click: () => setSelectedGroup(group) }}
-                            />
-                        ))}
+                        {markers.map((group) => {
+                            const groupVisited = group.properties.every(p => isVisited(p.id))
+                            return (
+                                <Marker
+                                    key={`${group.groupKey}-${groupVisited}`}
+                                    position={group.coords}
+                                    icon={getGroupIcon(group.properties.length, selectedGroup?.groupKey === group.groupKey, groupVisited)}
+                                    eventHandlers={{ 
+                                        click: () => {
+                                            setSelectedGroup(group)
+                                            group.properties.forEach(p => markVisited(p.id))
+                                        } 
+                                    }}
+                                />
+                            )
+                        })}
                     </MarkerClusterGroup>
                 )}
             </MapContainer>
@@ -194,7 +208,7 @@ const MapView = ({ properties }) => {
             {/* Property popup sidebar (like dim.ria) - rendered via Portal to escape z-index context */}
             {selectedGroup && createPortal(
                 <div 
-                    key={selectedGroup.key}
+                    key={selectedGroup.groupKey}
                     className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-auto z-[60] w-auto sm:w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50" 
                     style={{ height: '480px' }}
                 >
@@ -244,9 +258,9 @@ const MapView = ({ properties }) => {
 
                                 <Link
                                     to={`/property/${p.id}`}
-                                    className="flex items-center justify-center w-full py-3.5 bg-navy text-white text-sm font-inter font-medium rounded-xl hover:bg-navy-light transition-colors mt-auto shrink-0"
+                                    className={`flex items-center justify-center w-full py-3.5 text-white text-sm font-inter font-medium rounded-xl transition-colors mt-auto shrink-0 ${isVisited(p.id) ? 'bg-gray-400 hover:bg-gray-500' : 'bg-navy hover:bg-navy-light'}`}
                                 >
-                                    Дивитися оголошення
+                                    {isVisited(p.id) ? 'Переглянуто' : 'Дивитися оголошення'}
                                 </Link>
                             </div>
                         ))}

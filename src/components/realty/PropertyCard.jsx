@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { BedDouble, Maximize2, MapPin, Heart } from 'lucide-react'
+import { BedDouble, Maximize2, MapPin, Heart, UtensilsCrossed, Building } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
 
@@ -67,22 +67,19 @@ const PropertyCard = memo(({ property, className = '' }) => {
           >
             <motion.div animate={{ scale: liked ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
               <Heart className={cn("w-4 h-4 transition-colors", {
-                "text-white fill-white": liked,
+                "text-red-500 fill-red-500": liked,
                 "text-white/70 group-hover/btn:text-white": !liked
               })} />
             </motion.div>
           </motion.button>
         </div>
 
-        {/* Price on image and Deal badge */}
+        {/* Price on image */}
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <div>
             <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price)}</p>
             {property.deal === 'rent' && <p className="text-[10px] text-white/70 font-inter">/місяць</p>}
           </div>
-          <span className="px-3 py-1 bg-black/50 backdrop-blur text-white/90 text-[9px] tracking-widest uppercase font-inter rounded-full">
-            {property.deal === 'sale' ? 'Продаж' : 'Оренда'}
-          </span>
         </div>
       </Link>
 
@@ -98,23 +95,36 @@ const PropertyCard = memo(({ property, className = '' }) => {
           <span className="truncate">{property.location}</span>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border/50 text-xs text-muted-foreground font-inter mt-auto">
-          <div className="flex items-center gap-4">
-            {property.rooms && (
-              <span className="flex items-center gap-1.5">
-                <BedDouble className="w-3.5 h-3.5 shrink-0" />
-                {property.rooms} кімн.
-              </span>
-            )}
-            {property.area && (
-              <span className="flex items-center gap-1.5">
-                <Maximize2 className="w-3.5 h-3.5 shrink-0" />
-                {property.area} м²
-              </span>
-            )}
-          </div>
-          {property.floor && (
-            <span>{property.floor}/{property.floors_total} пов.</span>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-border/50 text-[11px] text-muted-foreground font-inter mt-auto">
+          {property.rooms > 0 && (
+            <span className="flex items-center gap-1.5" title="Кількість кімнат">
+              <BedDouble className="w-3.5 h-3.5 shrink-0" />
+              {property.rooms} кімн.
+            </span>
+          )}
+          {property.area > 0 && (
+            <span className="flex items-center gap-1.5" title="Загальна площа">
+              <Maximize2 className="w-3.5 h-3.5 shrink-0" />
+              {property.area} м²
+            </span>
+          )}
+          {property.area_live > 0 && (
+            <span className="flex items-center gap-1.5" title="Житлова площа">
+              <BedDouble className="w-3.5 h-3.5 shrink-0" />
+              {property.area_live} м²
+            </span>
+          )}
+          {property.area_kitchen > 0 && (
+            <span className="flex items-center gap-1.5" title="Площа кухні">
+              <UtensilsCrossed className="w-3.5 h-3.5 shrink-0" />
+              {property.area_kitchen} м²
+            </span>
+          )}
+          {property.floor > 0 && (
+            <span className="flex items-center gap-1.5 ml-auto" title="Поверх">
+              <Building className="w-3.5 h-3.5 shrink-0" />
+              {property.floor}/{property.floors_total} пов.
+            </span>
           )}
         </div>
       </div>

@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, startTransition } from 'react'
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown, Filter, ChevronUp } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import MapView from '@/components/realty/MapView'
-import { getAllObjects, mapObject } from '@/lib/novostoyApi'
+import { getAllObjects, getObjects, mapObject } from '@/lib/novostoyApi'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import SeoMeta from '@/components/seo/SeoMeta'
@@ -71,8 +71,55 @@ const METRO_LINES = [
   }
 ]
 
+const DISTRICTS = [
+  { value: 'Алексеевка', label: 'Олексіївка' },
+  { value: 'Аэропорт', label: 'Аеропорт' },
+  { value: 'Восточный', label: 'Східний' },
+  { value: 'Гагарина (нач.)', label: 'Гагаріна (поч.)' },
+  { value: 'Жуковского', label: 'Жуковського' },
+  { value: 'Журавлевка', label: 'Журавлівка' },
+  { value: 'З-д Шевченко', label: 'Завод Шевченка' },
+  { value: 'Залютино', label: 'Залютине' },
+  { value: 'Ивановка', label: 'Іванівка' },
+  { value: 'Конный рынок', label: 'Кінний ринок' },
+  { value: 'Красный луч', label: 'Червоний Промінь' },
+  { value: 'Лысая Гора', label: 'Лиса Гора' },
+  { value: 'Москалевка', label: 'Москалівка' },
+  { value: 'Н.Бавария', label: 'Нова Баварія' },
+  { value: 'Немышля', label: 'Немишля' },
+  { value: 'Нов.Дома', label: 'Нові Будинки' },
+  { value: 'Одесская', label: 'Одеська' },
+  { value: 'Основа', label: 'Основа' },
+  { value: 'П.Поле', label: 'Павлове Поле' },
+  { value: 'Павловка', label: 'Павлівка' },
+  { value: 'Песочин', label: 'Пісочин' },
+  { value: 'Пятихатки', label: 'П\'ятихатки' },
+  { value: 'Роганский', label: 'Роганський' },
+  { value: 'Салтовка', label: 'Салтівка' },
+  { value: 'Сев.Салтовка', label: 'Північна Салтівка' },
+  { value: 'Сортировка', label: 'Сортувальня' },
+  { value: 'Хол.Гора', label: 'Холодна Гора' },
+  { value: 'ХТЗ', label: 'ХТЗ' },
+  { value: 'Шишковка', label: 'Шишківка' },
+  { value: 'ЮВ и ЦР', label: 'ПВ і ЦР' }, 
+  { value: 'Центр', label: 'Центр' }
+].sort((a, b) => a.label.localeCompare(b.label, 'uk'))
+
+const STATES = [
+  { value: '1', label: 'Житловий' },
+  { value: '2', label: 'Косметичний ремонт' },
+  { value: '3', label: 'Євроремонт' },
+  { value: '4', label: 'Капітальний ремонт' },
+  { value: '5', label: 'Без ремонту' },
+  { value: '6', label: 'Старий' },
+  { value: '7', label: 'Недобудова' },
+  { value: '8', label: 'Будівельний стан' },
+  { value: '9', label: 'Під обробку' }
+]
+
 const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const queryClient = useQueryClient()
   
   const [deal, setDeal] = useState(searchParams.get('deal') || 'sale')
   const [category, setCategory] = useState(defaultCategory)
@@ -89,6 +136,12 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [geoData, setGeoData] = useState({ streets: [], houses: {}, complexes: [] })
   
   const [metroStations, setMetroStations] = useState(searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : [])
+  const [districts, setDistricts] = useState(searchParams.get('districts') ? searchParams.get('districts').split(',') : [])
+  const [states, setStates] = useState(searchParams.get('states') ? searchParams.get('states').split(',') : [])
+  const [minFloor, setMinFloor] = useState(searchParams.get('minFloor') || '')
+  const [maxFloor, setMaxFloor] = useState(searchParams.get('maxFloor') || '')
+  const [minFloorsTotal, setMinFloorsTotal] = useState(searchParams.get('minFloorsTotal') || '')
+  const [maxFloorsTotal, setMaxFloorsTotal] = useState(searchParams.get('maxFloorsTotal') || '')
 
   useEffect(() => {
     Promise.all([
@@ -115,7 +168,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   }
 
   const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
-  const [showMapFilters, setShowMapFilters] = useState(false)
+  const [showMapFilters, setShowMapFilters] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1)
   const itemsPerPage = 18
 
@@ -123,6 +177,13 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const isFirstRender = useRef(true)
   const location = useLocation()
   const navigate = useNavigate()
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     setCategory(defaultCategory)
@@ -151,6 +212,12 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     if (searchStreet) params.set('searchStreet', searchStreet)
     if (searchHouse) params.set('searchHouse', searchHouse)
     if (metroStations.length > 0) params.set('metroStations', metroStations.join(','))
+    if (districts.length > 0) params.set('districts', districts.join(','))
+    if (states.length > 0) params.set('states', states.join(','))
+    if (minFloor) params.set('minFloor', minFloor)
+    if (maxFloor) params.set('maxFloor', maxFloor)
+    if (minFloorsTotal) params.set('minFloorsTotal', minFloorsTotal)
+    if (maxFloorsTotal) params.set('maxFloorsTotal', maxFloorsTotal)
     if (viewMode !== 'list') params.set('viewMode', viewMode)
     if (currentPage > 1) params.set('page', currentPage)
     
@@ -162,7 +229,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
     
     setSearchParams(params, { replace: true })
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, viewMode, currentPage, setSearchParams])
+  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode, currentPage, setSearchParams])
 
   // Reset page when filters change
   useEffect(() => {
@@ -171,7 +238,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       return
     }
     setCurrentPage(1)
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, viewMode])
+  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode])
 
   // Lock body scroll in map view to prevent seeing footer
   useEffect(() => {
@@ -216,10 +283,22 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       if (deal === 'sale') filters.sell_type = '2'
       if (deal === 'rent') filters.sell_type = '1'
 
-      const allItems = await getAllObjects(filters)
-      return allItems.map(mapObject)
+      // 1. Instantly return the first 100 properties so the UI unblocks and the user sees results
+      const firstPage = await getObjects(filters).catch(() => ({ data: [] }))
+      const initialItems = (firstPage?.data || []).map(mapObject)
+      
+      // 2. Quietly kick off the exhaustive fetch in the background
+      getAllObjects(filters).then(allItems => {
+        // 3. When done, silently update the cache to the full list (4000+ items)
+        queryClient.setQueryData(['novostoy-objects', deal], allItems.map(mapObject))
+      }).catch(e => console.error("Background fetch failed", e))
+
+      return initialItems
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   })
 
   const filtered = useMemo(() => {
@@ -249,6 +328,20 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
         if (!p.street?.toLowerCase().includes(query)) return false
       }
 
+      if (districts.length > 0) {
+        if (!districts.includes(p.region) && !districts.includes(p.mregion)) return false
+      }
+
+      if (states.length > 0) {
+        if (!p.state || !states.includes(p.state)) return false
+      }
+
+      if (minFloor && p.floor < Number(minFloor)) return false
+      if (maxFloor && p.floor > Number(maxFloor)) return false
+
+      if (minFloorsTotal && p.floors_total < Number(minFloorsTotal)) return false
+      if (maxFloorsTotal && p.floors_total > Number(maxFloorsTotal)) return false
+
       if (searchHouse) {
         const houseQuery = searchHouse.toLowerCase()
         if (p.building?.toLowerCase() !== houseQuery && !p.building?.toLowerCase().includes(houseQuery)) return false
@@ -260,7 +353,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
       return true
     })
-  }, [properties, minPrice, maxPrice, minArea, maxArea, category, subTypes, searchStreet, searchHouse, metroStations])
+  }, [properties, minPrice, maxPrice, minArea, maxArea, category, subTypes, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal])
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
   const currentItems = viewMode === 'list'
@@ -277,8 +370,14 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setSearchStreet('')
     setSearchHouse('')
     setMetroStations([])
+    setDistricts([])
+    setStates([])
+    setMinFloor('')
+    setMaxFloor('')
+    setMinFloorsTotal('')
+    setMaxFloorsTotal('')
   }
-  const hasFilters = subTypes.length > 0 || minPrice || maxPrice || minArea || maxArea || searchComplex || searchStreet || searchHouse || metroStations.length > 0
+  const hasFilters = subTypes.length > 0 || minPrice || maxPrice || minArea || maxArea || searchComplex || searchStreet || searchHouse || metroStations.length > 0 || districts.length > 0 || states.length > 0 || minFloor || maxFloor || minFloorsTotal || maxFloorsTotal
 
   // Dynamic SEO calculation
   const getSeoTitle = () => {
@@ -311,10 +410,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       />
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
 
-      <div className={cn(
-        "max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40 transition-all",
-        viewMode === 'map' ? "mt-2" : ""
-      )}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40 transition-all">
         {/* Toggle Filters Button for Mobile Map View */}
         {viewMode === 'map' && (
           <div className="lg:hidden mb-4 relative z-50">
@@ -337,41 +433,56 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className={cn(
-                "bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40",
-                viewMode === 'map' ? "rounded-3xl" : "rounded-3xl mb-10 mt-6 sticky top-24"
+                "bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 mt-2",
+                viewMode === 'map' ? "rounded-3xl" : "rounded-3xl mb-10 sticky top-24"
               )}
             >
+              <LayoutGroup id={viewMode}>
               <div className="p-4 sm:p-6 flex flex-col gap-5">
             {/* Top row: Deal Tabs + View Toggle */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-border/50 pb-5">
               
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
                 {/* Deal tabs */}
-                <div className="flex p-1 bg-muted rounded-full shrink-0">
+                <div className="flex p-1 bg-muted rounded-full shrink-0 relative">
                   {[['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
                     <button
                       key={v}
                       onClick={() => setDeal(v)}
-                      className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full', {
-                        'gradient-gold shadow-md': deal === v,
+                      className={cn('relative z-10 px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
+                        'text-white': deal === v,
                         'text-muted-foreground hover:text-foreground': deal !== v
                       })}
                     >
+                      {deal === v && (
+                        <motion.div
+                          layoutId="deal-pill"
+                          className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                      )}
                       {l}
                     </button>
                   ))}
                 </div>
                 {/* Category tabs */}
-                <div className="flex p-1 bg-muted rounded-full w-fit overflow-x-auto no-scrollbar">
+                <div className="flex p-1 bg-muted rounded-full w-fit shrink-0 relative">
                   {CATEGORIES.map(c => (
                     <button
                       key={c.value}
                       onClick={() => navigate(c.path + location.search)}
-                      className={cn('px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full whitespace-nowrap', {
-                        'gradient-gold shadow-md': category === c.value,
+                      className={cn('relative z-10 px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap', {
+                        'text-white': category === c.value,
                         'text-muted-foreground hover:text-foreground': category !== c.value
                       })}
                     >
+                      {category === c.value && (
+                        <motion.div
+                          layoutId="category-pill"
+                          className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                      )}
                       {c.label}
                     </button>
                   ))}
@@ -385,28 +496,40 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
               {/* View Toggle (Moved from Header) */}
               <div className="flex items-center gap-4 lg:gap-6">
-                <p className="text-muted-foreground text-sm font-inter hidden xl:block font-medium">{filtered.length} об'єктів</p>
-                <div className="flex p-1 bg-muted rounded-full">
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={cn('flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full', {
-                      'gradient-gold shadow-md': viewMode === 'list',
-                      'text-muted-foreground hover:text-foreground': viewMode !== 'list'
-                    })}
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                    <span className="hidden sm:inline">Список</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('map')}
-                    className={cn('flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-all rounded-full', {
-                      'gradient-gold shadow-md': viewMode === 'map',
-                      'text-muted-foreground hover:text-foreground': viewMode !== 'map'
-                    })}
-                  >
-                    <Map className="w-4 h-4" />
-                    <span className="hidden sm:inline">Карта</span>
-                  </button>
+                <p className="text-muted-foreground text-sm font-inter hidden xl:block font-medium">
+                  {properties.length <= 100 ? (
+                    <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-navy/70 bg-navy/5 px-3 py-1.5 rounded-full animate-pulse font-semibold">
+                      <svg className="w-3.5 h-3.5 animate-spin text-navy" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Оновлення бази...
+                    </span>
+                  ) : (
+                    <>{filtered.length} об'єктів</>
+                  )}
+                </p>
+                <div className="flex p-1 bg-muted rounded-full relative">
+                  {[
+                    { id: 'list', icon: LayoutGrid, label: 'Список' },
+                    { id: 'map', icon: Map, label: 'Карта' }
+                  ].map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => startTransition(() => setViewMode(v.id))}
+                      className={cn('relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
+                        'text-white': viewMode === v.id,
+                        'text-muted-foreground hover:text-foreground': viewMode !== v.id
+                      })}
+                    >
+                      {viewMode === v.id && (
+                        <motion.div
+                          layoutId="view-pill"
+                          className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                      )}
+                      <v.icon className="w-4 h-4" />
+                      <span className="hidden sm:inline">{v.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -465,8 +588,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
               {/* Ціна */}
               <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px]">
-                  <span className="truncate">Ціна</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
+                  <span className="truncate">Ціна</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
                   {(minPrice || maxPrice) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
@@ -483,8 +606,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
               {/* Площа */}
               <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px]">
-                  <span className="truncate">Площа</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
+                  <span className="truncate">Площа</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
                   {(minArea || maxArea) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
@@ -502,8 +625,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
               {/* Тип нерухомості */}
               {category && SUBTYPES_BY_CATEGORY[category] && (
                 <Popover>
-                  <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground">
-                    <span className="truncate">Тип нерухомості</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180">
+                    <span className="truncate">Тип нерухомості</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
                     {subTypes.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{subTypes.length}</span>}
                   </PopoverTrigger>
                   <PopoverContent className="w-[420px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
@@ -531,10 +654,35 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 </Popover>
               )}
 
+              {/* Advanced Filters Toggle Button */}
+              <button 
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
+              >
+                <span>Більше фільтрів</span> 
+                <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200", showAdvancedFilters && "rotate-180")} />
+                {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0)) > 0 && !showAdvancedFilters && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">
+                    {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0))}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Advanced Filters Row */}
+            <AnimatePresence>
+              {showAdvancedFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                  animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
+                  exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex flex-wrap items-center gap-3 w-full font-inter overflow-hidden border-t border-border/50 pt-4"
+                >
               {/* Станція метро */}
               <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground">
-                  <span className="truncate">Станція метро</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180">
+                  <span className="truncate">Станція метро</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
                   {metroStations.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{metroStations.length}</span>}
                 </PopoverTrigger>
                 <PopoverContent className="w-[500px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
@@ -568,10 +716,109 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 </PopoverContent>
               </Popover>
 
+              {/* Район */}
+              <Popover>
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180">
+                  <span className="truncate">Район</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
+                  {districts.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{districts.length}</span>}
+                </PopoverTrigger>
+                <PopoverContent className="w-[450px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Оберіть район</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 max-h-[60vh] overflow-y-auto pr-3 custom-scrollbar">
+                    {DISTRICTS.map(d => (
+                      <label key={d.value} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", districts.includes(d.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
+                          {districts.includes(d.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={districts.includes(d.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) setDistricts([...districts, d.value])
+                            else setDistricts(districts.filter(v => v !== d.value))
+                          }}
+                        />
+                        <span className={cn("text-sm truncate transition-colors", districts.includes(d.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")} title={d.label}>{d.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Поверх */}
+              <Popover>
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
+                  <span className="truncate">Поверх</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
+                  {(minFloor || maxFloor) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Поверх</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input type="number" placeholder="від" value={minFloor} onChange={e => setMinFloor(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                    <span className="text-muted-foreground">–</span>
+                    <input type="number" placeholder="до" value={maxFloor} onChange={e => setMaxFloor(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Поверховість */}
+              <Popover>
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
+                  <span className="truncate">Всього поверхів</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
+                  {(minFloorsTotal || maxFloorsTotal) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Всього поверхів</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input type="number" placeholder="від" value={minFloorsTotal} onChange={e => setMinFloorsTotal(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                    <span className="text-muted-foreground">–</span>
+                    <input type="number" placeholder="до" value={maxFloorsTotal} onChange={e => setMaxFloorsTotal(e.target.value)}
+                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Стан */}
+              <Popover>
+                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
+                  <span className="truncate">Стан</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
+                  {states.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{states.length}</span>}
+                </PopoverTrigger>
+                <PopoverContent className="w-[450px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Оберіть стан</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    {STATES.map(st => (
+                      <label key={st.value} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", states.includes(st.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
+                          {states.includes(st.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={states.includes(st.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) setStates([...states, st.value])
+                            else setStates(states.filter(v => v !== st.value))
+                          }}
+                        />
+                        <span className={cn("text-sm transition-colors", states.includes(st.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")}>{st.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+                </motion.div>
+              )}
+            </AnimatePresence>
             </div>
-          </div>
-        </motion.div>
-      )}
+            </LayoutGroup>
+          </motion.div>
+        )}
     </AnimatePresence>
 
         {/* Desktop Toggle Map Filters Button */}
@@ -659,11 +906,18 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
-                        className={cn('w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors rounded-full', {
-                          'gradient-gold': isCurrent,
+                        className={cn('relative z-10 w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors rounded-full', {
+                          'text-white': isCurrent,
                           'text-muted-foreground hover:bg-muted hover:text-foreground': !isCurrent
                         })}
                       >
+                        {isCurrent && (
+                          <motion.div
+                            layoutId="pagination-pill"
+                            className="absolute inset-0 gradient-gold rounded-full -z-10"
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          />
+                        )}
                         {page}
                       </button>
                     )

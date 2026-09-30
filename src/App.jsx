@@ -2,7 +2,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import PageNotFound from './lib/PageNotFound'
 import { AuthProvider } from '@/lib/AuthContext'
@@ -34,6 +34,21 @@ const PageLoader = () => (
   </div>
 )
 
+const CatalogWrapper = () => {
+  const location = useLocation()
+  const path = location.pathname
+  
+  if (!path.startsWith('/flats') && !path.startsWith('/houses') && !path.startsWith('/realtys')) {
+    return <PageNotFound />
+  }
+
+  let category = 'apartment'
+  if (path.startsWith('/houses')) category = 'house'
+  else if (path.startsWith('/realtys')) category = 'commercial'
+  
+  return <CatalogPage defaultCategory={category} />
+}
+
 const AuthenticatedApp = () => {
   return (
     <Routes>
@@ -43,21 +58,9 @@ const AuthenticatedApp = () => {
             <HomePage />
           </Suspense>
         } />
-        <Route path="/flats" element={
-          <Suspense fallback={<PageLoader />}>
-            <CatalogPage defaultCategory="apartment" />
-          </Suspense>
-        } />
-        <Route path="/houses" element={
-          <Suspense fallback={<PageLoader />}>
-            <CatalogPage defaultCategory="house" />
-          </Suspense>
-        } />
-        <Route path="/realtys" element={
-          <Suspense fallback={<PageLoader />}>
-            <CatalogPage defaultCategory="commercial" />
-          </Suspense>
-        } />
+        
+        {/* Single dynamic route guarantees exactly zero unmounts between flats/houses/realtys */}
+        <Route path="/:catalogType" element={<Suspense fallback={<PageLoader />}><CatalogWrapper /></Suspense>} />
         <Route path="/property/:id" element={
           <Suspense fallback={<PageLoader />}>
             <PropertyDetail />

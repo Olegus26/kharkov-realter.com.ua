@@ -1,10 +1,31 @@
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Phone, Mail, MapPin, Instagram, Facebook, Send as Telegram } from 'lucide-react'
 import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
 import { cn } from '@/lib/utils'
+import AddressRevolver from './AddressRevolver'
+
+const OFFICES = [
+  { title: 'Центр-1', addr: 'вулиця Григорія Сковороди, 65, 2-й поверх, офіс № 3', phones: ['+380 (67) 714-36-52', '+380 (66) 909-51-04'] },
+  { title: 'Центр-2', addr: 'вулиця Сумська, 80', phones: ['+380 (95) 737-22-61', '+380 (93) 396-35-10'] },
+  { title: 'Левада', addr: 'Аерокосмічний проспект, 48', phones: ['+380 (67) 803-52-48', '+380 (50) 505-91-78'] },
+  { title: 'Нові Будинки', addr: 'проспект Петра Григоренка, 7', phones: ['+380 (98) 284-33-43', '+380 (95) 775-08-88'] },
+  { title: 'Одеська', addr: 'Аерокосмічний проспект, 176', phones: ['+380 (50) 135-18-16'] },
+  { title: 'Олексіївка', addr: 'проспект Людвіга Свободи, 39', phones: ['+380 (99) 924-90-31', '+380 (96) 076-02-99'] },
+  { title: 'Павлове Поле', addr: 'вулиця 23-го Серпня, 38', phones: ['+380 (50) 949-14-87', '+380 (97) 520-87-50'] },
+  { title: 'Салтівка-2', addr: 'проспект Тракторобудівників, 108', phones: ['+380 (73) 056-16-70', '+380 (67) 575-51-09'] },
+  { title: 'Салтівка-3', addr: 'вул. Нескорених, 30', phones: ['+380 (99) 049-83-91', '+380 (96) 201-02-20'] },
+  { title: 'Салтівка-4', addr: 'вулиця Амосова, 25', phones: ['+380 (95) 737-22-61', '+380 (93) 396-35-10'] },
+  { title: 'Салтівка-5', addr: 'вул. Нескорених, 30', phones: ['+380 (97) 943-07-93', '+380 (97) 016-15-07', '+380 (95) 816-21-63'] },
+  { title: 'Холодна Гора', addr: 'вулиця Холодногірська, 3', phones: ['+380 (99) 933-89-02'] },
+  { title: 'ХТЗ', addr: 'проспект Олександрівський, 154', phones: ['+380 (99) 484-46-69', '+380 (67) 113-11-95'] }
+];
 
 const Footer = () => {
-  const phones = getPhonesForToday();
+  const [activeOfficeIdx, setActiveOfficeIdx] = useState(0);
+  const phones = OFFICES[activeOfficeIdx]?.phones || getPhonesForToday();
+  
   return (
     <footer className="bg-card border-t border-border">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -71,15 +92,25 @@ const Footer = () => {
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-gold mb-5">Контакти</p>
             <ul className="space-y-4">
-              <li className="flex gap-3 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 text-gold mt-0.5 shrink-0" />
-                Харків, вул. Григорія Сковороди, 65, 2-й поверх, оф. 3
+              <li className="flex text-sm text-muted-foreground w-full">
+                <AddressRevolver addresses={OFFICES} onChange={setActiveOfficeIdx} />
               </li>
               <li className="flex flex-col gap-2">
                 {phones.map((p, idx) => (
                   <a key={idx} href={getPhoneLink(p)} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-gold transition-colors">
                     <Phone className={cn("w-4 h-4 text-gold shrink-0", idx > 0 && "opacity-0")} />
-                    {p}
+                    <motion.span key={p + activeOfficeIdx} className="flex">
+                      {p.split('').map((char, i) => (
+                        <motion.span
+                          key={i}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: idx * 0.2 + i * 0.03, duration: 0.1 }}
+                        >
+                          {char === ' ' ? '\u00A0' : char}
+                        </motion.span>
+                      ))}
+                    </motion.span>
                   </a>
                 ))}
               </li>

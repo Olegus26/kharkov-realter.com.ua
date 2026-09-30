@@ -47,7 +47,7 @@
 
 @layer base {
   * { @apply border-border; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scrollbar-gutter: stable; }
   body { 
     @apply bg-background text-foreground font-inter antialiased font-medium;
     text-rendering: optimizeLegibility;
@@ -77,6 +77,15 @@
   }
   .gradient-dark {
     background: linear-gradient(180deg, transparent, hsl(var(--background)) 80%);
+  }
+
+  /* Hide scrollbar for elements with no-scrollbar */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

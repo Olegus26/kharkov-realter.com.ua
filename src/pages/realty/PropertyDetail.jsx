@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import { getAllObjects, mapObject } from '@/lib/novostoyApi'
 import { useFavorites } from '@/lib/FavoritesContext'
+import { useVisited } from '@/lib/useVisited'
 import { cn } from '@/lib/utils'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
@@ -17,6 +18,7 @@ const PropertyDetail = () => {
   const [activeImg, setActiveImg] = useState(0)
   const thumbnailRefs = useRef([])
   const { isFavorite, toggleFavorite } = useFavorites()
+  const { markVisited } = useVisited()
   const queryClient = useQueryClient()
 
   useEffect(() => {
@@ -52,6 +54,12 @@ const PropertyDetail = () => {
     },
     staleTime: 10 * 60 * 1000,
   })
+
+  useEffect(() => {
+    if (property?.id) {
+      markVisited(property.id)
+    }
+  }, [property?.id, markVisited])
 
   if (isLoading) return (
     <div className="min-h-screen bg-background pt-24 pb-20">
@@ -213,42 +221,42 @@ const PropertyDetail = () => {
 
               {/* Specs grid */}
               <div className="grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-border border-y border-border py-6 mb-10">
-                {property.area && (
+                {property.area > 0 && (
                   <div className="text-center px-4 py-2">
                     <Maximize2 className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
                     <p className="font-inter font-medium text-2xl text-foreground">{property.area}</p>
                     <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Загальна м²</p>
                   </div>
                 )}
-                {property.area_live && (
+                {property.area_live > 0 && (
                   <div className="text-center px-4 py-2">
                     <BedDouble className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
                     <p className="font-inter font-medium text-2xl text-foreground">{property.area_live}</p>
                     <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Житлова м²</p>
                   </div>
                 )}
-                {property.area_kitchen && (
+                {property.area_kitchen > 0 && (
                   <div className="text-center px-4 py-2">
                     <UtensilsCrossed className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
                     <p className="font-inter font-medium text-2xl text-foreground">{property.area_kitchen}</p>
                     <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кухня м²</p>
                   </div>
                 )}
-                {property.rooms && (
+                {property.rooms > 0 && (
                   <div className="text-center px-4 py-2">
                     <BedDouble className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
                     <p className="font-inter font-medium text-2xl text-foreground">{property.rooms}</p>
                     <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кімнат</p>
                   </div>
                 )}
-                {property.floor && (
+                {property.floor > 0 && (
                   <div className="text-center px-4 py-2">
                     <Building className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
                     <p className="font-inter font-medium text-2xl text-foreground">{property.floor}/{property.floors_total}</p>
                     <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Поверх</p>
                   </div>
                 )}
-                {!property.floor && property.year_built && (
+                {(!property.floor || property.floor === 0) && property.year_built > 0 && (
                   <div className="text-center px-4 py-2">
                     <Calendar className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
                     <p className="font-inter font-medium text-2xl text-foreground">{property.year_built}</p>
@@ -346,7 +354,7 @@ const PropertyDetail = () => {
                   className="w-full mt-3 py-4 border border-border bg-transparent flex items-center justify-center gap-2 hover:bg-muted transition-colors group font-inter rounded-full"
                 >
                   <motion.div animate={{ scale: isFavorite(property.id) ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
-                    <Heart className={cn("w-4 h-4 transition-colors", isFavorite(property.id) ? "text-navy fill-navy" : "text-muted-foreground group-hover:text-navy")} />
+                    <Heart className={cn("w-4 h-4 transition-colors", isFavorite(property.id) ? "text-red-500 fill-red-500" : "text-muted-foreground group-hover:text-red-500")} />
                   </motion.div>
                   <span className="text-xs tracking-widest uppercase font-medium text-foreground">
                     {isFavorite(property.id) ? 'В обраному' : 'Записатись на перегляд'}
