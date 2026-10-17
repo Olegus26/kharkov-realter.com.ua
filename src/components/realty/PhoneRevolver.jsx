@@ -1,92 +1,108 @@
-import { useState, useRef, useEffect } from 'react';
-import { Phone } from 'lucide-react';
-import { getPhoneLink } from '@/lib/phones';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Phone, ChevronUp, ChevronDown } from 'lucide-react'
+import { getPhoneLink } from '@/lib/phones'
 
-export default function PhoneRevolver({ phones }) {
-  const [activeIndex, setActiveIndex] = useState(phones?.length >= 3 ? 1 : 0);
-  const isWheeling = useRef(false);
-  const wheelTimeout = useRef(null);
+const PhoneRevolver = ({ phones = [] }) => {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const isWheeling = useRef(false)
+  const wheelTimeout = useRef(null)
+  const containerRef = useRef(null)
 
-  if (!phones || phones.length === 0) return null;
+  const handleNext = useCallback(() => {
+    if (!phones || phones.length <= 1) return
+    setActiveIndex((prev) => (prev + 1) % phones.length)
+  }, [phones])
+
+  const handlePrev = useCallback(() => {
+    if (!phones || phones.length <= 1) return
+    setActiveIndex((prev) => (prev - 1 + phones.length) % phones.length)
+  }, [phones])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || !phones || phones.length <= 1) return
+
+    const handleNativeWheel = (e) => {
+      // Allow wheel to rotate phone numbers smoothly
+      if (isWheeling.current) return
+
+      if (e.deltaY > 0) {
+        setActiveIndex((prev) => (prev + 1) % phones.length)
+      } else if (e.deltaY < 0) {
+        setActiveIndex((prev) => (prev - 1 + phones.length) % phones.length)
+      }
+
+      isWheeling.current = true
+      clearTimeout(wheelTimeout.current)
+      wheelTimeout.current = setTimeout(() => {
+        isWheeling.current = false
+      }, 150)
+    }
+
+    el.addEventListener('wheel', handleNativeWheel, { passive: true })
+    return () => {
+      el.removeEventListener('wheel', handleNativeWheel)
+      if (wheelTimeout.current) clearTimeout(wheelTimeout.current)
+    }
+  }, [phones])
+
+  if (!phones || phones.length === 0) return null
 
   if (phones.length === 1) {
     return (
-      <a href={getPhoneLink(phones[0])} className="hidden xl:flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-gold transition-colors">
-        <Phone className="w-4 h-4" />
-        {phones[0]}
+      <a
+        href={getPhoneLink(phones[0])}
+        tabIndex={0}
+        aria-label={`Зателефонувати ${phones[0]}`}
+        className="hidden xl:flex items-center gap-2 text-sm font-medium text-foreground/70 hover:text-gold transition-colors focus:outline-none focus:ring-1 focus:ring-gold rounded-full px-2 py-1"
+      >
+        <Phone className="w-4 h-4 text-gold" />
+        <span>{phones[0]}</span>
       </a>
-    );
+    )
   }
 
-  const containerRef = useRef(null);
+  const currentPhone = phones[activeIndex] || phones[0]
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const handleNativeWheel = (e) => {
-      e.preventDefault(); // Blocks the whole page from scrolling
-      
-      if (isWheeling.current) return;
-      
-      if (e.deltaY > 0) {
-        setActiveIndex((prev) => Math.min(prev + 1, phones.length - 1));
-      } else if (e.deltaY < 0) {
-        setActiveIndex((prev) => Math.max(prev - 1, 0));
-      }
-      
-      isWheeling.current = true;
-      clearTimeout(wheelTimeout.current);
-      wheelTimeout.current = setTimeout(() => {
-        isWheeling.current = false;
-      }, 150);
-    };
-
-    el.addEventListener('wheel', handleNativeWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleNativeWheel);
-  }, [phones.length]);
-  
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="hidden xl:flex items-center gap-2 relative h-[50px]" 
-      title="Гортайте коліщатком миші"
+      className="hidden xl:flex items-center gap-1.5 relative h-[44px] bg-muted/40 hover:bg-muted/70 px-3 py-1 rounded-full border border-border/40 transition-colors"
+      title="Гортайте або використовуйте стрілки для зміни номера"
     >
-      <Phone className="w-4 h-4 text-foreground/60 z-10 shrink-0" />
-      
-      <div 
-        className="flex flex-col h-[50px] overflow-hidden relative perspective-[1000px] w-[140px]"
-        style={{ padding: '13px 0' }}
+      <Phone className="w-3.5 h-3.5 text-gold shrink-0" />
+
+      <a
+        href={getPhoneLink(currentPhone)}
+        tabIndex={0}
+        aria-label={`Зателефонувати черговому спеціалісту: ${currentPhone}`}
+        className="text-xs font-semibold font-inter text-foreground hover:text-gold transition-colors tracking-tight min-w-[130px]"
       >
-        <div 
-           className="transition-transform duration-300 ease-out flex flex-col"
-           style={{ transform: `translateY(-${activeIndex * 24}px)` }}
+        {currentPhone}
+      </a>
+
+      <div className="flex flex-col -my-1 ml-0.5">
+        <button
+          type="button"
+          onClick={handlePrev}
+          aria-label="Попередній телефон"
+          tabIndex={0}
+          className="p-0.5 text-muted-foreground hover:text-foreground transition-colors leading-none"
         >
-          {phones.map((p, idx) => {
-            const diff = idx - activeIndex;
-            const isActive = diff === 0;
-            
-            return (
-              <a 
-                key={idx} 
-                href={getPhoneLink(p)} 
-                className="flex-none h-[24px] flex items-center justify-start transition-all duration-300 ease-out origin-center"
-                style={{
-                  transform: `rotateX(${diff * -40}deg) scale(${isActive ? 1 : 0.85}) translateZ(${isActive ? '0px' : '-10px'})`,
-                  opacity: isActive ? 1 : 0.4,
-                  color: isActive ? 'inherit' : 'hsl(var(--foreground) / 0.6)',
-                  pointerEvents: isActive ? 'auto' : 'none'
-                }}
-              >
-                <span className={cn("text-sm font-medium truncate transition-colors", isActive ? "text-foreground/80 hover:text-gold" : "")}>
-                  {p}
-                </span>
-              </a>
-            );
-          })}
-        </div>
+          <ChevronUp className="w-3 h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={handleNext}
+          aria-label="Наступний телефон"
+          tabIndex={0}
+          className="p-0.5 text-muted-foreground hover:text-foreground transition-colors leading-none"
+        >
+          <ChevronDown className="w-3 h-3" />
+        </button>
       </div>
     </div>
-  );
+  )
 }
+
+export default PhoneRevolver

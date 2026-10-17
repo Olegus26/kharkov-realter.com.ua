@@ -1,17 +1,33 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart } from 'lucide-react'
+import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send } from 'lucide-react'
 import { getAllObjects, mapObject } from '@/lib/novostoyApi'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
-import { cn } from '@/lib/utils'
+import { submitLead } from '@/lib/leadService'
+import { formatPhone, cn } from '@/lib/utils'
+import { HOTLINE_PHONE } from '@/data/offices'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
 
 const DEAL_LABELS = { sale: 'Продаж', rent: 'Оренда' }
 const TYPE_LABELS = { apartment: 'Квартира', house: 'Будинок', penthouse: 'Пентхаус', villa: 'Вілла', commercial: 'Комерційна' }
+
+const STATUS_STAMPS = [
+  { key: 'is_sold', src: '/stamp-sold.png', alt: 'Продано' },
+  { key: 'deposit', src: '/stamp-deposit.png', alt: 'Завдаток' },
+]
+
+const sanitizeHtml = (html) => {
+  if (!html) return ''
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, '')
+}
 
 const PropertyDetail = () => {
   const { id } = useParams()
@@ -20,6 +36,13 @@ const PropertyDetail = () => {
   const { isFavorite, toggleFavorite } = useFavorites()
   const { markVisited } = useVisited()
   const queryClient = useQueryClient()
+
+  // Booking modal state
+  const [isBookingOpen, setIsBookingOpen] = useState(false)
+  const [bookingForm, setBookingForm] = useState({ name: '', phone: '', note: '' })
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState(false)
+  const [bookingSubmitted, setBookingSubmitted] = useState(false)
+  const [bookingError, setBookingError] = useState('')
 
   useEffect(() => {
     if (thumbnailRefs.current[activeImg]) {
@@ -35,22 +58,25 @@ const PropertyDetail = () => {
   const { data: property, isLoading } = useQuery({
     queryKey: ['novostoy-property', id],
     queryFn: async () => {
-      // Check if already in catalog cache (sale or rent)
       const saleCache = queryClient.getQueryData(['novostoy-objects', 'sale'])
       const rentCache = queryClient.getQueryData(['novostoy-objects', 'rent'])
       const allCache = queryClient.getQueryData(['novostoy-objects', ''])
-      
+
       for (const cache of [saleCache, rentCache, allCache]) {
         if (cache) {
-          const found = cache.find(o => String(o.id) === String(id))
-          if (found) return found
+          const found = cache.find((o) => String(o.id) === String(id))
+          if (found && found.images && found.images.length > 0) return found
         }
       }
-      
-      // Not in cache — fetch all and find
-      const allItems = await getAllObjects({})
+
+      const allItems = await getAllObjects({ sell_type: '2' })
       const mapped = allItems.map(mapObject)
-      return mapped.find(o => String(o.id) === String(id)) || null
+      const found = mapped.find((o) => String(o.id) === String(id))
+      if (found) return found
+
+      const rentItems = await getAllObjects({ sell_type: '1' })
+      const mappedRent = rentItems.map(mapObject)
+      return mappedRent.find((o) => String(o.id) === String(id)) || null
     },
     staleTime: 10 * 60 * 1000,
   })
@@ -61,90 +87,135 @@ const PropertyDetail = () => {
     }
   }, [property?.id, markVisited])
 
-  if (isLoading) return (
-    <div className="min-h-screen bg-background pt-24 pb-20">
-      {/* Skeleton Gallery */}
-      <div className="w-full h-[50vh] md:h-[60vh] bg-card border-b border-border/50 animate-pulse" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 md:mt-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-          <div className="lg:col-span-2 space-y-8">
-            {/* Title & Location Skeleton */}
-            <div className="space-y-4">
-              <div className="w-24 h-4 bg-muted/30 rounded animate-pulse" />
-              <div className="w-3/4 h-12 md:h-16 bg-muted/30 rounded animate-pulse" />
-              <div className="w-1/2 h-4 bg-muted/30 rounded animate-pulse" />
-            </div>
-            {/* Specs Grid Skeleton */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border/50">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-card h-32 animate-pulse" />
-              ))}
-            </div>
-            {/* Description Skeleton */}
-            <div className="space-y-3 pt-4">
-              <div className="w-32 h-8 bg-muted/30 rounded animate-pulse mb-6" />
-              <div className="w-full h-4 bg-muted/30 rounded animate-pulse" />
-              <div className="w-5/6 h-4 bg-muted/30 rounded animate-pulse" />
-              <div className="w-full h-4 bg-muted/30 rounded animate-pulse" />
-              <div className="w-4/5 h-4 bg-muted/30 rounded animate-pulse" />
-            </div>
-          </div>
-          {/* Sidebar Skeleton */}
-          <div className="lg:col-span-1 hidden lg:block">
-            <div className="border border-border/50 bg-card p-7 space-y-6">
-              <div className="w-20 h-3 bg-muted/30 rounded animate-pulse" />
-              <div className="w-48 h-14 bg-muted/30 rounded animate-pulse" />
-              <div className="w-24 h-3 bg-muted/30 rounded animate-pulse" />
-              <div className="w-full h-12 bg-muted/30 rounded animate-pulse mt-8" />
-              <div className="w-full h-12 bg-muted/30 rounded animate-pulse" />
+  const handlePrevImage = useCallback(() => {
+    if (!property?.images?.length) return
+    setActiveImg((prev) => (prev === 0 ? property.images.length - 1 : prev - 1))
+  }, [property?.images])
+
+  const handleNextImage = useCallback(() => {
+    if (!property?.images?.length) return
+    setActiveImg((prev) => (prev === property.images.length - 1 ? 0 : prev + 1))
+  }, [property?.images])
+
+  const handleKeyDownGallery = useCallback((e) => {
+    if (e.key === 'ArrowLeft') handlePrevImage()
+    if (e.key === 'ArrowRight') handleNextImage()
+  }, [handlePrevImage, handleNextImage])
+
+  const handleToggleFavorite = useCallback((e) => {
+    e.preventDefault()
+    if (property?.id) toggleFavorite(property.id)
+  }, [property?.id, toggleFavorite])
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault()
+    setIsSubmittingBooking(true)
+    setBookingError('')
+
+    const result = await submitLead({
+      type: 'viewing',
+      name: bookingForm.name,
+      phone: bookingForm.phone,
+      propertyId: property?.id,
+      propertyTitle: property?.title,
+      message: bookingForm.note
+    })
+
+    setIsSubmittingBooking(false)
+    if (!result.success) {
+      setBookingError(result.error || 'Помилка надсилання')
+      return
+    }
+
+    setBookingSubmitted(true)
+  }
+
+  const catalogBackLink = useMemo(() => {
+    if (!property) return '/flats'
+    if (property.type === 'house') return '/houses'
+    if (property.type === 'commercial') return '/realtys'
+    return '/flats'
+  }, [property])
+
+  const catalogBackTitle = useMemo(() => {
+    if (!property) return 'Каталог'
+    if (property.type === 'house') return 'Будинки'
+    if (property.type === 'commercial') return 'Комерція'
+    return 'Квартири'
+  }, [property])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background pt-24 pb-20">
+        <div className="w-full h-[50vh] md:h-[60vh] bg-card border-b border-border/50 animate-pulse" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 md:mt-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+            <div className="lg:col-span-2 space-y-8">
+              <div className="space-y-4">
+                <div className="w-24 h-4 bg-muted/30 rounded animate-pulse" />
+                <div className="w-3/4 h-12 md:h-16 bg-muted/30 rounded animate-pulse" />
+                <div className="w-1/2 h-4 bg-muted/30 rounded animate-pulse" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border/50">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-card h-32 animate-pulse" />
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
-  if (!property) return (
-    <div className="pt-32 text-center min-h-screen flex flex-col items-center justify-center">
-      <p className="font-cormorant text-4xl mb-4">Об'єкт не знайдено</p>
-      <Link to="/flats" className="text-gold text-sm font-inter">← Повернутися до каталогу</Link>
-    </div>
-  )
+  if (!property) {
+    return (
+      <div className="pt-32 text-center min-h-screen flex flex-col items-center justify-center px-4">
+        <p className="font-cormorant text-4xl mb-4 font-bold text-foreground">Об'єкт не знайдено</p>
+        <p className="text-muted-foreground font-inter text-sm mb-6">Можливо, оголошення було знято з публікації або змінилася адреса.</p>
+        <Link to="/flats" className="px-6 py-3 bg-navy text-white text-xs tracking-widest uppercase font-inter rounded-full hover:bg-navy/90 transition-colors">
+          Повернутися до каталогу
+        </Link>
+      </div>
+    )
+  }
 
   const images = property.images?.length
     ? property.images
     : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80']
 
-  const handlePrevImage = () => {
-    setActiveImg(prev => (prev === 0 ? images.length - 1 : prev - 1))
-  }
-
-  const handleNextImage = () => {
-    setActiveImg(prev => (prev === images.length - 1 ? 0 : prev + 1))
-  }
-
+  const stamp = STATUS_STAMPS.find(({ key }) => property[key])
   const pricePerM2 = property.area ? Math.round(property.price / property.area) : null
 
+  const formattedPrice = property.deal === 'rent'
+    ? `${property.price.toLocaleString('uk-UA')} грн`
+    : `$${property.price.toLocaleString('uk-UA')}`
+
   const schemaUrl = `https://kharkov-realter.com.ua/property/${property.id}`
-  const seoTitle = `${TYPE_LABELS[property.type] || 'Об\'єкт'} ${property.rooms ? property.rooms + '-кімн., ' : ''}${property.area} м² за $${property.price.toLocaleString()}`
+  const seoTitle = `${TYPE_LABELS[property.type] || 'Об\'єкт'} ${property.rooms ? property.rooms + '-кімн., ' : ''}${property.area ? property.area + ' м² ' : ''}за ${formattedPrice}`
+
+  const primaryCallPhone = property.agent_phones?.[0]
+    ? `tel:+38${property.agent_phones[0]}`
+    : `tel:+380507136363`
 
   return (
-    <div className="pt-24 pb-20">
-      <SeoMeta 
+    <div className="pt-24 pb-20" onKeyDown={handleKeyDownGallery} tabIndex={0}>
+      <SeoMeta
         title={seoTitle}
-        description={property.description?.substring(0, 160) || `Купити ${seoTitle.toLowerCase()} від агентства Харків Ріелтер.`}
+        description={property.description?.substring(0, 160) || `${property.deal === 'rent' ? 'Орендувати' : 'Купити'} ${seoTitle.toLowerCase()} від агентства Харків Ріелтер.`}
         url={`/property/${property.id}`}
         image={images[0]}
       />
       <JsonLd data={generateRealEstateSchema(property, schemaUrl)} />
-      <div className="max-w-7xl mx-auto px-6">
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Breadcrumb */}
-        <div className="py-6 flex items-center gap-3">
-          <Link to="/flats" className="flex items-center gap-2 text-muted-foreground hover:text-gold text-sm font-inter transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Каталог
+        <div className="py-6 flex items-center gap-3 text-xs sm:text-sm font-inter">
+          <Link to={catalogBackLink} className="flex items-center gap-1.5 text-muted-foreground hover:text-gold transition-colors font-medium">
+            <ArrowLeft className="w-4 h-4" /> {catalogBackTitle}
           </Link>
           <span className="text-border">/</span>
-          <span className="text-sm text-muted-foreground font-inter truncate max-w-xs">{property.title}</span>
+          <span className="text-muted-foreground truncate max-w-[200px] sm:max-w-sm">{property.title}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -156,29 +227,44 @@ const PropertyDetail = () => {
                 src={images[activeImg]}
                 alt={property.title}
                 className="w-full h-full object-cover select-none"
-                onError={e => { e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80' }}
+                onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80' }}
               />
+              {stamp && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none z-10">
+                  <img
+                    src={stamp.src}
+                    alt={stamp.alt}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-1/2 h-1/2 object-contain scale-125 drop-shadow-2xl"
+                  />
+                </div>
+              )}
               {property.new_building && (
-                <div className="absolute top-4 left-4 px-4 py-1.5 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full z-10">Новобудова</div>
+                <div className="absolute top-4 left-4 px-4 py-1.5 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full z-10">
+                  Новобудова
+                </div>
               )}
               <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/50 backdrop-blur text-white text-[10px] tracking-widest uppercase font-inter rounded-full z-10">
                 {activeImg + 1} / {images.length}
               </div>
 
-              {/* Navigation arrows */}
+              {/* Navigation arrows - visible on mobile touch, hover on desktop */}
               {images.length > 1 && (
                 <>
                   <button
+                    type="button"
                     onClick={handlePrevImage}
                     aria-label="Попереднє фото"
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/40 hover:bg-background/85 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:text-gold transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:text-gold transition-all duration-300 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 z-10"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
+                    type="button"
                     onClick={handleNextImage}
                     aria-label="Наступне фото"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/40 hover:bg-background/85 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:text-gold transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:text-gold transition-all duration-300 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 z-10"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -193,16 +279,24 @@ const PropertyDetail = () => {
                   {images.map((img, i) => (
                     <button
                       key={i}
-                      ref={el => { thumbnailRefs.current[i] = el }}
+                      ref={(el) => { thumbnailRefs.current[i] = el }}
                       onClick={() => setActiveImg(i)}
-                      className={`shrink-0 w-24 h-16 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                        activeImg === i 
-                          ? 'border-navy scale-95 shadow-md shadow-navy/20' 
+                      aria-label={`Переглянути фото ${i + 1}`}
+                      className={cn(
+                        'shrink-0 w-24 h-16 overflow-hidden rounded-xl border-2 transition-all duration-300',
+                        activeImg === i
+                          ? 'border-navy scale-95 shadow-md shadow-navy/20'
                           : 'border-transparent opacity-70 hover:opacity-100 hover:border-border'
-                      }`}
+                      )}
                     >
-                      <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover pointer-events-none rounded-lg"
-                        onError={e => { e.currentTarget.style.display = 'none' }} />
+                      <img
+                        src={img}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover pointer-events-none rounded-lg"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
                     </button>
                   ))}
                 </div>
@@ -211,11 +305,11 @@ const PropertyDetail = () => {
 
             {/* Info block */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="border-t border-border pt-8">
-              <p className="text-xs tracking-[0.2em] uppercase text-gold mb-2 font-inter">{TYPE_LABELS[property.type]}</p>
-              <h1 className="font-cormorant text-4xl sm:text-5xl font-light mb-3">{property.title}</h1>
+              <p className="text-xs tracking-[0.2em] uppercase text-gold mb-2 font-inter font-semibold">{TYPE_LABELS[property.type]}</p>
+              <h1 className="font-cormorant text-3xl sm:text-5xl font-bold tracking-tight mb-3 text-foreground leading-tight">{property.title}</h1>
 
               <div className="flex items-start gap-1.5 text-muted-foreground text-sm mb-8 font-inter">
-                <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
+                <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-gold" />
                 <span>{property.location}</span>
               </div>
 
@@ -224,48 +318,48 @@ const PropertyDetail = () => {
                 {property.area > 0 && (
                   <div className="text-center px-4 py-2">
                     <Maximize2 className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
-                    <p className="font-inter font-medium text-2xl text-foreground">{property.area}</p>
-                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Загальна м²</p>
+                    <p className="font-inter font-bold text-2xl text-foreground">{property.area}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Загальна м²</p>
                   </div>
                 )}
                 {property.area_live > 0 && (
                   <div className="text-center px-4 py-2">
                     <BedDouble className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
-                    <p className="font-inter font-medium text-2xl text-foreground">{property.area_live}</p>
-                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Житлова м²</p>
+                    <p className="font-inter font-bold text-2xl text-foreground">{property.area_live}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Житлова м²</p>
                   </div>
                 )}
                 {property.area_kitchen > 0 && (
                   <div className="text-center px-4 py-2">
                     <UtensilsCrossed className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
-                    <p className="font-inter font-medium text-2xl text-foreground">{property.area_kitchen}</p>
-                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кухня м²</p>
+                    <p className="font-inter font-bold text-2xl text-foreground">{property.area_kitchen}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кухня м²</p>
                   </div>
                 )}
                 {property.rooms > 0 && (
                   <div className="text-center px-4 py-2">
                     <BedDouble className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
-                    <p className="font-inter font-medium text-2xl text-foreground">{property.rooms}</p>
-                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кімнат</p>
+                    <p className="font-inter font-bold text-2xl text-foreground">{property.rooms}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Кімнат</p>
                   </div>
                 )}
                 {property.floor > 0 && (
                   <div className="text-center px-4 py-2">
                     <Building className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
-                    <p className="font-inter font-medium text-2xl text-foreground">{property.floor}/{property.floors_total}</p>
-                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Поверх</p>
+                    <p className="font-inter font-bold text-2xl text-foreground">{property.floor}/{property.floors_total}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Поверх</p>
                   </div>
                 )}
                 {(!property.floor || property.floor === 0) && property.year_built > 0 && (
                   <div className="text-center px-4 py-2">
                     <Calendar className="w-4 h-4 text-muted-foreground mx-auto mb-3" />
-                    <p className="font-inter font-medium text-2xl text-foreground">{property.year_built}</p>
-                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Рік будівн.</p>
+                    <p className="font-inter font-bold text-2xl text-foreground">{property.year_built}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-inter mt-1">Рік будівн.</p>
                   </div>
                 )}
               </div>
 
-              {/* Additional Text Specs */}
+              {/* Additional Specs */}
               <div className="mb-8 flex flex-col gap-3 text-sm font-inter">
                 {property.region && (
                   <div className="grid grid-cols-3 border-b border-border/50 pb-2">
@@ -289,89 +383,207 @@ const PropertyDetail = () => {
                 )}
               </div>
 
-              {/* Description */}
+              {/* Description sanitized */}
               {property.description && (
                 <div className="mb-8">
                   <h3 className="font-cormorant text-2xl mb-4 font-bold">Опис</h3>
-                  <div 
-                    className="text-foreground leading-relaxed text-sm font-inter space-y-3"
-                    dangerouslySetInnerHTML={{ __html: property.description }}
+                  <div
+                    className="text-foreground leading-relaxed text-sm font-inter space-y-3 prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(property.description) }}
                   />
                 </div>
               )}
 
               {/* Source link */}
               {property.source_url && (
-                <a href={property.source_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-gold font-inter transition-colors">
+                <a
+                  href={property.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-gold font-inter transition-colors"
+                >
                   <ExternalLink className="w-3.5 h-3.5" /> Оригінальна сторінка об'єкта
                 </a>
               )}
             </motion.div>
           </div>
 
-          {/* Right: Price + Contact */}
+          {/* Right: Price + Contact + Booking */}
           <div className="lg:col-span-1">
             <div className="sticky top-28 space-y-5">
-              {/* Price card */}
-              <div className="border border-border bg-card p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1 font-inter">
+              <div className="border border-border bg-card p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1 font-inter font-semibold">
                   {DEAL_LABELS[property.deal]}
                 </p>
-                <p className="font-inter font-bold text-4xl mb-1 tracking-tight text-foreground">
-                  ${property.price.toLocaleString('uk-UA')}
+                <p className="font-inter font-bold text-3xl sm:text-4xl mb-1 tracking-tight text-foreground">
+                  {formattedPrice}
+                  {property.deal === 'rent' && <span className="text-sm font-normal text-muted-foreground ml-2">/місяць</span>}
                 </p>
-                {pricePerM2 && (
-                  <p className="text-muted-foreground text-xs font-inter mb-8">
+                {pricePerM2 && property.deal !== 'rent' && (
+                  <p className="text-muted-foreground text-xs font-inter mb-6">
                     ${pricePerM2.toLocaleString('uk-UA')}/м²
                   </p>
                 )}
 
-                {/* Agent phones */}
-                {property.agent_phones?.length > 0 && (
-                  <div className="space-y-2 mb-8">
-                    <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-3">Контакти агента</p>
-                    {property.agent_phones.map(phone => (
-                      <a key={phone} href={`tel:+38${phone}`}
-                        className="flex items-center gap-3 w-full py-3 px-4 border border-border bg-card rounded-xl hover:border-navy hover:shadow-sm transition-all group font-inter">
-                        <Phone className="w-4 h-4 text-muted-foreground group-hover:text-navy transition-colors" />
-                        <span className="text-sm font-medium group-hover:text-navy transition-colors">+38 {phone}</span>
+                {/* Primary Action 1: Book viewing */}
+                <button
+                  type="button"
+                  onClick={() => setIsBookingOpen(true)}
+                  className="flex items-center justify-center w-full py-3.5 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-bold hover:opacity-90 transition-opacity rounded-full shadow-md gap-2"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  Записатись на перегляд
+                </button>
+
+                {/* Primary Action 2: Call agent directly */}
+                <a
+                  href={primaryCallPhone}
+                  className="flex items-center justify-center w-full mt-3 py-3.5 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold hover:bg-navy/90 transition-colors rounded-full shadow-sm gap-2"
+                >
+                  <Phone className="w-4 h-4" />
+                  Подзвонити агенту
+                </a>
+
+                {/* Primary Action 3: Add to favorites */}
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  className={cn(
+                    'w-full mt-3 py-3 border border-border bg-transparent flex items-center justify-center gap-2 transition-colors font-inter rounded-full text-xs font-semibold uppercase tracking-wider',
+                    isFavorite(property.id) ? 'bg-red-50 text-red-600 border-red-200' : 'text-foreground hover:bg-muted'
+                  )}
+                >
+                  <Heart className={cn('w-4 h-4', isFavorite(property.id) && 'fill-red-500 text-red-500')} />
+                  <span>{isFavorite(property.id) ? 'В обраному' : 'Додати в обране'}</span>
+                </button>
+
+                {/* Agent phones list if multiple */}
+                {property.agent_phones?.length > 1 && (
+                  <div className="space-y-2 mt-6 pt-6 border-t border-border">
+                    <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-2 font-semibold">Додаткові контакти</p>
+                    {property.agent_phones.slice(1).map((phone) => (
+                      <a
+                        key={phone}
+                        href={`tel:+38${phone}`}
+                        className="flex items-center gap-2.5 w-full py-2 px-3 border border-border bg-card rounded-xl hover:border-navy transition-all font-inter text-xs text-foreground"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>+38 {phone}</span>
                       </a>
                     ))}
                   </div>
                 )}
-
-                <Link to="/contact"
-                  className="flex items-center justify-center w-full py-4 gradient-gold text-xs tracking-widest uppercase font-inter font-semibold hover:opacity-90 transition-opacity rounded-full shadow-md">
-                  <Phone className="w-4 h-4 mr-2" />
-                  Подзвонити агенту
-                </Link>
-
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => toggleFavorite(property.id)}
-                  className="w-full mt-3 py-4 border border-border bg-transparent flex items-center justify-center gap-2 hover:bg-muted transition-colors group font-inter rounded-full"
-                >
-                  <motion.div animate={{ scale: isFavorite(property.id) ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
-                    <Heart className={cn("w-4 h-4 transition-colors", isFavorite(property.id) ? "text-red-500 fill-red-500" : "text-muted-foreground group-hover:text-red-500")} />
-                  </motion.div>
-                  <span className="text-xs tracking-widest uppercase font-medium text-foreground">
-                    {isFavorite(property.id) ? 'В обраному' : 'Записатись на перегляд'}
-                  </span>
-                </motion.button>
               </div>
 
-              {/* ID */}
-              <div className="border border-border bg-card p-6 text-center rounded-2xl shadow-sm">
-                <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-2">ID об'єкта</p>
-                <p className="font-inter text-lg text-foreground font-medium">{property.id}</p>
+              {/* ID & Hotline */}
+              <div className="border border-border bg-card p-5 text-center rounded-2xl shadow-sm space-y-1">
+                <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter">ID об'єкта</p>
+                <p className="font-inter text-base text-foreground font-bold">#{property.id}</p>
+                <p className="text-xs text-muted-foreground font-inter pt-2">Гаряча лінія: {HOTLINE_PHONE}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {isBookingOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-3xl max-w-lg w-full p-6 sm:p-8 relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button
+              type="button"
+              onClick={() => { setIsBookingOpen(false); setBookingSubmitted(false); setBookingError('') }}
+              aria-label="Закрити вікно"
+              className="absolute top-5 right-5 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {bookingSubmitted ? (
+              <div className="text-center py-8">
+                <CheckCircle className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
+                <h3 className="font-cormorant text-3xl font-bold mb-2">Заявку прийнято!</h3>
+                <p className="text-muted-foreground font-inter text-sm mb-6">
+                  Ми зв'яжемося з вами найближчим часом для узгодження зручного часу перегляду об'єкта <b>#{property.id}</b>.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsBookingOpen(false)}
+                  className="px-8 py-3.5 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full hover:bg-navy/90 transition-colors"
+                >
+                  Зрозуміло
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-gold font-inter font-semibold mb-1">Огляд нерухомості</p>
+                <h3 className="font-cormorant text-2xl sm:text-3xl font-bold mb-2">Запис на перегляд</h3>
+                <p className="text-xs text-muted-foreground font-inter mb-6 line-clamp-1">
+                  Об'єкт: #{property.id} · {property.title}
+                </p>
+
+                <form onSubmit={handleBookingSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Ваше ім'я *</label>
+                    <input
+                      required
+                      type="text"
+                      value={bookingForm.name}
+                      onChange={(e) => setBookingForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Олександр"
+                      className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Номер телефону *</label>
+                    <input
+                      required
+                      type="tel"
+                      value={bookingForm.phone}
+                      onChange={(e) => setBookingForm((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                      placeholder="+380 (50) 000-00-00"
+                      className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Зручний час або коментар</label>
+                    <textarea
+                      rows={3}
+                      value={bookingForm.note}
+                      onChange={(e) => setBookingForm((prev) => ({ ...prev, note: e.target.value }))}
+                      placeholder="Наприклад: завтра після 15:00"
+                      className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter resize-none"
+                    />
+                  </div>
+
+                  {bookingError && (
+                    <p className="text-xs text-destructive font-inter bg-destructive/10 p-3 rounded-xl">{bookingError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingBooking}
+                    className="w-full py-4 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isSubmittingBooking ? (
+                      <span>Відправляємо...</span>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Підтвердити запис</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
 export default PropertyDetail

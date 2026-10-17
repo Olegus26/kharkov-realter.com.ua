@@ -1,15 +1,21 @@
-import { motion } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
-import UtilityCard from '@/components/realty/UtilityCard';
-import { utilities } from '@/lib/utilityData';
+import { motion } from 'framer-motion'
+import { AlertTriangle } from 'lucide-react'
+import UtilityCard from '@/components/realty/UtilityCard'
+import { utilities } from '@/lib/utilityData'
+import SeoMeta from '@/components/seo/SeoMeta'
 
-export default function UtilitiesPage() {
+const UtilitiesPage = () => {
   return (
     <div className="pt-24 pb-20">
+      <SeoMeta
+        title="Комунальні служби Харкова | Харків Ріелтер"
+        description="Актуальні контакти та телефони аварійних, комунальних та адміністративних служб Харкова. Газ, світло, вода, тепло, ЦНАП."
+        url="/utilities"
+      />
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="py-12 border-b border-border mb-10">
-          <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter">Довідник</p>
+          <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter font-semibold">Довідник</p>
           <h1 className="font-cormorant text-5xl sm:text-6xl font-light mb-3">Комунальні служби Харкова</h1>
           <p className="text-muted-foreground text-sm font-inter max-w-2xl leading-relaxed">
             Корисні контакти комунальних та адміністративних служб для мешканців Харкова.
@@ -30,8 +36,11 @@ export default function UtilitiesPage() {
             </p>
           </div>
           
-          <a href="tel:104"
-            className="px-10 py-4 bg-white text-[#111827] rounded-full font-inter text-2xl font-semibold tracking-wide hover:bg-gray-100 transition-colors shrink-0">
+          <a
+            href="tel:104"
+            className="px-10 py-4 bg-white text-[#111827] rounded-full font-inter text-2xl font-semibold tracking-wide hover:bg-gray-100 transition-colors shrink-0"
+            aria-label="Зателефонувати 104 в аварійну газову службу"
+          >
             104
           </a>
         </div>
@@ -61,5 +70,7 @@ export default function UtilitiesPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
+
+export default UtilitiesPage

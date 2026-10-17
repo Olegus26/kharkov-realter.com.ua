@@ -1,48 +1,50 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle, AlertCircle, MessageSquare } from 'lucide-react'
 import { formatPhone, cn } from '@/lib/utils'
+import { submitLead } from '@/lib/leadService'
 import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
+import { OFFICES, HOTLINE_PHONE, GENERAL_EMAIL } from '@/data/offices'
 
 const ContactPage = () => {
-  const phones = getPhonesForToday();
+  const phones = getPhonesForToday()
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', type: 'buy' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSending(true)
-    
-    // WARNING: Storing bot token in frontend is not secure for production.
-    const BOT_TOKEN = '8682779916:AAHs83CU6whQibCqugxPf7cWZAcFCeLuv38'
-    const CHAT_ID = '-1004492752360' 
-    
-    const types = { buy: 'Купівля', rent: 'Оренда', sell: 'Продаж', consult: 'Консультація' }
-    const typeLabel = types[form.type] || form.type
-    
-    const text = `Новая заявка с сайта! 🏢\nТема: ${typeLabel}\nИмя: ${form.name}\nТелефон: ${form.phone}\nEmail: ${form.email || '—'}\nПожелания: ${form.message || '—'}`
+    setErrorMessage('')
 
-    try {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: CHAT_ID, text: text })
-      })
-    } catch (err) {
-      console.error('Telegram error:', err)
-    }
+    const res = await submitLead({
+      type: form.type,
+      name: form.name,
+      phone: form.phone,
+      email: form.email,
+      message: form.message
+    })
 
     setSending(false)
+
+    if (!res.success) {
+      setErrorMessage(res.error || 'Не вдалося надіслати заявку. Будь ласка, зателефонуйте нам.')
+      return
+    }
+
     setSent(true)
   }
 
   return (
     <div className="pt-24 pb-20">
       {/* Header */}
-      <section className="max-w-7xl mx-auto px-6 py-16 border-b border-border mb-16">
-        <p className="text-xs tracking-[0.4em] uppercase text-gold mb-4 font-inter">Зворотній зв'язок</p>
-        <h1 className="font-cormorant text-6xl sm:text-7xl font-light">Зв'яжіться з нами</h1>
+      <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16 border-b border-border mb-12">
+        <p className="text-xs tracking-[0.4em] uppercase text-gold mb-3 font-inter font-semibold">Зворотній зв'язок</p>
+        <h1 className="font-cormorant text-5xl sm:text-6xl font-bold text-foreground">Зв'яжіться з нами</h1>
+        <p className="text-muted-foreground font-inter text-sm mt-3 max-w-xl">
+          Оберіть зручний офіс у вашому районі, зателефонуйте черговому спеціалісту або залиште запит на підбір нерухомості.
+        </p>
       </section>
 
       <div className="max-w-7xl mx-auto px-6">
@@ -50,65 +52,115 @@ const ContactPage = () => {
           {/* Form */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             {sent ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-20 border border-gold/30 bg-card">
-                <CheckCircle className="w-16 h-16 text-gold mb-6" />
-                <h2 className="font-cormorant text-4xl mb-3">Дякуємо!</h2>
-                <p className="text-muted-foreground font-inter text-sm">Ми отримали вашу заявку і зв'яжемося з вами найближчим часом.</p>
-                <button onClick={() => { setSent(false); setForm({ name: '', phone: '', email: '', message: '', type: 'buy' }) }}
-                  className="mt-8 text-sm text-gold hover:text-gold/70 transition-colors font-inter">
-                  Відправити ще раз
+              <div className="h-full flex flex-col items-center justify-center text-center py-20 border border-gold/30 bg-card rounded-3xl p-8">
+                <CheckCircle className="w-16 h-16 text-emerald-500 mb-6" />
+                <h2 className="font-cormorant text-4xl mb-3 font-bold text-foreground">Дякуємо!</h2>
+                <p className="text-muted-foreground font-inter text-sm max-w-md">
+                  Ми успішно отримали вашу заявку. Черговий спеціаліст зв'яжеться з вами протягом 15 хвилин.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setSent(false); setForm({ name: '', phone: '', email: '', message: '', type: 'buy' }) }}
+                  className="mt-8 text-sm text-gold hover:text-gold/80 transition-colors font-inter font-semibold"
+                >
+                  Відправити ще одне повідомлення
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5 bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
                 <div>
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-4 font-inter">Тема звернення</p>
-                  <div className="flex gap-1 bg-muted p-1 rounded-full">
-                    {[['buy', 'Купівля'], ['rent', 'Оренда'], ['sell', 'Продаж'], ['consult', 'Консультація']].map(([v, l]) => (
-                      <button key={v} type="button" onClick={() => setForm(f => ({ ...f, type: v }))}
-                        className={`flex-1 py-3 text-[10px] tracking-widest uppercase font-inter rounded-full transition-all duration-300 ${form.type === v ? 'gradient-gold shadow-md' : 'text-muted-foreground hover:text-navy'}`}>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3 font-inter font-semibold">Тема звернення</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-muted p-1.5 rounded-2xl">
+                    {[
+                      ['buy', 'Купівля'],
+                      ['rent', 'Оренда'],
+                      ['sell', 'Продаж'],
+                      ['consult', 'Консультація']
+                    ].map(([v, l]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, type: v }))}
+                        className={cn(
+                          'py-2.5 text-[11px] tracking-wider uppercase font-inter rounded-xl transition-all duration-200 font-semibold',
+                          form.type === v ? 'gradient-gold text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
                         {l}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-2">Ім'я *</label>
-                    <input required type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                      className="w-full border border-border bg-card text-foreground px-5 py-4 text-sm outline-none focus:border-navy transition-colors font-inter placeholder:text-muted-foreground rounded-2xl"
-                      placeholder="Ваше ім'я" />
+                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5 font-semibold">Ім'я *</label>
+                    <input
+                      required
+                      type="text"
+                      value={form.name}
+                      onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                      className="w-full border border-border bg-card text-foreground px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-navy/20 transition-all font-inter placeholder:text-muted-foreground rounded-2xl"
+                      placeholder="Ваше ім'я"
+                    />
                   </div>
                   <div>
-                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-2">Телефон *</label>
-                    <input required type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: formatPhone(e.target.value) }))}
-                      className="w-full border border-border bg-card text-foreground px-5 py-4 text-sm outline-none focus:border-navy transition-colors font-inter placeholder:text-muted-foreground rounded-2xl"
-                      placeholder="+380 (50) 000-00-00" />
+                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5 font-semibold">Телефон *</label>
+                    <input
+                      required
+                      type="tel"
+                      value={form.phone}
+                      onChange={(e) => setForm((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                      className="w-full border border-border bg-card text-foreground px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-navy/20 transition-all font-inter placeholder:text-muted-foreground rounded-2xl"
+                      placeholder="+380 (50) 000-00-00"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-2">Email</label>
-                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                    className="w-full border border-border bg-card text-foreground px-5 py-4 text-sm outline-none focus:border-navy transition-colors font-inter placeholder:text-muted-foreground rounded-2xl"
-                    placeholder="email@example.com" />
+                  <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5 font-semibold">Email (необов'язково)</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                    className="w-full border border-border bg-card text-foreground px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-navy/20 transition-all font-inter placeholder:text-muted-foreground rounded-2xl"
+                    placeholder="email@example.com"
+                  />
                 </div>
 
                 <div>
-                  <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-2">Повідомлення</label>
-                  <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                    rows={5}
-                    className="w-full border border-border bg-card text-foreground px-5 py-4 text-sm outline-none focus:border-navy transition-colors font-inter placeholder:text-muted-foreground resize-none rounded-2xl"
-                    placeholder="Розкажіть про ваші побажання..." />
+                  <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5 font-semibold">Повідомлення або побажання</label>
+                  <textarea
+                    value={form.message}
+                    onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
+                    rows={4}
+                    className="w-full border border-border bg-card text-foreground px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-navy/20 transition-all font-inter placeholder:text-muted-foreground resize-none rounded-2xl"
+                    placeholder="Опишіть бажаний район, кількість кімнат або орієнтовний бюджет..."
+                  />
                 </div>
 
-                <button type="submit" disabled={sending}
-                  className="w-full py-4 gradient-gold text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-3 disabled:opacity-70 rounded-full shadow-md mt-6">
+                {errorMessage && (
+                  <div className="flex items-center gap-2 p-4 rounded-xl bg-destructive/10 text-destructive text-sm font-inter">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="w-full py-4 gradient-gold text-xs tracking-widest uppercase font-inter font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-3 disabled:opacity-70 rounded-full shadow-md mt-6 text-white"
+                >
                   {sending ? (
-                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Відправляємо...</>
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Відправляємо запит...</span>
+                    </>
                   ) : (
-                    <><Send className="w-4 h-4" /> Відправити заявку</>
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Відправити заявку</span>
+                    </>
                   )}
                 </button>
 
@@ -121,64 +173,109 @@ const ContactPage = () => {
 
           {/* Info */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-8">
-            <div>
-              <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-4 font-inter">Наші офіси</p>
-              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent' }}>
-                {[
-                  { title: 'Центр-1', addr: 'вулиця Григорія Сковороди, 65, 2-й поверх, офіс № 3' },
-                  { title: 'Центр-2', addr: 'вулиця Сумська, 80' },
-                  { title: 'Левада', addr: 'Аерокосмічний проспект, 48' },
-                  { title: 'Нові Будинки', addr: 'проспект Петра Григоренка, 7' },
-                  { title: 'Одеська', addr: 'Аерокосмічний проспект, 176' },
-                  { title: 'Олексіївка', addr: 'проспект Людвіга Свободи, 39' },
-                  { title: 'Павлове Поле', addr: 'вулиця 23-го Серпня, 38' },
-                  { title: 'Салтівка-2', addr: 'проспект Тракторобудівників, 108' },
-                  { title: 'Салтівка-3', addr: 'вул. Нескорених, 30' },
-                  { title: 'Салтівка-4', addr: 'вулиця Амосова, 25' },
-                  { title: 'Салтівка-5', addr: 'вул. Нескорених, 30' },
-                  { title: 'Холодна Гора', addr: 'вулиця Холодногірська, 3' },
-                  { title: 'ХТЗ', addr: 'проспект Олександрівський, 154' },
-                ].map(o => (
-                  <a 
-                    key={o.title} 
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('АН "Харків-Ріелтер" ' + o.title)}`}
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3 p-6 border border-border bg-card rounded-3xl shadow-sm">
+                <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Гаряча лінія та чергові номери</p>
+                <a href={getPhoneLink(HOTLINE_PHONE)} className="flex items-center gap-3 group">
+                  <div className="w-10 h-10 rounded-full gradient-gold flex items-center justify-center text-white shrink-0">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-inter font-bold text-xl text-foreground group-hover:text-gold transition-colors">{HOTLINE_PHONE}</p>
+                    <p className="text-xs text-muted-foreground font-inter">Багатоканальний диспетчерський зв'язок</p>
+                  </div>
+                </a>
+
+                <div className="pt-3 border-t border-border flex flex-wrap gap-2">
+                  <a
+                    href="https://t.me/kharkov_realter"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex gap-4 p-5 border border-border bg-card rounded-2xl hover:border-navy/40 hover:shadow-md transition-all group cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088cc]/10 text-[#0088cc] hover:bg-[#0088cc] hover:text-white transition-colors text-xs font-inter font-semibold"
                   >
-                    <MapPin className="w-5 h-5 text-navy group-hover:text-navy/70 shrink-0 mt-0.5 transition-colors" />
-                    <div>
-                      <p className="font-inter font-medium text-base leading-tight mb-1 text-foreground group-hover:text-navy transition-colors">{o.title}</p>
-                      <p className="text-muted-foreground text-sm font-inter">{o.addr}</p>
-                    </div>
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Telegram канал
                   </a>
-                ))}
+                  <a
+                    href="viber://chat?number=%2B380507136363"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white transition-colors text-xs font-inter font-semibold"
+                  >
+                    Viber чат
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a
+                  href={`mailto:${GENERAL_EMAIL}`}
+                  className="flex items-center gap-3.5 p-5 border border-border bg-card rounded-2xl hover:border-gold/50 transition-colors group shadow-sm"
+                >
+                  <Mail className="w-5 h-5 text-gold shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter">Email</p>
+                    <p className="font-inter font-semibold text-sm text-foreground truncate group-hover:text-gold transition-colors">{GENERAL_EMAIL}</p>
+                  </div>
+                </a>
+
+                <div className="flex items-center gap-3.5 p-5 border border-border bg-card rounded-2xl shadow-sm">
+                  <Clock className="w-5 h-5 text-gold shrink-0" />
+                  <div>
+                    <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter">Графік роботи</p>
+                    <p className="font-inter font-semibold text-sm text-foreground">Пн–Пт: 10:00 – 18:00</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2 p-5 border border-border bg-card rounded-2xl hover:border-navy/40 hover:shadow-md transition-all group">
-                <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter">Телефон</p>
-                {phones.map((p, idx) => (
-                  <a key={idx} href={getPhoneLink(p)} className="flex items-center gap-4">
-                    <Phone className={cn("w-5 h-5 text-muted-foreground group-hover:text-navy transition-colors", idx > 0 && "opacity-0")} />
-                    <p className="font-inter font-medium text-lg group-hover:text-navy transition-colors">{p}</p>
-                  </a>
-                ))}
+            {/* Offices list */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-inter font-semibold">13 відділень у Харкові</p>
+                <span className="text-xs text-gold font-inter font-semibold">Поруч з кожним метро</span>
               </div>
-              <a href="mailto:info@kharkiv-realty.ua" className="flex items-center gap-4 p-5 border border-border bg-card rounded-2xl hover:border-navy/40 hover:shadow-md transition-all group">
-                <Mail className="w-5 h-5 text-muted-foreground group-hover:text-navy transition-colors" />
-                <div>
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-0.5">Email</p>
-                  <p className="font-inter font-medium text-lg group-hover:text-navy transition-colors">info@kharkiv-realty.ua</p>
-                </div>
-              </a>
-              <div className="flex items-center gap-4 p-5 border border-border bg-card rounded-2xl">
-                <Clock className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter mb-0.5">Режим роботи</p>
-                  <p className="font-inter font-medium text-lg">Пн–Пт: 10:00 – 18:00</p>
-                </div>
+
+              <div className="space-y-3 max-h-[460px] overflow-y-auto pr-2 custom-scrollbar">
+                {OFFICES.map((o) => (
+                  <div
+                    key={o.id}
+                    className="p-4 border border-border bg-card rounded-2xl hover:border-navy/40 transition-all shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2.5">
+                        <MapPin className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-inter font-bold text-sm text-foreground">{o.name}</p>
+                          <p className="text-muted-foreground text-xs font-inter mt-0.5">{o.address}</p>
+                          {o.metro && (
+                            <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-md bg-muted text-foreground/80 font-inter">
+                              м. {o.metro}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('АН "Харків-Ріелтер" ' + o.name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-semibold text-gold hover:underline font-inter shrink-0"
+                      >
+                        Карта ↗
+                      </a>
+                    </div>
+
+                    <div className="mt-3 pt-2.5 border-t border-border/50 flex flex-wrap gap-2">
+                      {o.phones.map((phone) => (
+                        <a
+                          key={phone}
+                          href={getPhoneLink(phone)}
+                          className="text-xs font-inter text-foreground/80 hover:text-gold transition-colors font-medium"
+                        >
+                          {phone}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </motion.div>

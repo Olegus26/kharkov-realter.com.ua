@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { BedDouble, Maximize2, MapPin, Heart, UtensilsCrossed, Building } from 'lucide-react'
+import { BedDouble, Maximize2, MapPin, Heart, UtensilsCrossed, Building, Eye, Home, Hammer, Handshake } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
 
@@ -13,15 +13,29 @@ const TYPE_LABELS = {
   commercial: 'Комерційна',
 }
 
-const formatPrice = (p) => {
-  if (!p) return '—'
-  if (p >= 1_000_000) return `$${(p / 1_000_000).toFixed(2)} млн`
-  return `$${p?.toLocaleString('uk-UA')}`
+const PROGRAM_BADGES = [
+  { key: 'eoselia', label: 'єОселя', icon: Home, className: 'gradient-gold text-white' },
+  { key: 'erecovery', label: 'єВідновлення', icon: Hammer, className: 'bg-emerald-600/90 backdrop-blur text-white' },
+  { key: 'tender', label: 'Торг', icon: Handshake, className: 'bg-navy/80 backdrop-blur text-white' },
+]
+
+const STATUS_STAMPS = [
+  { key: 'is_sold', src: '/stamp-sold.png', alt: 'Продано' },
+  { key: 'deposit', src: '/stamp-deposit.png', alt: 'Завдаток' },
+]
+
+const formatPrice = (price, deal) => {
+  if (!price) return '—'
+  if (deal === 'rent') return `${price.toLocaleString('uk-UA')} грн`
+  if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(2)} млн`
+  return `$${price.toLocaleString('uk-UA')}`
 }
 
 const PropertyCard = memo(({ property, className = '' }) => {
   const { isFavorite, toggleFavorite } = useFavorites()
   const liked = isFavorite(property.id)
+
+  const stamp = STATUS_STAMPS.find(({ key }) => property[key])
 
   const handleToggleFavorite = useCallback((e) => {
     e.preventDefault()
@@ -43,8 +57,23 @@ const PropertyCard = memo(({ property, className = '' }) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent opacity-90" />
 
+        {stamp && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
+            <img
+              src={stamp.src}
+              alt={stamp.alt}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-contain scale-125 drop-shadow-lg"
+              onError={(e) => {
+                e.currentTarget.src = stamp.alt === 'Продано' ? '/Продано.png' : '/Завдаток.png'
+              }}
+            />
+          </div>
+        )}
+
         {/* Badges */}
-        <div className="absolute top-4 left-4 flex gap-2">
+        <div className="absolute top-4 left-4 right-16 flex flex-wrap gap-2">
           {property.featured && (
             <span className="px-3 py-1 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full">
               Топ
@@ -55,6 +84,15 @@ const PropertyCard = memo(({ property, className = '' }) => {
               Новобудова
             </span>
           )}
+          {PROGRAM_BADGES.filter(({ key }) => property[key]).map(({ key, label, icon: Icon, className }) => (
+            <span
+              key={key}
+              className={cn('flex items-center gap-1.5 px-3 py-1 text-[11px] tracking-wide font-inter font-semibold rounded-full shadow-md', className)}
+            >
+              <Icon className="w-3 h-3 shrink-0" aria-hidden="true" />
+              {label}
+            </span>
+          ))}
         </div>
         
         <div className="absolute top-4 right-4">
@@ -77,9 +115,17 @@ const PropertyCard = memo(({ property, className = '' }) => {
         {/* Price on image */}
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <div>
-            <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price)}</p>
+            <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price, property.deal)}</p>
             {property.deal === 'rent' && <p className="text-[10px] text-white/70 font-inter">/місяць</p>}
           </div>
+          <span
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-black/30 backdrop-blur text-white/90 text-[11px] font-inter font-medium rounded-full"
+            title="Кількість переглядів"
+            aria-label={`Переглядів: ${property.views}`}
+          >
+            <Eye className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            {property.views.toLocaleString('uk-UA')}
+          </span>
         </div>
       </Link>
 

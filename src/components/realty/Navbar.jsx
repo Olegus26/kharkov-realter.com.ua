@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Phone, Heart, Home as HomeIcon, Building2, Users, Info, LifeBuoy, Contact as ContactIcon, ChevronDown, MessageSquare, Briefcase } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useFavorites } from '@/lib/FavoritesContext';
-import { getPhonesForToday, getPhoneLink } from '@/lib/phones';
-import PhoneRevolver from './PhoneRevolver';
+import { useState, useEffect, useRef } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Menu, X, Phone, Heart, Home as HomeIcon, Building2, Users, Info, LifeBuoy, Contact as ContactIcon, ChevronDown, MessageSquare, Briefcase } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useFavorites } from '@/lib/FavoritesContext'
+import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
+import { OFFICES } from '@/data/offices'
+import PhoneRevolver from './PhoneRevolver'
 
 const links = [
   { to: '/', label: 'Головна', icon: HomeIcon },
@@ -14,150 +16,160 @@ const links = [
   { to: '/o-korporatcii', label: 'Про нас', icon: Info },
   { to: '/kontakty', label: 'Контакти', icon: ContactIcon },
   { to: '/vakansii', label: 'Вакансії', icon: Briefcase },
-];
+]
 
-const REVIEW_LINKS = [
-  { name: 'Центр-1', subtitle: 'вулиця Григорія Сковороди, 65', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Центр-1#lrd=0x4127a0c2c79f564f:0x335f80521ccbe442,1' },
-  { name: 'Центр-2', subtitle: 'вулиця Сумська, 80', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Центр-2#lrd=0x4127a0de66af253f:0xa9e390a3fab4e824,1' },
-  { name: 'Левада', subtitle: 'Аерокосмічний проспект, 48', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Левада#lrd=0x4127a08797907619:0x5dfb221d2bc5d778,1' },
-  { name: 'Нові Будинки', subtitle: 'проспект Петра Григоренка, 7', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Нові+Будинки#lrd=0x41270a4fb908a46d:0xadacdcb1f20dcf3b,1' },
-  { name: 'Одеська', subtitle: 'Аерокосмічний проспект, 176', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Одеська#lrd=0x41270a9632008db3:0x44a76c12d3ce7f5e,1' },
-  { name: 'Олексіївка', subtitle: 'проспект Людвіга Свободи, 39', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Олексіївка#lrd=0x4127a41b8c5ed819:0x6b2dee6f3b93e37f,1' },
-  { name: 'Павлове Поле', subtitle: 'вулиця 23-го Серпня, 38', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Павлове+Поле#lrd=0x4127a6b576c30355:0x94796041da45487c,1' },
-  { name: 'Салтівка-2', subtitle: 'проспект Тракторобудівників, 108', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-2#lrd=0x412709f3ac950a27:0x9631459d2d056b8d,1' },
-  { name: 'Салтівка-3', subtitle: 'вул. Нескорених, 30', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-3#lrd=0x412709d8835a2725:0x58aee67da27117b6,1' },
-  { name: 'Салтівка-4', subtitle: 'вулиця Амосова, 25', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-4#lrd=0x412709872feacc21:0x4b60e810c9bccc8d,1' },
-  { name: 'Салтівка-5', subtitle: 'вул. Нескорених, 30', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Салтівка-5#lrd=0x412709e08d68d3f7:0x53dee34e1ca75e2e,1' },
-  { name: 'Холодна Гора', subtitle: 'вулиця Холодногірська, 3', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+Холодна+Гора#lrd=0x4127a1b6fbe26829:0x8e70d5c0fe3ae2e2,1' },
-  { name: 'ХТЗ', subtitle: 'проспект Олександрівський, 154', url: 'https://www.google.com/search?q=АН+"Харків-Ріелтер"+ХТЗ#lrd=0x41270b8516e70c1b:0x69aaf2d405f83757,1' },
-];
-
-export default function Navbar() {
-  const [open, setOpen] = useState(false);
-  const [reviewsOpen, setReviewsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
-  const { favorites } = useFavorites();
-  const count = favorites.length;
-  const reviewsRef = useRef(null);
-  const phones = getPhonesForToday();
+const Navbar = () => {
+  const [open, setOpen] = useState(false)
+  const [reviewsOpen, setReviewsOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const location = useLocation()
+  const { favorites } = useFavorites()
+  const count = favorites.length
+  const reviewsRef = useRef(null)
+  const phones = getPhonesForToday()
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (reviewsRef.current && !reviewsRef.current.contains(e.target)) {
-        setReviewsOpen(false);
+        setReviewsOpen(false)
       }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', fn)
-    return () => window.removeEventListener('scroll', fn)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  useEffect(() => setOpen(false), [location]);
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 40)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    setOpen(false)
+    setReviewsOpen(false)
+  }, [location])
 
   return (
     <header className={cn(
-      "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-      scrolled ? "bg-white/95 backdrop-blur-xl border-b border-black/5 shadow-sm" : "bg-white/85 backdrop-blur-xl border-b border-transparent"
+      'fixed top-0 inset-x-0 z-50 transition-all duration-300',
+      scrolled ? 'bg-white/95 backdrop-blur-xl border-b border-black/5 shadow-sm' : 'bg-white/85 backdrop-blur-xl border-b border-transparent'
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 shrink-0 group">
           <img
             src="/logo.png"
-            alt="Харьков Риелтер"
+            alt="Харків Ріелтер логотип"
             className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
           />
           <div>
             <p className="font-cormorant font-bold text-lg leading-none tracking-widest text-foreground">ХАРКІВ</p>
-            <p className="text-[9px] tracking-[0.3em] text-gold uppercase">Ріелтер</p>
+            <p className="text-[9px] tracking-[0.3em] text-gold uppercase font-semibold">Ріелтер</p>
           </div>
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-6">
-          {links.map(l => {
-            const isActive = l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to;
+        <nav className="hidden lg:flex items-center gap-6" aria-label="Основна навігація">
+          {links.map((l) => {
+            const isActive = l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to
             return (
               <Link
                 key={l.to}
                 to={l.to}
                 className={cn(
                   'text-sm font-medium transition-colors duration-300',
-                  isActive ? 'text-gold' : 'text-foreground/60 hover:text-foreground'
+                  isActive ? 'text-gold font-semibold' : 'text-foreground/70 hover:text-foreground'
                 )}
               >
                 {l.label}
               </Link>
             )
           })}
-          
+
           {/* Reviews Dropdown (Desktop) */}
           <div className="relative" ref={reviewsRef}>
             <button
-              onClick={() => setReviewsOpen(!reviewsOpen)}
+              type="button"
+              onClick={() => setReviewsOpen((prev) => !prev)}
+              aria-expanded={reviewsOpen}
               className={cn(
                 'flex items-center gap-1 text-sm font-medium transition-colors duration-300',
-                reviewsOpen ? 'text-gold' : 'text-foreground/60 hover:text-foreground'
+                reviewsOpen ? 'text-gold' : 'text-foreground/70 hover:text-foreground'
               )}
             >
-              Відгуки
-              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", reviewsOpen && "rotate-180")} />
+              <span>Відгуки</span>
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', reviewsOpen && 'rotate-180')} />
             </button>
 
-            {reviewsOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 min-w-[240px] max-h-[300px] overflow-y-auto custom-scrollbar bg-white rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.16)] border border-border/50 py-2 animate-in fade-in slide-in-from-top-2 z-50">
-                {REVIEW_LINKS.map(link => (
-                  <a
-                    key={link.name}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col px-4 py-2 hover:bg-navy/5 transition-colors"
-                    onClick={() => setReviewsOpen(false)}
+            <AnimatePresence>
+              {reviewsOpen && (
+                <div className="absolute top-full right-0 mt-7 z-50">
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ transformOrigin: 'top right' }}
+                    className="w-[280px] max-h-[340px] overflow-y-auto custom-scrollbar bg-white rounded-2xl shadow-[0_14px_36px_rgba(15,23,42,0.14)] border border-border/60 p-2"
                   >
-                    <span className="font-semibold text-sm text-foreground">{link.name}</span>
-                    <span className="text-[11px] text-muted-foreground">{link.subtitle}</span>
-                  </a>
-                ))}
-              </div>
-            )}
+                    <div className="px-3 py-1.5 border-b border-border/40 mb-1">
+                      <p className="text-[10px] tracking-widest uppercase font-semibold text-muted-foreground font-inter">Відгуки Google Maps за філіями</p>
+                    </div>
+                    {OFFICES.map((office) => (
+                      <a
+                        key={office.id}
+                        href={office.reviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col px-3 py-2 hover:bg-navy/5 rounded-xl transition-colors group"
+                        onClick={() => setReviewsOpen(false)}
+                      >
+                        <span className="font-semibold text-sm text-foreground group-hover:text-navy transition-colors">{office.name}</span>
+                        <span className="text-[11px] text-muted-foreground truncate">{office.shortAddress}</span>
+                      </a>
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         </nav>
 
         {/* Right section */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Favorites heart — always visible */}
+          {/* Favorites heart */}
           <Link
             to="/favorites"
+            aria-label={`Збережені об'єкти (${count})`}
             className={cn(
-              'relative w-10 h-10 sm:p-2 rounded-full flex items-center justify-center transition-colors',
-              location.pathname === '/favorites' ? 'text-gold' : 'text-foreground/50 hover:text-gold'
+              'relative w-10 h-10 rounded-full flex items-center justify-center transition-colors',
+              location.pathname === '/favorites' ? 'text-gold' : 'text-foreground/60 hover:text-gold'
             )}
           >
-            <Heart className={cn('w-5 h-5', location.pathname === '/favorites' && 'fill-gold')} />
+            <Heart className={cn('w-5 h-5', location.pathname === '/favorites' && 'fill-gold text-gold')} />
             {count > 0 && (
-              <span className="absolute top-1 right-1 sm:top-0.5 sm:right-0.5 w-4 h-4 bg-gold text-white text-[9px] font-bold flex items-center justify-center rounded-full">
+              <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[9px] font-bold flex items-center justify-center rounded-full shadow-sm">
                 {count}
               </span>
             )}
           </Link>
 
-          {/* Phone + CTA — desktop only */}
+          {/* Phone revolver */}
           <PhoneRevolver phones={phones} />
-          <Link to="/kontakty" className="hidden lg:block px-6 py-2.5 gradient-gold rounded-full text-xs tracking-wide uppercase font-inter font-semibold hover:opacity-90 transition-opacity text-white">
+
+          <Link
+            to="/kontakty"
+            className="hidden lg:block px-6 py-2.5 gradient-gold rounded-full text-xs tracking-wide uppercase font-inter font-semibold hover:opacity-90 transition-opacity text-white shadow-sm"
+          >
             Консультація
           </Link>
 
-          {/* Hamburger — mobile only, comfortable touch zone */}
+          {/* Hamburger — mobile only */}
           <button
-            onClick={() => setOpen(!open)}
-            aria-label="Меню"
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label={open ? 'Закрити меню' : 'Відкрити меню'}
+            aria-expanded={open}
             className="lg:hidden w-10 h-10 rounded-full flex items-center justify-center text-foreground active:bg-black/5 transition-colors"
           >
             {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -165,84 +177,106 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu — big touch-friendly items with icons */}
+      {/* Mobile menu */}
       {open && (
-        <div className="lg:hidden bg-white/95 backdrop-blur-xl border-t border-black/5 px-4 py-3 max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div className="lg:hidden bg-white/95 backdrop-blur-xl border-t border-black/5 px-4 py-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav className="space-y-1">
-            {links.map(l => {
-              const isActive = l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to;
+            {links.map((l) => {
+              const isActive = l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to
               return (
                 <Link
                   key={l.to}
                   to={l.to}
                   className={cn(
-                    'flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-medium transition-colors',
-                    isActive ? 'bg-gold/10 text-gold' : 'text-foreground/70 active:bg-black/5'
+                    'flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                    isActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
                   )}
                 >
                   <l.icon className="w-5 h-5" />
-                  {l.label}
+                  <span>{l.label}</span>
                 </Link>
               )
             })}
+
             <Link
               to="/favorites"
               className={cn(
-                'flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-medium transition-colors',
-                location.pathname === '/favorites' ? 'bg-gold/10 text-gold' : 'text-foreground/70 active:bg-black/5'
+                'flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                location.pathname === '/favorites' ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
               )}
             >
-              <Heart className={cn('w-5 h-5', location.pathname === '/favorites' && 'fill-gold')} />
-              Обране {count > 0 && <span className="text-sm text-gold font-semibold">({count})</span>}
+              <Heart className={cn('w-5 h-5', location.pathname === '/favorites' && 'fill-gold text-gold')} />
+              <span>Обране {count > 0 && <span className="text-sm text-gold font-semibold">({count})</span>}</span>
             </Link>
 
             {/* Mobile Reviews Accordion */}
-            <div className="flex flex-col">
+            <div className="flex flex-col pt-1">
               <button
-                onClick={() => setReviewsOpen(!reviewsOpen)}
+                type="button"
+                onClick={() => setReviewsOpen((prev) => !prev)}
                 className={cn(
-                  'flex items-center gap-4 px-4 py-3.5 rounded-xl text-base font-medium transition-colors w-full',
-                  reviewsOpen ? 'bg-navy/5 text-navy' : 'text-foreground/70 active:bg-black/5'
+                  'flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
+                  reviewsOpen ? 'bg-navy/5 text-navy' : 'text-foreground/80 active:bg-black/5'
                 )}
               >
                 <MessageSquare className="w-5 h-5" />
-                Відгуки
-                <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform duration-200", reviewsOpen && "rotate-180")} />
+                <span>Відгуки за філіями</span>
+                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', reviewsOpen && 'rotate-180')} />
               </button>
-              
-              {reviewsOpen && (
-                <div className="px-4 py-2 mt-1 space-y-1 bg-muted/30 rounded-xl ml-4 max-h-[300px] overflow-y-auto custom-scrollbar">
-                  {REVIEW_LINKS.map(link => (
-                    <a
-                      key={link.name}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex flex-col py-2 px-3 hover:bg-navy/5 rounded-lg transition-colors"
-                      onClick={() => setOpen(false)}
-                    >
-                      <span className="font-semibold text-sm text-foreground">{link.name}</span>
-                      <span className="text-[11px] text-muted-foreground">{link.subtitle}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
 
+              <AnimatePresence>
+                {reviewsOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-3 py-2 mt-1 space-y-1 bg-muted/40 rounded-xl ml-4 max-h-[260px] overflow-y-auto custom-scrollbar">
+                      {OFFICES.map((office) => (
+                        <a
+                          key={office.id}
+                          href={office.reviewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col py-2 px-3 hover:bg-navy/5 rounded-lg transition-colors"
+                          onClick={() => setOpen(false)}
+                        >
+                          <span className="font-semibold text-sm text-foreground">{office.name}</span>
+                          <span className="text-[11px] text-muted-foreground">{office.shortAddress}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
-          <div className="flex flex-col gap-1 mt-2">
+
+          <div className="flex flex-col gap-1 mt-4 pt-3 border-t border-border/50">
             {phones.map((p, idx) => (
-              <a key={idx} href={getPhoneLink(p)} className="flex items-center gap-4 px-4 py-2.5 rounded-xl text-base font-medium text-foreground/70 active:bg-black/5">
-                <Phone className={cn("w-5 h-5", idx > 0 && "opacity-0")} />
-                {p}
+              <a
+                key={idx}
+                href={getPhoneLink(p)}
+                className="flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium text-foreground/80 active:bg-black/5"
+              >
+                <Phone className="w-4 h-4 text-gold shrink-0" />
+                <span>{p}</span>
               </a>
             ))}
           </div>
-          <Link to="/kontakty" className="block mt-2 mb-2 px-5 py-4 gradient-gold rounded-2xl text-sm tracking-wide uppercase font-semibold text-center text-white">
+
+          <Link
+            to="/kontakty"
+            className="block mt-4 mb-2 px-5 py-3.5 gradient-gold rounded-2xl text-xs tracking-wide uppercase font-semibold text-center text-white shadow-sm"
+          >
             Консультація
           </Link>
         </div>
       )}
     </header>
-  );
+  )
 }
+
+export default Navbar

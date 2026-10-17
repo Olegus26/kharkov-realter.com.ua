@@ -1,60 +1,51 @@
-import { useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { ArrowRight, ChevronDown, Award, Users, Home, TrendingUp } from 'lucide-react';
-import PropertyCard from '@/components/realty/PropertyCard';
-import { getObjects, getAllObjects, mapObject } from '@/lib/novostoyApi';
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { ArrowRight, ChevronDown, Award, Users, Home, TrendingUp } from 'lucide-react'
+import PropertyCard from '@/components/realty/PropertyCard'
+import { useCatalogObjects } from '@/lib/useCatalogObjects'
+import SeoMeta from '@/components/seo/SeoMeta'
 
-const HERO_IMAGES = [
-  '/hero-bg.jpg',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&q=80',
-  'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1600&q=80'];
+const FEATURED_COUNT = 3
+const HERO_BG = '/hero-bg.jpg'
 
 const stats = [
   { icon: Award, value: '30+', label: 'років на ринку' },
   { icon: Home, value: '5 000+', label: 'угод закрито' },
   { icon: Users, value: '100+', label: 'спеціалістів' },
   { icon: TrendingUp, value: 'ТОП-1', label: 'у Харкові' }
-];
+]
 
-export default function HomePage() {
-  const [deal, setDeal] = useState('sale');
-  const [query, setQuery] = useState('');
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+const HomePage = () => {
+  const [deal, setDeal] = useState('sale')
+  const [query, setQuery] = useState('')
+  const navigate = useNavigate()
 
-  const handlePrefetchCatalog = useCallback(() => {
-    queryClient.prefetchQuery({
-      queryKey: ['novostoy-objects', 'sale'],
-      queryFn: async () => {
-        const allItems = await getAllObjects({ sell_type: '2' })
-        return allItems.map(mapObject)
-      },
-      staleTime: 10 * 60 * 1000,
-    })
-  }, [queryClient])
-
-  const { data: properties = [], isLoading } = useQuery({
-    queryKey: ['novostoy-objects-featured'],
-    queryFn: async () => {
-      const res = await getObjects({ parent_id: '2', limit: 12 })
-      return (res.data || []).map(mapObject)
-    }
-  })
+  // Already sorted by edit date (newest first); starting the load here warms up the catalog as well
+  const { data: catalogObjects = [], isLoading } = useCatalogObjects('sale')
+  const properties = catalogObjects
+    .filter((p) => p.type === 'apartment' && !p.is_sold && !p.deposit)
+    .slice(0, FEATURED_COUNT)
 
   const handleSearch = (e) => {
-    e.preventDefault();
-    navigate(`/flats?deal=${deal}&q=${encodeURIComponent(query)}`);
-  };
+    e.preventDefault()
+    const qParam = query.trim() ? `&q=${encodeURIComponent(query.trim())}` : ''
+    navigate(`/flats?deal=${deal}${qParam}`)
+  }
 
   return (
     <div>
+      <SeoMeta
+        title="Агентство нерухомості Харків Ріелтер | Купити, продати, орендувати житло"
+        description="Найбільша актуальна база нерухомості Харкова та області. Купівля, продаж та оренда квартир, будинків, комерції. 13 офісів по місту, безпечні угоди з 1996 року."
+        url="/"
+      />
+
       {/* Hero — cinematic, left-aligned */}
-      <section className="relative min-h-screen flex items-end sm:items-center overflow-hidden">
+      <section className="relative min-h-[100svh] flex items-end sm:items-center overflow-hidden">
         <img
-          src={HERO_IMAGES[0]}
-          alt="Харків Ріелтер - елітна нерухомість"
+          src={HERO_BG}
+          alt="Харків Ріелтер - нерухомість у Харкові"
           fetchPriority="high"
           decoding="sync"
           className="absolute inset-0 w-full h-full object-cover"
@@ -142,7 +133,7 @@ export default function HomePage() {
             <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter font-semibold">Гарячі пропозиції</p>
             <h2 className="font-cormorant font-extrabold tracking-tight text-4xl sm:text-5xl">Топові об'єкти</h2>
           </div>
-          <Link to="/flats" onMouseEnter={handlePrefetchCatalog} className="hidden sm:flex items-center gap-2 text-sm font-semibold text-gold hover:gap-4 transition-all font-inter">
+          <Link to="/flats" className="hidden sm:flex items-center gap-2 text-sm font-semibold text-gold hover:gap-4 transition-all font-inter">
             Весь каталог <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -164,7 +155,7 @@ export default function HomePage() {
         }
 
         <div className="text-center mt-10 sm:hidden">
-          <Link to="/flats" onMouseEnter={handlePrefetchCatalog} className="inline-flex items-center gap-2 text-sm font-semibold text-gold font-inter">
+          <Link to="/flats" className="inline-flex items-center gap-2 text-sm font-semibold text-gold font-inter">
             Весь каталог <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -217,5 +208,8 @@ export default function HomePage() {
           </div>
         </motion.div>
       </section>
-    </div>);
+    </div>
+  )
 }
+
+export default HomePage

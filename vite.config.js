@@ -11,23 +11,23 @@ export default defineConfig({
     },
   },
   build: {
-    // Split vendor chunks for better caching
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
-          'data-vendor': ['@tanstack/react-query'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) {
+              return 'react-vendor'
+            }
+            if (id.includes('framer-motion') || id.includes('lucide-react')) {
+              return 'ui-vendor'
+            }
+          }
         },
       },
     },
-    // Reduce chunk warnings
     chunkSizeWarningLimit: 600,
-    // Enable source maps for debugging
     sourcemap: false,
-    // Minify with esbuild (faster than terser)
     minify: 'esbuild',
-    // Target modern browsers only
     target: 'es2020',
   },
 })

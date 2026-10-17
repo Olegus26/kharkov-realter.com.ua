@@ -1,11 +1,10 @@
 import { useState, useMemo, useEffect, useRef, startTransition } from 'react'
-import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
-import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, Heart, ChevronDown, Filter, ChevronUp } from 'lucide-react'
+import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, Filter, ChevronUp } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import MapView from '@/components/realty/MapView'
-import { getAllObjects, getObjects, mapObject } from '@/lib/novostoyApi'
+import { useCatalogObjects } from '@/lib/useCatalogObjects'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import SeoMeta from '@/components/seo/SeoMeta'
@@ -21,35 +20,35 @@ const CATEGORIES = [
 
 const SUBTYPES_BY_CATEGORY = {
   apartment: [
-    { value: 'rooms_1', label: '1-комн. квартира' },
-    { value: 'rooms_2', label: '2-комн. квартира' },
-    { value: 'rooms_3', label: '3-комн. квартира' },
-    { value: 'rooms_4', label: '4-комн. квартира' },
-    { value: 'rooms_5+', label: '5 и более комнат' },
-    { value: 'gostinka', label: 'гостинки' },
-    { value: 'gostinka_su', label: 'гостинки с с/у' },
-    { value: 'podselenie', label: 'подселение' },
+    { value: 'rooms_1', label: '1-кімн. квартира' },
+    { value: 'rooms_2', label: '2-кімн. квартира' },
+    { value: 'rooms_3', label: '3-кімн. квартира' },
+    { value: 'rooms_4', label: '4-кімн. квартира' },
+    { value: 'rooms_5+', label: '5 і більше кімнат' },
+    { value: 'gostinka', label: 'Гостинка' },
+    { value: 'gostinka_su', label: 'Гостинка зі своїм с/в' },
+    { value: 'podselenie', label: 'Підселення' },
   ],
   house: [
-    { value: 'whole', label: 'целый' },
-    { value: 'half', label: '1/2' },
-    { value: 'third', label: '1/3' },
-    { value: 'dacha', label: 'дача' },
-    { value: 'land', label: 'участок' },
+    { value: 'whole', label: 'Окремий будинок' },
+    { value: 'half', label: 'Частина будинку (1/2)' },
+    { value: 'third', label: 'Частина будинку (1/3)' },
+    { value: 'dacha', label: 'Дача' },
+    { value: 'land', label: 'Земельна ділянка' },
   ],
   commercial: [
-    { value: 'premises', label: 'помещение' },
-    { value: 'building', label: 'здание' },
-    { value: 'land_comm', label: 'участок' },
-    { value: 'garage', label: 'гараж' },
-    { value: 'shop', label: 'магазин' },
-    { value: 'office', label: 'офис' },
-    { value: 'production', label: 'производство' },
-    { value: 'sto', label: 'СТО' },
-    { value: 'warehouse', label: 'склад' },
-    { value: 'non_res_complex', label: 'нежил. комплекс' },
-    { value: 'cafe', label: 'кафе' },
-    { value: 'kiosk', label: 'киоск' },
+    { value: 'premises', label: 'Нежитлове приміщення' },
+    { value: 'building', label: 'Окрема будівля' },
+    { value: 'land_comm', label: 'Ділянка під комерцію' },
+    { value: 'garage', label: 'Гараж / паркінг' },
+    { value: 'shop', label: 'Магазин / торгова площа' },
+    { value: 'office', label: 'Офіс' },
+    { value: 'production', label: 'Виробниче приміщення' },
+    { value: 'sto', label: 'СТО / автосервіс' },
+    { value: 'warehouse', label: 'Склад' },
+    { value: 'non_res_complex', label: 'Майновий комплекс' },
+    { value: 'cafe', label: 'Кафе / ресторан' },
+    { value: 'kiosk', label: 'Кіоск / павільйон' },
   ]
 }
 
@@ -57,17 +56,50 @@ const METRO_LINES = [
   {
     name: 'Холодногірсько-Заводська лінія',
     color: 'text-red-500',
-    stations: ['Холодная гора', 'Вокзальная', 'Центральный рынок', 'Площадь Конституции', 'Левада', 'Спортивная', 'Заводская', 'Турбоатом', 'Дворец Спорта', 'Армейская', 'Им. А. С. Масельского', 'Тракторный завод', 'Индустриальная']
+    stations: [
+      { label: 'Холодна гора', value: 'Холодная гора' },
+      { label: 'Вокзальна', value: 'Вокзальная' },
+      { label: 'Центральний ринок', value: 'Центральный рынок' },
+      { label: 'Майдан Конституції', value: 'Площадь Конституции' },
+      { label: 'Левада', value: 'Левада' },
+      { label: 'Спортивна', value: 'Спортивная' },
+      { label: 'Заводська', value: 'Заводская' },
+      { label: 'Турбоатом', value: 'Турбоатом' },
+      { label: 'Палац Спорту', value: 'Дворец Спорта' },
+      { label: 'Армійська', value: 'Армейская' },
+      { label: 'Ім. О. С. Масельського', value: 'Им. А. С. Масельского' },
+      { label: 'Тракторний завод', value: 'Тракторный завод' },
+      { label: 'Індустріальна', value: 'Индустриальная' }
+    ]
   },
   {
     name: 'Салтівська лінія',
     color: 'text-blue-500',
-    stations: ['Исторический музей', 'Университет', 'Ярослава Мудрого', 'Киевская', 'Академика Барабашова', 'Академика Павлова', 'Студенческая', 'Салтовская']
+    stations: [
+      { label: 'Історичний музей', value: 'Исторический музей' },
+      { label: 'Університет', value: 'Университет' },
+      { label: 'Ярослава Мудрого', value: 'Ярослава Мудрого' },
+      { label: 'Київська', value: 'Киевская' },
+      { label: 'Академіка Барабашова', value: 'Академика Барабашова' },
+      { label: 'Академіка Павлова', value: 'Академика Павлова' },
+      { label: 'Студентська', value: 'Студенческая' },
+      { label: 'Салтівська', value: 'Салтовская' }
+    ]
   },
   {
     name: 'Олексіївська лінія',
     color: 'text-green-500',
-    stations: ['Метростроителей', 'Державинская', 'Защитников Украины', 'Архитектора Бекетова', 'Госпром', 'Научная', 'Ботанический сад', '23 Августа', 'Алексеевская', 'Победа']
+    stations: [
+      { label: 'Метробудівників', value: 'Метростроителей' },
+      { label: 'Захисників України', value: 'Защитников Украины' },
+      { label: 'Архітектора Бекетова', value: 'Архитектора Бекетова' },
+      { label: 'Держпром', value: 'Госпром' },
+      { label: 'Наукова', value: 'Научная' },
+      { label: 'Ботанічний сад', value: 'Ботанический сад' },
+      { label: '23 Серпня', value: '23 Августа' },
+      { label: 'Олексіївська', value: 'Алексеевская' },
+      { label: 'Перемога', value: 'Победа' }
+    ]
   }
 ]
 
@@ -119,10 +151,11 @@ const STATES = [
 
 const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const queryClient = useQueryClient()
   
   const [deal, setDeal] = useState(searchParams.get('deal') || 'sale')
   const [category, setCategory] = useState(defaultCategory)
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'date_desc')
   const [subTypes, setSubTypes] = useState(searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : [])
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
@@ -178,17 +211,37 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  const handleCategoryChange = (catValue) => {
+    if (category === catValue) return
+    setCategory(catValue)
+    setSubTypes([])
+    setCurrentPage(1)
+    const catObj = CATEGORIES.find(c => c.value === catValue)
+    if (!catObj) return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('subTypes')
+    nextParams.delete('page')
+    const qs = nextParams.toString()
+    navigate(`${catObj.path}${qs ? `?${qs}` : ''}`, { replace: true })
+  }
 
   useEffect(() => {
     setCategory(defaultCategory)
     setSubTypes([])
   }, [defaultCategory])
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname
+      const found = CATEGORIES.find(c => path.startsWith(c.path))
+      if (found && found.value !== category) {
+        setCategory(found.value)
+        setSubTypes([])
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [category])
 
   // Load from sessionStorage if navigated without params
   useEffect(() => {
@@ -203,6 +256,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   useEffect(() => {
     const params = new URLSearchParams()
     if (deal) params.set('deal', deal)
+    if (searchQuery) params.set('q', searchQuery)
+    if (sortBy && sortBy !== 'date_desc') params.set('sort', sortBy)
     if (subTypes.length > 0) params.set('subTypes', subTypes.join(','))
     if (minPrice) params.set('minPrice', minPrice)
     if (maxPrice) params.set('maxPrice', maxPrice)
@@ -229,7 +284,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
     
     setSearchParams(params, { replace: true })
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode, currentPage, setSearchParams])
+  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode, currentPage, setSearchParams])
 
   // Reset page when filters change
   useEffect(() => {
@@ -238,7 +293,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       return
     }
     setCurrentPage(1)
-  }, [deal, category, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode])
+  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode])
 
   // Lock body scroll in map view to prevent seeing footer
   useEffect(() => {
@@ -276,33 +331,10 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }, 50)
   }
 
-  const { data: properties = [], isLoading, error } = useQuery({
-    queryKey: ['novostoy-objects', deal],
-    queryFn: async () => {
-      const filters = {}
-      if (deal === 'sale') filters.sell_type = '2'
-      if (deal === 'rent') filters.sell_type = '1'
-
-      // 1. Instantly return the first 100 properties so the UI unblocks and the user sees results
-      const firstPage = await getObjects(filters).catch(() => ({ data: [] }))
-      const initialItems = (firstPage?.data || []).map(mapObject)
-      
-      // 2. Quietly kick off the exhaustive fetch in the background
-      getAllObjects(filters).then(allItems => {
-        // 3. When done, silently update the cache to the full list (4000+ items)
-        queryClient.setQueryData(['novostoy-objects', deal], allItems.map(mapObject))
-      }).catch(e => console.error("Background fetch failed", e))
-
-      return initialItems
-    },
-    staleTime: Infinity,
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  })
+  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal)
 
   const filtered = useMemo(() => {
-    return properties.filter(p => {
+    const list = properties.filter(p => {
       if (minPrice && p.price < Number(minPrice)) return false
       if (maxPrice && p.price > Number(maxPrice)) return false
 
@@ -311,6 +343,26 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
       if (category && p.type !== category) return false
 
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase().trim()
+        const matchesQ = (p.title && p.title.toLowerCase().includes(q)) ||
+                         (p.location && p.location.toLowerCase().includes(q)) ||
+                         (p.street && p.street.toLowerCase().includes(q)) ||
+                         (p.region && p.region.toLowerCase().includes(q)) ||
+                         (p.mregion && p.mregion.toLowerCase().includes(q)) ||
+                         (p.building && p.building.toLowerCase().includes(q)) ||
+                         (p.description && p.description.toLowerCase().includes(q))
+        if (!matchesQ) return false
+      }
+
+      if (searchComplex) {
+        const c = searchComplex.toLowerCase().trim()
+        const matchesC = (p.title && p.title.toLowerCase().includes(c)) ||
+                         (p.location && p.location.toLowerCase().includes(c)) ||
+                         (p.description && p.description.toLowerCase().includes(c))
+        if (!matchesC) return false
+      }
+
       if (subTypes.length > 0) {
         const matches = subTypes.some(st => {
           if (st === 'rooms_1') return p.rooms === 1
@@ -318,7 +370,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
           if (st === 'rooms_3') return p.rooms === 3
           if (st === 'rooms_4') return p.rooms === 4
           if (st === 'rooms_5+') return p.rooms >= 5
-          return true // Unmapped subtypes return true temporarily
+          return true
         })
         if (!matches) return false
       }
@@ -348,19 +400,34 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       }
 
       if (metroStations.length > 0) {
-        if (!metroStations.some(s => p.mregion?.toLowerCase().includes(s.toLowerCase()))) return false
+        if (!metroStations.some(s => (p.metro || p.mregion)?.toLowerCase().includes(s.toLowerCase()))) return false
       }
 
       return true
     })
-  }, [properties, minPrice, maxPrice, minArea, maxArea, category, subTypes, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal])
+
+    switch (sortBy) {
+      case 'price_asc':
+        return [...list].sort((a, b) => a.price - b.price)
+      case 'price_desc':
+        return [...list].sort((a, b) => b.price - a.price)
+      case 'area_desc':
+        return [...list].sort((a, b) => (b.area || 0) - (a.area || 0))
+      case 'area_asc':
+        return [...list].sort((a, b) => (a.area || 0) - (b.area || 0))
+      case 'date_desc':
+      default:
+        return [...list].sort((a, b) => b.date_edit - a.date_edit || Number(b.id) - Number(a.id))
+    }
+  }, [properties, minPrice, maxPrice, minArea, maxArea, category, searchQuery, searchComplex, subTypes, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, sortBy])
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
   const currentItems = viewMode === 'list'
     ? filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-    : filtered // map view shows all filtered
+    : filtered
 
   const clearFilters = () => {
+    setSearchQuery('')
     setSubTypes([])
     setMinPrice('')
     setMaxPrice('')
@@ -377,7 +444,24 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setMinFloorsTotal('')
     setMaxFloorsTotal('')
   }
-  const hasFilters = subTypes.length > 0 || minPrice || maxPrice || minArea || maxArea || searchComplex || searchStreet || searchHouse || metroStations.length > 0 || districts.length > 0 || states.length > 0 || minFloor || maxFloor || minFloorsTotal || maxFloorsTotal
+  const hasFilters = Boolean(
+    searchQuery ||
+    subTypes.length > 0 ||
+    minPrice ||
+    maxPrice ||
+    minArea ||
+    maxArea ||
+    searchComplex ||
+    searchStreet ||
+    searchHouse ||
+    metroStations.length > 0 ||
+    districts.length > 0 ||
+    states.length > 0 ||
+    minFloor ||
+    maxFloor ||
+    minFloorsTotal ||
+    maxFloorsTotal
+  )
 
   // Dynamic SEO calculation
   const getSeoTitle = () => {
@@ -386,7 +470,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     if (deal === 'rent') title = `Оренда: ${title.toLowerCase()}`
     if (filtered.length > 0) {
       const minP = minPrice ? Number(minPrice) : Math.min(...filtered.map(p => p.price))
-      title += ` в Харкові. ${filtered.length} об'єктів від $${minP.toLocaleString()}`
+      const formattedMinP = deal === 'rent' ? `${minP.toLocaleString('uk-UA')} грн` : `$${minP.toLocaleString('uk-UA')}`
+      title += ` в Харкові. ${filtered.length} об'єктів від ${formattedMinP}`
     } else {
       title += ' в Харкові'
     }
@@ -410,7 +495,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       />
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40 transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40">
         {/* Toggle Filters Button for Mobile Map View */}
         {viewMode === 'map' && (
           <div className="lg:hidden mb-4 relative z-50">
@@ -428,7 +513,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
         <AnimatePresence initial={false}>
           {!(viewMode === 'map' && !showMapFilters) && (
             <motion.div 
-              initial={{ height: 0, opacity: 0 }}
+              initial={false}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
@@ -470,7 +555,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   {CATEGORIES.map(c => (
                     <button
                       key={c.value}
-                      onClick={() => navigate(c.path + location.search)}
+                      type="button"
+                      onClick={() => handleCategoryChange(c.value)}
                       className={cn('relative z-10 px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap', {
                         'text-white': category === c.value,
                         'text-muted-foreground hover:text-foreground': category !== c.value
@@ -494,10 +580,26 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   )}
                 </div>
 
-              {/* View Toggle (Moved from Header) */}
-              <div className="flex items-center gap-4 lg:gap-6">
+              {/* Sort & View Toggle */}
+              <div className="flex items-center gap-3 lg:gap-4 flex-wrap">
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    aria-label="Сортування каталогу"
+                    className="appearance-none bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full pl-4 pr-8 py-2.5 outline-none cursor-pointer border border-transparent focus:border-navy/30 transition-colors"
+                  >
+                    <option value="date_desc">Новіші спочатку</option>
+                    <option value="price_asc">Ціна: від дешевших</option>
+                    <option value="price_desc">Ціна: від дорожчих</option>
+                    <option value="area_asc">Площа: від меншої</option>
+                    <option value="area_desc">Площа: від більшої</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                </div>
+
                 <p className="text-muted-foreground text-sm font-inter hidden xl:block font-medium">
-                  {properties.length <= 100 ? (
+                  {isFetching ? (
                     <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-navy/70 bg-navy/5 px-3 py-1.5 rounded-full animate-pulse font-semibold">
                       <svg className="w-3.5 h-3.5 animate-spin text-navy" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       Оновлення бази...
@@ -535,8 +637,9 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
             </div>
 
-            {/* Bottom row: Inputs & Popovers */}
-            <div className="flex flex-wrap items-center gap-3 w-full font-inter">
+            {/* Filter controls row */}
+            <div className="flex flex-col w-full">
+              <div className="flex flex-wrap items-center gap-3 w-full font-inter">
               {/* Complex */}
               <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
                 <Autocomplete
@@ -593,7 +696,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   {(minPrice || maxPrice) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Ціна ($)</p>
+                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">{deal === 'rent' ? 'Ціна (грн)' : 'Ціна ($)'}</p>
                   <div className="flex items-center gap-2 mb-2">
                     <input type="number" placeholder="від" value={minPrice} onChange={e => setMinPrice(e.target.value)}
                       className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
@@ -656,7 +759,10 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
               {/* Advanced Filters Toggle Button */}
               <button 
+                type="button"
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                aria-expanded={showAdvancedFilters}
+                aria-label="Більше фільтрів"
                 className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
               >
                 <span>Більше фільтрів</span> 
@@ -670,15 +776,16 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
             </div>
 
             {/* Advanced Filters Row */}
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {showAdvancedFilters && (
                 <motion.div
-                  initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                  animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
-                  exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-wrap items-center gap-3 w-full font-inter overflow-hidden border-t border-border/50 pt-4"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: [0.04, 0.62, 0.23, 0.98] }}
+                  className="overflow-hidden w-full"
                 >
+                  <div className="flex flex-wrap items-center gap-3 w-full font-inter border-t border-border/50 pt-4 mt-3">
               {/* Станція метро */}
               <Popover>
                 <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180">
@@ -693,20 +800,20 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         <p className={`text-[10px] font-bold uppercase tracking-wider mb-4 ${line.color}`}>{line.name}</p>
                         <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                           {line.stations.map(st => (
-                            <label key={st} className="flex items-center gap-3 cursor-pointer group">
-                              <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", metroStations.includes(st) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
-                                {metroStations.includes(st) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                            <label key={st.value} className="flex items-center gap-3 cursor-pointer group">
+                              <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", metroStations.includes(st.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
+                                {metroStations.includes(st.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
                               </div>
                               <input
                                 type="checkbox"
                                 className="hidden"
-                                checked={metroStations.includes(st)}
+                                checked={metroStations.includes(st.value)}
                                 onChange={(e) => {
-                                  if (e.target.checked) setMetroStations([...metroStations, st])
-                                  else setMetroStations(metroStations.filter(v => v !== st))
+                                  if (e.target.checked) setMetroStations([...metroStations, st.value])
+                                  else setMetroStations(metroStations.filter(v => v !== st.value))
                                 }}
                               />
-                              <span className={cn("text-sm truncate transition-colors", metroStations.includes(st) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")} title={st}>{st}</span>
+                              <span className={cn("text-sm truncate transition-colors", metroStations.includes(st.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")} title={st.label}>{st.label}</span>
                             </label>
                           ))}
                         </div>
@@ -812,9 +919,121 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 </PopoverContent>
               </Popover>
 
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
+
+            {/* Active filter badges */}
+            {hasFilters && (
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/50 text-xs font-inter">
+                <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider mr-1">Фільтри:</span>
+                {searchQuery && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                    Пошук: "{searchQuery}"
+                    <button type="button" onClick={() => setSearchQuery('')} aria-label="Скинути пошуковий запит" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {(minPrice || maxPrice) && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                    Ціна: {minPrice ? `від ${minPrice}` : ''} {maxPrice ? `до ${maxPrice}` : ''} {deal === 'rent' ? 'грн' : '$'}
+                    <button type="button" onClick={() => { setMinPrice(''); setMaxPrice('') }} aria-label="Скинути фільтр ціни" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {(minArea || maxArea) && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                    Площа: {minArea ? `від ${minArea}` : ''} {maxArea ? `до ${maxArea}` : ''} м²
+                    <button type="button" onClick={() => { setMinArea(''); setMaxArea('') }} aria-label="Скинути фільтр площі" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {searchComplex && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                    ЖК: {searchComplex}
+                    <button type="button" onClick={() => setSearchComplex('')} aria-label="Скинути фільтр ЖК" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {searchStreet && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                    Вулиця: {searchStreet} {searchHouse}
+                    <button type="button" onClick={() => { setSearchStreet(''); setSearchHouse('') }} aria-label="Скинути фільтр вулиці" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {subTypes.map(st => {
+                  const item = (SUBTYPES_BY_CATEGORY[category] || []).find(x => x.value === st)
+                  return (
+                    <span key={st} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                      {item ? item.label : st}
+                      <button type="button" onClick={() => setSubTypes(subTypes.filter(v => v !== st))} aria-label={`Видалити тип ${st}`} className="hover:text-destructive transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )
+                })}
+                {districts.map(d => {
+                  const item = DISTRICTS.find(x => x.value === d)
+                  return (
+                    <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                      {item ? item.label : d}
+                      <button type="button" onClick={() => setDistricts(districts.filter(v => v !== d))} aria-label={`Видалити район ${d}`} className="hover:text-destructive transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )
+                })}
+                {metroStations.map(m => {
+                  let label = m
+                  for (const line of METRO_LINES) {
+                    const found = line.stations.find(s => s.value === m)
+                    if (found) { label = found.label; break }
+                  }
+                  return (
+                    <span key={m} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                      М: {label}
+                      <button type="button" onClick={() => setMetroStations(metroStations.filter(v => v !== m))} aria-label={`Видалити станцію ${label}`} className="hover:text-destructive transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )
+                })}
+                {states.map(s => {
+                  const item = STATES.find(x => x.value === s)
+                  return (
+                    <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                      {item ? item.label : s}
+                      <button type="button" onClick={() => setStates(states.filter(v => v !== s))} aria-label={`Видалити стан ${s}`} className="hover:text-destructive transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )
+                })}
+                {(minFloor || maxFloor) && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
+                    Поверх: {minFloor ? `від ${minFloor}` : ''} {maxFloor ? `до ${maxFloor}` : ''}
+                    <button type="button" onClick={() => { setMinFloor(''); setMaxFloor('') }} aria-label="Скинути фільтр поверху" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-xs text-destructive hover:underline font-semibold ml-auto transition-colors"
+                >
+                  Скинути все
+                </button>
+              </div>
+            )}
             </div>
             </LayoutGroup>
           </motion.div>
@@ -870,7 +1089,12 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
           <div className="flex flex-col gap-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {currentItems.map((p, i) => (
-                <motion.div key={p.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (i % 20) * 0.05 }}>
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: (i % 20) * 0.04 }}
+                >
                   <PropertyCard property={p} />
                 </motion.div>
               ))}
@@ -883,9 +1107,11 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   <button
                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                    aria-label="Попередня сторінка"
+                    className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors text-sm font-inter"
                   >
                     <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Назад</span>
                   </button>
 
                   {/* Pagination logic */}
@@ -906,6 +1132,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
+                        aria-label={`Сторінка ${page}`}
+                        aria-current={isCurrent ? "page" : undefined}
                         className={cn('relative z-10 w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors rounded-full', {
                           'text-white': isCurrent,
                           'text-muted-foreground hover:bg-muted hover:text-foreground': !isCurrent
@@ -926,9 +1154,11 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   <button
                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="flex items-center gap-1 p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors text-sm"
+                    aria-label="Наступна сторінка"
+                    className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors text-sm font-inter"
                   >
-                    вперед <ChevronRight className="w-4 h-4" />
+                    <span className="hidden sm:inline">Вперед</span>
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>

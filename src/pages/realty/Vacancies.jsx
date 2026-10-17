@@ -1,9 +1,10 @@
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'
 import {
   TrendingUp, MapPin, GraduationCap, CalendarClock, Users,
   CheckCircle2, Phone, Send, ArrowRight, Check,
-} from 'lucide-react';
-import VacancyForm from '@/components/realty/VacancyForm';
+} from 'lucide-react'
+import VacancyForm from '@/components/realty/VacancyForm'
+import SeoMeta from '@/components/seo/SeoMeta'
 
 const BENEFITS = [
   {
@@ -31,7 +32,7 @@ const BENEFITS = [
     title: 'Доброзичливий колектив',
     desc: 'Досвід колег та їхні успіхи завжди стимулюватимуть вас до нових досягнень.',
   },
-];
+]
 
 const PROFILES = [
   {
@@ -44,9 +45,9 @@ const PROFILES = [
     title: 'Активні та цілеспрямовані',
     desc: 'Ті, кого не лякає динамічний темп роботи. Хто вміє чути клієнта, будувати довірливу комунікацію та відповідально ставиться до своєї роботи.',
   },
-];
+]
 
-const REQUIREMENTS = ['Бажання заробляти', 'Грамотна мова', 'Здатність до навчання', 'Знання ПК', 'Терпіння', 'Охайний зовнішній вигляд'];
+const REQUIREMENTS = ['Бажання заробляти', 'Грамотна мова', 'Здатність до навчання', 'Знання ПК', 'Терпіння', 'Охайний зовнішній вигляд']
 
 const OFFER_POINTS = [
   'Робота без досвіду з швидким професійним зростанням',
@@ -60,11 +61,16 @@ const OFFER_POINTS = [
   'Юридична, інформаційна та рекламна підтримка',
   'Корпоративні заходи, тренінги, семінари',
   'Можливість кар’єрного росту всередині компанії',
-];
+]
 
-export default function VacanciesPage() {
+const VacanciesPage = () => {
   return (
     <div className="pt-24">
+      <SeoMeta
+        title="Вакансії рієлтора в Харкові | Робота в нерухомості"
+        description="Робота та вакансії рієлтора в Харкові від корпорації Харків Ріелтер. Безкоштовне навчання, високий дохід, підтримка наставника. Приєднуйтесь!"
+        url="/vakansii"
+      />
       {/* Header */}
       <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16 border-b border-border">
         <p className="text-xs tracking-[0.3em] uppercase text-gold mb-4 font-inter font-semibold">Кар'єра · Харків</p>
@@ -99,7 +105,9 @@ export default function VacanciesPage() {
                 Залишити заявку <ArrowRight className="w-4 h-4" />
               </a>
               <a href="tel:+380735642268"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full border border-white/25 text-cream text-xs tracking-widest uppercase font-inter font-semibold hover:bg-white/10 transition-colors">
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full border border-white/25 text-cream text-xs tracking-widest uppercase font-inter font-semibold hover:bg-white/10 transition-colors"
+                aria-label="Зателефонувати в HR відділ"
+              >
                 <Phone className="w-4 h-4" /> Поговорити з HR
               </a>
             </div>
@@ -193,23 +201,29 @@ export default function VacanciesPage() {
           {/* HR contacts */}
           <div>
             <div className="sticky top-28 space-y-4">
-              <div className="border border-black/5 bg-card shadow-sm rounded-2xl p-7 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 gradient-gold" />
-                <p className="text-xs tracking-[0.2em] uppercase text-gold mb-1 font-inter">Зв'язатися з HR</p>
-                <p className="font-cormorant text-2xl mb-6">Анастасія</p>
+              <div className="border border-border bg-card rounded-2xl p-6 shadow-sm">
+                <p className="text-xs tracking-[0.2em] uppercase text-gold mb-4 font-inter font-semibold">Відділ кадрів</p>
+                <p className="font-cormorant font-bold text-xl mb-1">Менеджер по персоналу</p>
+                <p className="text-muted-foreground text-xs font-inter mb-6">Відповімо на всі питання та узгодимо співбесіду</p>
                 <div className="space-y-3">
                   <a href="tel:+380735642268"
-                    className="flex items-center gap-3 p-3.5 rounded-xl border border-border hover:border-gold/40 hover:text-gold transition-colors group font-inter">
+                    className="flex items-center gap-3 p-3.5 rounded-xl border border-border hover:border-gold/40 hover:text-gold transition-colors group font-inter"
+                    aria-label="Зателефонувати: 073 564 22 68"
+                  >
                     <Phone className="w-4 h-4 text-gold" />
                     <span className="text-sm group-hover:text-gold transition-colors">073 564 22 68</span>
                   </a>
                   <a href="https://t.me/hrkharkivrealter" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3.5 rounded-xl border border-border hover:border-gold/40 hover:text-gold transition-colors group font-inter">
+                    className="flex items-center gap-3 p-3.5 rounded-xl border border-border hover:border-gold/40 hover:text-gold transition-colors group font-inter"
+                    aria-label="Написати у Telegram: @hrkharkivrealter"
+                  >
                     <Send className="w-4 h-4 text-gold" />
                     <span className="text-sm group-hover:text-gold transition-colors">Telegram: @hrkharkivrealter</span>
                   </a>
                   <a href="mailto:hr.kharkivrealter@gmail.com"
-                    className="flex items-center gap-3 p-3.5 rounded-xl border border-border hover:border-gold/40 hover:text-gold transition-colors group font-inter">
+                    className="flex items-center gap-3 p-3.5 rounded-xl border border-border hover:border-gold/40 hover:text-gold transition-colors group font-inter"
+                    aria-label="Написати на hr.kharkivrealter@gmail.com"
+                  >
                     <CheckCircle2 className="w-4 h-4 text-gold" />
                     <span className="text-sm group-hover:text-gold transition-colors break-all">hr.kharkivrealter@gmail.com</span>
                   </a>
@@ -245,5 +259,7 @@ export default function VacanciesPage() {
         </div>
       </section>
     </div>
-  );
+  )
 }
+
+export default VacanciesPage

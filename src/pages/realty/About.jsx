@@ -117,10 +117,10 @@ const AboutPage = () => {
         </div>
 
         {/* CTA */}
-        <div className="text-center border border-gold/30 bg-card p-12">
-          <h2 className="font-cormorant text-4xl mb-4">Почніть з нами</h2>
+        <div className="text-center border border-gold/30 bg-card p-12 rounded-2xl">
+          <h2 className="font-cormorant text-4xl mb-4 font-bold">Почніть з нами</h2>
           <p className="text-muted-foreground font-inter text-sm mb-8">Зв'яжіться з нашими експертами для безкоштовної консультації</p>
-          <Link to="/contact" className="inline-flex items-center gap-3 px-10 py-4 gradient-gold text-background text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity">
+          <Link to="/kontakty" className="inline-flex items-center gap-3 px-10 py-4 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-medium hover:opacity-90 transition-opacity rounded-full shadow-md">
             Зв'язатися <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

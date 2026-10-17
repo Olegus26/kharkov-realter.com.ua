@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kharkov-realter.com.ua/sitemap.xml

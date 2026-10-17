@@ -1,8 +1,21 @@
 {
-  "short_name": "Ріелтер",
-  "name": "Харків Ріелтер",
+  "short_name": "Харків Ріелтер",
+  "name": "Харків Ріелтер - Агентство нерухомості",
+  "description": "Купівля, продаж та оренда квартир, будинків і комерційної нерухомості в Харкові",
   "start_url": "/",
-  "background_color": "#0d0d0d",
-  "theme_color": "#c5a880",
-  "display": "standalone"
+  "background_color": "#ffffff",
+  "theme_color": "#1b2a4a",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
