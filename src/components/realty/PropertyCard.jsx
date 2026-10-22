@@ -56,6 +56,17 @@ const PropertyCard = memo(({ property, className = '' }) => {
     e.currentTarget.style.display = 'none'
   }
 
+  const hasSubAreas = Boolean(property.area_live || property.area_kitchen)
+  const areaString = property.area
+    ? hasSubAreas
+      ? `${property.area} / ${property.area_live || '—'} / ${property.area_kitchen || '—'} м²`
+      : `${property.area} м²`
+    : null
+
+  const areaTooltip = property.area
+    ? `Загальна площа: ${property.area} м²${property.area_live ? `, Житлова: ${property.area_live} м²` : ''}${property.area_kitchen ? `, Кухня: ${property.area_kitchen} м²` : ''}`
+    : ''
+
   return (
     <div
       className={cn('group bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-xl transition-all hover:-translate-y-1 duration-300', className)}
@@ -127,7 +138,7 @@ const PropertyCard = memo(({ property, className = '' }) => {
           </motion.button>
         </div>
 
-        {/* Price and Торг on image (Торг placed where views were) */}
+        {/* Price and Торг on image */}
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2">
           <div>
             <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price, property.deal)}</p>
@@ -161,37 +172,59 @@ const PropertyCard = memo(({ property, className = '' }) => {
           {property.title}
         </h3>
 
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-4">
+        <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-3">
           <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">{property.location}</span>
         </div>
 
-        <div className="flex items-center justify-between gap-2 pt-4 border-t border-border/50 text-xs text-muted-foreground font-inter mt-auto">
-          <div className="flex items-center gap-3">
-            {property.rooms > 0 && (
-              <span className="flex items-center gap-1.5" title="Кількість кімнат">
-                <BedDouble className="w-3.5 h-3.5 shrink-0" />
-                {property.rooms} кімн.
+        {/* Optional Metro and State Chips */}
+        {(property.metro || property.state) && (
+          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+            {property.metro && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[11px] font-medium font-inter">
+                м. {property.metro}
               </span>
             )}
-            {property.area > 0 && (
-              <span className="flex items-center gap-1.5" title="Загальна площа">
-                <Maximize2 className="w-3.5 h-3.5 shrink-0" />
-                {property.area} м²
+            {property.state && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-muted text-foreground/80 text-[11px] font-medium font-inter truncate max-w-[200px]" title={`Стан: ${property.state}`}>
+                {property.state}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Complete specs: Rooms, Full Area (Total / Live / Kitchen), Floor/Floors */}
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-border/50 text-xs text-muted-foreground font-inter mt-auto">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+            {property.rooms > 0 && (
+              <span className="flex items-center gap-1 text-foreground/90 font-medium" title="Кількість кімнат">
+                <BedDouble className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                <span>{property.rooms} кімн.</span>
+              </span>
+            )}
+            {areaString && (
+              <span className="flex items-center gap-1 text-foreground/90 font-medium" title={areaTooltip}>
+                <Maximize2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                <span>{areaString}</span>
               </span>
             )}
           </div>
 
-          {property.floor > 0 && (
-            <span className="flex items-center gap-1.5" title="Поверх">
-              <Building className="w-3.5 h-3.5 shrink-0" />
-              {property.floor}/{property.floors_total} пов.
+          {property.floor > 0 ? (
+            <span className="flex items-center gap-1 text-foreground/90 font-medium shrink-0" title="Поверх / поверховість">
+              <Building className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+              <span>{property.floor}/{property.floors_total} пов.</span>
             </span>
-          )}
+          ) : property.year_built > 0 ? (
+            <span className="flex items-center gap-1 text-muted-foreground text-xs shrink-0" title="Рік будівництва">
+              <span>{property.year_built} р.</span>
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
   )
+
 })
 
 export default PropertyCard

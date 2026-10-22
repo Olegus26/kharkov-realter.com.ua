@@ -1,10 +1,26 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
-import { ArrowRight, ChevronDown, Award, Users, Home as HomeIcon, TrendingUp } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ArrowRight,
+  ChevronDown,
+  Award,
+  Users,
+  Home as HomeIcon,
+  TrendingUp,
+  MapPin,
+  Building2,
+  TrainFront,
+  Navigation,
+  Search,
+  X,
+  ArrowUpRight,
+  Hammer
+} from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import { getObjects, getAllObjects, mapObject } from '@/lib/novostoyApi'
+import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
 
@@ -24,8 +40,34 @@ const stats = [
 const HomePage = () => {
   const [deal, setDeal] = useState('sale')
   const [query, setQuery] = useState('')
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false)
+  const [geoData, setGeoData] = useState({ streets: [], complexes: [] })
+
+  const searchContainerRef = useRef(null)
+  const inputRef = useRef(null)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    Promise.all([
+      import('@/data/streets.json').then((m) => m.default || m),
+      import('@/data/complexes.json').then((m) => m.default || m)
+    ])
+      .then(([streets, complexes]) => {
+        setGeoData({ streets: streets || [], complexes: complexes || [] })
+      })
+      .catch((e) => console.error('Error loading geo data on Home', e))
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setIsSuggestionsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handlePrefetchCatalog = useCallback(() => {
     queryClient.prefetchQuery({
@@ -46,9 +88,110 @@ const HomePage = () => {
     }
   })
 
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) {
+      return {
+        hasResults: true,
+        isPopular: true,
+        metro: [
+          { label: 'Університет', value: 'Университет', line: 'Салтівська лінія' },
+          { label: 'Холодна гора', value: 'Холодная гора', line: 'Холодногірсько-Заводська лінія' },
+          { label: 'Наукова', value: 'Научная', line: 'Олексіївська лінія' }
+        ],
+        districts: [
+          { label: 'Салтівка', value: 'Салтовка' },
+          { label: 'Олексіївка', value: 'Алексеевка' },
+          { label: 'Центр', value: 'Центр' }
+        ],
+        complexes: (geoData.complexes || []).slice(0, 3).map((c) => ({
+          label: c.jk_name,
+          value: c.jk_name,
+          address: c.address
+        })),
+        streets: []
+      }
+    }
+
+    const matchingMetro = []
+    METRO_LINES.forEach((line) => {
+      line.stations.forEach((st) => {
+        if (st.label.toLowerCase().includes(q) || st.value.toLowerCase().includes(q)) {
+          matchingMetro.push({ label: st.label, value: st.value, line: line.name })
+        }
+      })
+    })
+
+    const matchingDistricts = DISTRICTS.filter(
+      (d) => d.label.toLowerCase().includes(q) || d.value.toLowerCase().includes(q)
+    ).slice(0, 5)
+
+    const matchingComplexes = (geoData.complexes || [])
+      .filter((c) => c.jk_name?.toLowerCase().includes(q) || c.address?.toLowerCase().includes(q))
+      .slice(0, 4)
+      .map((c) => ({ label: c.jk_name, value: c.jk_name, address: c.address }))
+
+    const matchingStreets = (geoData.streets || [])
+      .filter((s) => {
+        if (s.current_name?.toLowerCase().includes(q)) return true
+        if (s.old_names && s.old_names.some((old) => old.toLowerCase().includes(q))) return true
+        return false
+      })
+      .slice(0, 5)
+      .map((s) => ({ label: s.current_name, value: s.current_name }))
+
+    const hasResults =
+      matchingMetro.length > 0 ||
+      matchingDistricts.length > 0 ||
+      matchingComplexes.length > 0 ||
+      matchingStreets.length > 0
+
+    return {
+      hasResults,
+      isPopular: false,
+      metro: matchingMetro.slice(0, 4),
+      districts: matchingDistricts,
+      complexes: matchingComplexes,
+      streets: matchingStreets
+    }
+  }, [query, geoData])
+
+  const handleSelectSuggestion = (type, val) => {
+    setIsSuggestionsOpen(false)
+    if (!val) return
+
+    if (type === 'metro') {
+      navigate(`/flats?deal=${deal}&metroStations=${encodeURIComponent(val)}`)
+      return
+    }
+    if (type === 'district') {
+      navigate(`/flats?deal=${deal}&districts=${encodeURIComponent(val)}`)
+      return
+    }
+    if (type === 'complex') {
+      navigate(`/flats?deal=${deal}&searchComplex=${encodeURIComponent(val)}`)
+      return
+    }
+    if (type === 'street') {
+      navigate(`/flats?deal=${deal}&searchStreet=${encodeURIComponent(val)}`)
+      return
+    }
+    if (type === 'query') {
+      navigate(`/flats?deal=${deal}&q=${encodeURIComponent(val)}`)
+      return
+    }
+    navigate(`/flats?deal=${deal}&q=${encodeURIComponent(val)}`)
+  }
+
   const handleSearch = (e) => {
     e.preventDefault()
-    navigate(`/flats?deal=${deal}&q=${encodeURIComponent(query)}`)
+    setIsSuggestionsOpen(false)
+    const trimmed = query.trim()
+    if (!trimmed) {
+      navigate(`/flats?deal=${deal}`)
+      return
+    }
+    navigate(`/flats?deal=${deal}&q=${encodeURIComponent(trimmed)}`)
   }
 
   const handleSetDealSale = () => {
@@ -57,6 +200,26 @@ const HomePage = () => {
 
   const handleSetDealRent = () => {
     setDeal('rent')
+  }
+
+  const handleInputChange = (e) => {
+    setQuery(e.target.value)
+    setIsSuggestionsOpen(true)
+  }
+
+  const handleInputFocus = () => {
+    setIsSuggestionsOpen(true)
+  }
+
+  const handleClearQuery = () => {
+    setQuery('')
+    inputRef.current?.focus()
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setIsSuggestionsOpen(false)
+    }
   }
 
   return (
@@ -108,45 +271,206 @@ const HomePage = () => {
             Чесність, порядок та безпека угод з будь-якою нерухомістю. З Агентством нерухомості «Харків-Ріелтер» вирішити житлове питання легко та надійно!
           </motion.p>
 
-          {/* Search pill */}
-          <motion.form
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.65 }}
-            onSubmit={handleSearch}
-            className="flex flex-col sm:flex-row gap-0 max-w-2xl border border-white/15 bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-full p-2"
-          >
-            <div className="flex gap-1 rounded-full bg-black/30 p-1 mx-1">
-              <button
-                type="button"
-                onClick={handleSetDealSale}
-                className={`flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-all ${deal === 'sale' ? 'bg-white text-navy' : 'text-cream/70 hover:text-cream'}`}
-              >
-                Купити
-              </button>
-              <button
-                type="button"
-                onClick={handleSetDealRent}
-                className={`flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-all ${deal === 'rent' ? 'bg-white text-navy' : 'text-cream/70 hover:text-cream'}`}
-              >
-                Орендувати
-              </button>
-            </div>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Район, метро, вулиця..."
-              aria-label="Пошук за районом, метро або вулицею"
-              className="flex-1 px-5 py-3 bg-transparent text-sm text-cream placeholder:text-cream/40 outline-none font-inter"
-            />
-            <button
-              type="submit"
-              className="px-8 py-3 bg-white text-navy rounded-full text-xs tracking-widest uppercase font-inter font-bold whitespace-nowrap hover:bg-cream transition-colors"
+          {/* Search pill with live popup autocomplete */}
+          <div className="relative max-w-2xl" ref={searchContainerRef}>
+            <motion.form
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65 }}
+              onSubmit={handleSearch}
+              className="flex flex-col sm:flex-row gap-0 w-full border border-white/20 bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-full p-2 shadow-2xl"
             >
-              Знайти
-            </button>
-          </motion.form>
+              <div className="flex gap-1 rounded-full bg-black/35 p-1 mx-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleSetDealSale}
+                  className={`flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-all ${deal === 'sale' ? 'bg-white text-navy shadow-sm' : 'text-cream/75 hover:text-cream'}`}
+                >
+                  Купити
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSetDealRent}
+                  className={`flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-all ${deal === 'rent' ? 'bg-white text-navy shadow-sm' : 'text-cream/75 hover:text-cream'}`}
+                >
+                  Орендувати
+                </button>
+              </div>
+
+              <div className="relative flex-1 flex items-center min-w-0">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={handleInputChange}
+                  onFocus={handleInputFocus}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Район, метро, вулиця або ЖК..."
+                  aria-label="Пошук за районом, метро, вулицею або ЖК"
+                  className="w-full px-5 py-3 bg-transparent text-sm text-cream placeholder:text-cream/50 outline-none font-inter"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={handleClearQuery}
+                    aria-label="Очистити поле пошуку"
+                    className="p-1.5 text-cream/60 hover:text-white transition-colors mr-2 shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="px-8 py-3 bg-white text-navy rounded-full text-xs tracking-widest uppercase font-inter font-bold whitespace-nowrap hover:bg-cream transition-colors shadow-sm shrink-0"
+              >
+                Знайти
+              </button>
+            </motion.form>
+
+            {/* Live Autocomplete Dropdown Popup */}
+            <AnimatePresence>
+              {isSuggestionsOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.16 }}
+                  className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 p-3 z-50 max-h-[380px] overflow-y-auto custom-scrollbar font-inter text-foreground"
+                >
+                  {/* Category: Метро */}
+                  {suggestions.metro.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <TrainFront className="w-3.5 h-3.5 text-blue-600" />
+                        <span>{suggestions.isPopular ? 'Популярне метро' : 'Станції метро'}</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {suggestions.metro.map((m) => (
+                          <button
+                            key={m.value}
+                            type="button"
+                            onClick={() => handleSelectSuggestion('metro', m.value)}
+                            tabIndex={0}
+                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">м. {m.label}</span>
+                              <span className="text-xs text-muted-foreground truncate hidden sm:inline">({m.line})</span>
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Category: Райони */}
+                  {suggestions.districts.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                        <span>{suggestions.isPopular ? 'Популярні райони' : 'Райони міста'}</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {suggestions.districts.map((d) => (
+                          <button
+                            key={d.value}
+                            type="button"
+                            onClick={() => handleSelectSuggestion('district', d.value)}
+                            tabIndex={0}
+                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">р-н {d.label}</span>
+                              <span className="text-xs text-muted-foreground truncate hidden sm:inline">Харків</span>
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Category: Житлові комплекси */}
+                  {suggestions.complexes.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                        <span>Житлові комплекси (ЖК)</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {suggestions.complexes.map((c) => (
+                          <button
+                            key={c.value}
+                            type="button"
+                            onClick={() => handleSelectSuggestion('complex', c.value)}
+                            tabIndex={0}
+                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{c.label}</span>
+                              {c.address && <span className="text-xs text-muted-foreground truncate hidden sm:inline">{c.address}</span>}
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Category: Вулиці */}
+                  {suggestions.streets.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Вулиці Харкова</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {suggestions.streets.map((s) => (
+                          <button
+                            key={s.value}
+                            type="button"
+                            onClick={() => handleSelectSuggestion('street', s.value)}
+                            tabIndex={0}
+                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{s.label}</span>
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Free Search fallback action */}
+                  {query.trim().length > 0 && (
+                    <div className="pt-2 border-t border-border/50">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectSuggestion('query', query.trim())}
+                        tabIndex={0}
+                        className="w-full text-left px-3 py-2.5 rounded-xl bg-muted/50 hover:bg-navy hover:text-white transition-colors flex items-center justify-between group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Search className="w-4 h-4 text-gold shrink-0 group-hover:text-white transition-colors" />
+                          <span className="text-xs font-semibold">Шукати всі об'єкти за запитом: «{query.trim()}»</span>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors shrink-0" />
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <a
@@ -319,7 +643,7 @@ const HomePage = () => {
             </div>
 
             <Link
-              to="/flats?deal=sale"
+              to="/flats?deal=sale&eoselia=true"
               className="w-full py-3.5 px-6 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full text-center hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2"
             >
               <span>Об'єкти під єОселя</span>
@@ -345,25 +669,25 @@ const HomePage = () => {
               </p>
               <ul className="space-y-3 text-xs sm:text-sm font-inter text-foreground mb-8">
                 <li className="flex items-center gap-2.5">
-                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <Hammer className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Повна юридична перевірка правовстановлюючих документів</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <Hammer className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Безпечне бронювання коштів сертифіката через Дію</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <Hammer className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Нотаріальне оформлення угоди без затримок та ризиків</span>
                 </li>
               </ul>
             </div>
 
             <Link
-              to="/kontakty"
+              to="/flats?deal=sale&erecovery=true"
               className="w-full py-3.5 px-6 border border-border text-foreground hover:border-gold hover:text-gold text-xs tracking-widest uppercase font-inter font-bold rounded-full text-center hover:bg-muted/60 transition-colors flex items-center justify-center gap-2"
             >
-              <span>Консультація щодо сертифіката</span>
+              <span>Об'єкти під єВідновлення</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

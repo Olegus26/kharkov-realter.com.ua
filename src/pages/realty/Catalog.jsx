@@ -11,6 +11,7 @@ import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateItemListSchema } from '@/components/seo/JsonLd'
 import { Autocomplete } from '@/components/ui/autocomplete'
 import { cn } from '@/lib/utils'
+import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 
 const CATEGORIES = [
   { value: 'apartment', label: 'Квартири', path: '/flats' },
@@ -52,90 +53,6 @@ const SUBTYPES_BY_CATEGORY = {
   ]
 }
 
-const METRO_LINES = [
-  {
-    name: 'Холодногірсько-Заводська лінія',
-    color: 'text-red-500',
-    stations: [
-      { label: 'Холодна гора', value: 'Холодная гора' },
-      { label: 'Вокзальна', value: 'Вокзальная' },
-      { label: 'Центральний ринок', value: 'Центральный рынок' },
-      { label: 'Майдан Конституції', value: 'Площадь Конституции' },
-      { label: 'Левада', value: 'Левада' },
-      { label: 'Спортивна', value: 'Спортивная' },
-      { label: 'Заводська', value: 'Заводская' },
-      { label: 'Турбоатом', value: 'Турбоатом' },
-      { label: 'Палац Спорту', value: 'Дворец Спорта' },
-      { label: 'Армійська', value: 'Армейская' },
-      { label: 'Ім. О. С. Масельського', value: 'Им. А. С. Масельского' },
-      { label: 'Тракторний завод', value: 'Тракторный завод' },
-      { label: 'Індустріальна', value: 'Индустриальная' }
-    ]
-  },
-  {
-    name: 'Салтівська лінія',
-    color: 'text-blue-500',
-    stations: [
-      { label: 'Історичний музей', value: 'Исторический музей' },
-      { label: 'Університет', value: 'Университет' },
-      { label: 'Ярослава Мудрого', value: 'Ярослава Мудрого' },
-      { label: 'Київська', value: 'Киевская' },
-      { label: 'Академіка Барабашова', value: 'Академика Барабашова' },
-      { label: 'Академіка Павлова', value: 'Академика Павлова' },
-      { label: 'Студентська', value: 'Студенческая' },
-      { label: 'Салтівська', value: 'Салтовская' }
-    ]
-  },
-  {
-    name: 'Олексіївська лінія',
-    color: 'text-green-500',
-    stations: [
-      { label: 'Метробудівників', value: 'Метростроителей' },
-      { label: 'Захисників України', value: 'Защитников Украины' },
-      { label: 'Архітектора Бекетова', value: 'Архитектора Бекетова' },
-      { label: 'Держпром', value: 'Госпром' },
-      { label: 'Наукова', value: 'Научная' },
-      { label: 'Ботанічний сад', value: 'Ботанический сад' },
-      { label: '23 Серпня', value: '23 Августа' },
-      { label: 'Олексіївська', value: 'Алексеевская' },
-      { label: 'Перемога', value: 'Победа' }
-    ]
-  }
-]
-
-const DISTRICTS = [
-  { value: 'Алексеевка', label: 'Олексіївка' },
-  { value: 'Аэропорт', label: 'Аеропорт' },
-  { value: 'Восточный', label: 'Східний' },
-  { value: 'Гагарина (нач.)', label: 'Гагаріна (поч.)' },
-  { value: 'Жуковского', label: 'Жуковського' },
-  { value: 'Журавлевка', label: 'Журавлівка' },
-  { value: 'З-д Шевченко', label: 'Завод Шевченка' },
-  { value: 'Залютино', label: 'Залютине' },
-  { value: 'Ивановка', label: 'Іванівка' },
-  { value: 'Конный рынок', label: 'Кінний ринок' },
-  { value: 'Красный луч', label: 'Червоний Промінь' },
-  { value: 'Лысая Гора', label: 'Лиса Гора' },
-  { value: 'Москалевка', label: 'Москалівка' },
-  { value: 'Н.Бавария', label: 'Нова Баварія' },
-  { value: 'Немышля', label: 'Немишля' },
-  { value: 'Нов.Дома', label: 'Нові Будинки' },
-  { value: 'Одесская', label: 'Одеська' },
-  { value: 'Основа', label: 'Основа' },
-  { value: 'П.Поле', label: 'Павлове Поле' },
-  { value: 'Павловка', label: 'Павлівка' },
-  { value: 'Песочин', label: 'Пісочин' },
-  { value: 'Пятихатки', label: 'П\'ятихатки' },
-  { value: 'Роганский', label: 'Роганський' },
-  { value: 'Салтовка', label: 'Салтівка' },
-  { value: 'Сев.Салтовка', label: 'Північна Салтівка' },
-  { value: 'Сортировка', label: 'Сортувальня' },
-  { value: 'Хол.Гора', label: 'Холодна Гора' },
-  { value: 'ХТЗ', label: 'ХТЗ' },
-  { value: 'Шишковка', label: 'Шишківка' },
-  { value: 'ЮВ и ЦР', label: 'ПВ і ЦР' }, 
-  { value: 'Центр', label: 'Центр' }
-].sort((a, b) => a.label.localeCompare(b.label, 'uk'))
 
 const STATES = [
   { value: '1', label: 'Житловий' },
@@ -357,6 +274,33 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       }
     }
   }, [location.search, navigate])
+
+  // Synchronize state when navigating from Home or external URL with search parameters
+  useEffect(() => {
+    if (!location.search) return
+    const p = new URLSearchParams(location.search)
+    if (p.has('deal')) setDeal(p.get('deal') || 'sale')
+    if (p.has('q')) setSearchQuery(p.get('q') || '')
+    if (p.has('searchStreet')) setSearchStreet(p.get('searchStreet') || '')
+    if (p.has('searchComplex')) setSearchComplex(p.get('searchComplex') || '')
+    if (p.has('searchHouse')) setSearchHouse(p.get('searchHouse') || '')
+    if (p.has('metroStations')) {
+      const val = p.get('metroStations')
+      setMetroStations(val ? val.split(',') : [])
+    }
+    if (p.has('districts')) {
+      const val = p.get('districts')
+      setDistricts(val ? val.split(',') : [])
+    }
+    if (p.has('eoselia')) setFilterEoselia(p.get('eoselia') === 'true')
+    if (p.has('erecovery')) setFilterErecovery(p.get('erecovery') === 'true')
+    if (p.has('subTypes')) {
+      const val = p.get('subTypes')
+      setSubTypes(val ? val.split(',') : [])
+    }
+    if (p.has('minPrice')) setMinPrice(p.get('minPrice') || '')
+    if (p.has('maxPrice')) setMaxPrice(p.get('maxPrice') || '')
+  }, [location.search])
 
   useEffect(() => {
     const params = new URLSearchParams()
@@ -871,42 +815,6 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 </Popover>
               )}
 
-              {/* Програма: єВідновлення */}
-              <button
-                type="button"
-                onClick={handleToggleErecovery}
-                aria-pressed={filterErecovery}
-                aria-label="Фільтр об'єктів за програмою єВідновлення"
-                tabIndex="0"
-                className={cn(
-                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
-                  filterErecovery
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                    : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
-                )}
-              >
-                <Hammer className={cn('w-4 h-4', filterErecovery ? 'text-white' : 'text-emerald-600')} />
-                <span>єВідновлення</span>
-              </button>
-
-              {/* Програма: єОселя */}
-              <button
-                type="button"
-                onClick={handleToggleEoselia}
-                aria-pressed={filterEoselia}
-                aria-label="Фільтр об'єктів за програмою єОселя"
-                tabIndex="0"
-                className={cn(
-                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
-                  filterEoselia
-                    ? 'bg-navy text-white border-navy shadow-sm'
-                    : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
-                )}
-              >
-                <HomeIcon className={cn('w-4 h-4', filterEoselia ? 'text-white' : 'text-navy')} />
-                <span>єОселя</span>
-              </button>
-
               {/* Advanced Filters Toggle Button */}
               <button 
                 type="button"
@@ -917,9 +825,9 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
               >
                 <span>Більше фільтрів</span> 
                 <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200", showAdvancedFilters && "rotate-180")} />
-                {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0)) > 0 && !showAdvancedFilters && (
+                {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0) + (filterErecovery ? 1 : 0) + (filterEoselia ? 1 : 0)) > 0 && !showAdvancedFilters && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">
-                    {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0))}
+                    {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0) + (filterErecovery ? 1 : 0) + (filterEoselia ? 1 : 0))}
                   </span>
                 )}
               </button>
@@ -1069,10 +977,45 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 </PopoverContent>
               </Popover>
 
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              {/* Програма: єВідновлення */}
+              <button
+                type="button"
+                onClick={handleToggleErecovery}
+                aria-pressed={filterErecovery}
+                aria-label="Фільтр об'єктів за програмою єВідновлення"
+                tabIndex={0}
+                className={cn(
+                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                  filterErecovery
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
+                )}
+              >
+                <Hammer className={cn('w-4 h-4', filterErecovery ? 'text-white' : 'text-emerald-600')} />
+                <span>єВідновлення</span>
+              </button>
+
+              {/* Програма: єОселя */}
+              <button
+                type="button"
+                onClick={handleToggleEoselia}
+                aria-pressed={filterEoselia}
+                aria-label="Фільтр об'єктів за програмою єОселя"
+                tabIndex={0}
+                className={cn(
+                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                  filterEoselia
+                    ? 'bg-navy text-white border-navy shadow-sm'
+                    : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
+                )}
+              >
+                <HomeIcon className={cn('w-4 h-4', filterEoselia ? 'text-white' : 'text-navy')} />
+                <span>єОселя</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
             </div>
 
             {/* Active filter badges */}
