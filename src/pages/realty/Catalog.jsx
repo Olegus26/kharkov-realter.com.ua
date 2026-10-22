@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, startTransition } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
-import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, Filter, ChevronUp } from 'lucide-react'
+import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, Filter, ChevronUp, Check } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import MapView from '@/components/realty/MapView'
 import { useCatalogObjects } from '@/lib/useCatalogObjects'
@@ -218,6 +218,14 @@ const checkSubTypeMatch = (p, st) => {
   return true
 }
 
+const SORT_OPTIONS = [
+  { value: 'date_desc', label: 'Новіші спочатку' },
+  { value: 'price_asc', label: 'Ціна: від дешевших' },
+  { value: 'price_desc', label: 'Ціна: від дорожчих' },
+  { value: 'area_asc', label: 'Площа: від меншої' },
+  { value: 'area_desc', label: 'Площа: від більшої' },
+]
+
 const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   
@@ -225,6 +233,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [category, setCategory] = useState(defaultCategory)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'date_desc')
+  const [isSortOpen, setIsSortOpen] = useState(false)
   const [subTypes, setSubTypes] = useState(searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : [])
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
@@ -607,7 +616,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
             {/* Top row: Deal Tabs + View Toggle */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
               
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-3">
                 {/* Deal tabs */}
                 <div className="flex p-1 bg-muted rounded-full shrink-0 relative">
                   {[['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
@@ -656,54 +665,65 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                     </button>
                   ))}
                 </div>
-                {hasFilters && (
-                  <button
-                    type="button"
-                    onClick={handleClearFilters}
-                    aria-label="Скинути всі вибрані фільтри"
-                    className="text-xs font-inter font-semibold text-destructive hover:text-destructive/80 transition-colors flex items-center justify-center gap-1.5 shrink-0 px-4 py-2 bg-destructive/10 hover:bg-destructive/15 rounded-full h-[38px] whitespace-nowrap"
-                  >
-                    <X className="w-3.5 h-3.5 shrink-0" />
-                    <span>Скинути</span>
-                  </button>
-                )}
               </div>
 
               {/* Sort & View Toggle */}
-              <div className="flex items-center gap-3 lg:gap-4 flex-wrap">
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    aria-label="Сортування каталогу"
-                    className="appearance-none bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full pl-4 pr-8 py-2.5 outline-none cursor-pointer border border-transparent focus:border-navy/30 transition-colors"
-                  >
-                    <option value="date_desc">Новіші спочатку</option>
-                    <option value="price_asc">Ціна: від дешевших</option>
-                    <option value="price_desc">Ціна: від дорожчих</option>
-                    <option value="area_asc">Площа: від меншої</option>
-                    <option value="area_desc">Площа: від більшої</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
-                </div>
+              <div className="flex items-center gap-3 lg:gap-4 flex-wrap ml-auto">
+                {/* Sort Popover: custom styled like other filters, shown ONLY in list mode */}
+                {viewMode === 'list' && (
+                  <Popover open={isSortOpen} onOpenChange={setIsSortOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Сортування каталогу"
+                        className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full px-4 py-2.5 outline-none transition-colors border border-transparent hover:border-border"
+                      >
+                        <span>{SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Новіші спочатку'}</span>
+                        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', isSortOpen && 'rotate-180')} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-52 p-1.5 rounded-2xl bg-white shadow-xl border border-border/70 z-50" align="start">
+                      <div className="space-y-0.5">
+                        {SORT_OPTIONS.map((opt) => {
+                          const isSelected = sortBy === opt.value
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => {
+                                setSortBy(opt.value)
+                                setIsSortOpen(false)
+                              }}
+                              className={cn(
+                                'w-full text-left px-3 py-2 text-xs font-inter rounded-xl transition-colors font-medium flex items-center justify-between',
+                                isSelected
+                                  ? 'bg-gold/15 text-gold font-semibold'
+                                  : 'text-foreground hover:bg-muted/70'
+                              )}
+                            >
+                              <span>{opt.label}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-gold shrink-0" />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
 
-                <p className="text-muted-foreground text-sm font-inter hidden xl:block font-medium">
-                  {isFetching ? (
-                    <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-navy/70 bg-navy/5 px-3 py-1.5 rounded-full animate-pulse font-semibold">
-                      <svg className="w-3.5 h-3.5 animate-spin text-navy" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      Оновлення бази...
-                    </span>
-                  ) : (
-                    <>{filtered.length} об'єктів</>
-                  )}
+                <p className="text-muted-foreground text-sm font-inter whitespace-nowrap font-medium flex items-center gap-1.5">
+                  {isFetching && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
+                  <span>{filtered.length} об'єктів</span>
                 </p>
-                <div className="flex p-1 bg-muted rounded-full relative">
+
+                <div className="flex p-1 bg-muted rounded-full relative shrink-0">
                   {[
                     { id: 'list', icon: LayoutGrid, label: 'Список' },
                     { id: 'map', icon: Map, label: 'Карта' }
                   ].map(v => (
                     <button
                       key={v.id}
+                      type="button"
                       onClick={() => startTransition(() => handleViewModeChange(v.id))}
                       className={cn('relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
                         'text-white': viewMode === v.id,
