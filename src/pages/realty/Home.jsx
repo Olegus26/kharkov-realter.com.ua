@@ -23,6 +23,7 @@ import { getObjects, getAllObjects, mapObject } from '@/lib/novostoyApi'
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
+import { cn } from '@/lib/utils'
 
 const HERO_IMAGES = [
   '/hero-bg.jpg',
@@ -156,8 +157,28 @@ const HomePage = () => {
     }
   }, [query, geoData])
 
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+
+  const flattenedSuggestions = useMemo(() => {
+    const list = []
+    if (suggestions.metro?.length > 0) {
+      suggestions.metro.forEach((m) => list.push({ type: 'metro', label: `м. ${m.label}`, value: m.value, sub: m.line }))
+    }
+    if (suggestions.districts?.length > 0) {
+      suggestions.districts.forEach((d) => list.push({ type: 'district', label: `р-н ${d.label}`, value: d.value, sub: 'Харків' }))
+    }
+    if (suggestions.complexes?.length > 0) {
+      suggestions.complexes.forEach((c) => list.push({ type: 'complex', label: c.label, value: c.value, sub: c.address }))
+    }
+    if (suggestions.streets?.length > 0) {
+      suggestions.streets.forEach((s) => list.push({ type: 'street', label: s.label, value: s.value, sub: 'Вулиця' }))
+    }
+    return list
+  }, [suggestions])
+
   const handleSelectSuggestion = (type, val) => {
     setIsSuggestionsOpen(false)
+    setHighlightedIndex(-1)
     if (!val) return
 
     if (type === 'metro') {
@@ -186,6 +207,7 @@ const HomePage = () => {
   const handleSearch = (e) => {
     e.preventDefault()
     setIsSuggestionsOpen(false)
+    setHighlightedIndex(-1)
     const trimmed = query.trim()
     if (!trimmed) {
       navigate(`/flats?deal=${deal}`)
@@ -205,6 +227,7 @@ const HomePage = () => {
   const handleInputChange = (e) => {
     setQuery(e.target.value)
     setIsSuggestionsOpen(true)
+    setHighlightedIndex(-1)
   }
 
   const handleInputFocus = () => {
@@ -213,12 +236,37 @@ const HomePage = () => {
 
   const handleClearQuery = () => {
     setQuery('')
+    setHighlightedIndex(-1)
     inputRef.current?.focus()
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (!isSuggestionsOpen) {
+        setIsSuggestionsOpen(true)
+        return
+      }
+      if (flattenedSuggestions.length === 0) return
+      setHighlightedIndex((prev) => (prev + 1 < flattenedSuggestions.length ? prev + 1 : 0))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (!isSuggestionsOpen) {
+        setIsSuggestionsOpen(true)
+        return
+      }
+      if (flattenedSuggestions.length === 0) return
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : flattenedSuggestions.length - 1))
+    } else if (e.key === 'Enter') {
+      if (isSuggestionsOpen && highlightedIndex >= 0 && flattenedSuggestions[highlightedIndex]) {
+        e.preventDefault()
+        const selected = flattenedSuggestions[highlightedIndex]
+        handleSelectSuggestion(selected.type, selected.value)
+        return
+      }
+    } else if (e.key === 'Escape') {
       setIsSuggestionsOpen(false)
+      setHighlightedIndex(-1)
     }
   }
 
@@ -230,18 +278,21 @@ const HomePage = () => {
       />
       <JsonLd schema={generateRealEstateAgentSchema()} />
 
-      {/* Hero — cinematic, left-aligned */}
-      <section className="relative min-h-screen flex items-end sm:items-center overflow-hidden">
-        <img
-          src={HERO_IMAGES[0]}
-          alt="Харків Ріелтер - елітна нерухомість"
-          fetchPriority="high"
-          decoding="sync"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-navy/90" />
+      {/* Hero — cinematic, left-aligned with safe clipping for dropdown */}
+      <section className="relative min-h-[92vh] sm:min-h-screen flex items-center">
+        {/* Background image & gradient with safe clipping */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <img
+            src={HERO_IMAGES[0]}
+            alt="Харків Ріелтер - елітна нерухомість"
+            fetchPriority="high"
+            decoding="sync"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-navy/90" />
+        </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-32 pb-28 sm:py-40 text-left">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-28 pb-16 sm:pt-36 sm:pb-24 text-left">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -272,7 +323,7 @@ const HomePage = () => {
           </motion.p>
 
           {/* Search pill with live popup autocomplete */}
-          <div className="relative max-w-2xl" ref={searchContainerRef}>
+          <div className="relative max-w-2xl z-30" ref={searchContainerRef}>
             <motion.form
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -307,6 +358,10 @@ const HomePage = () => {
                   onKeyDown={handleKeyDown}
                   placeholder="Район, метро, вулиця або ЖК..."
                   aria-label="Пошук за районом, метро, вулицею або ЖК"
+                  autoComplete="off"
+                  spellCheck="false"
+                  aria-expanded={isSuggestionsOpen}
+                  aria-autocomplete="list"
                   className="w-full px-5 py-3 bg-transparent text-sm text-cream placeholder:text-cream/50 outline-none font-inter"
                 />
                 {query && (
@@ -337,127 +392,299 @@ const HomePage = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
                   transition={{ duration: 0.16 }}
-                  className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 p-3 z-50 max-h-[380px] overflow-y-auto custom-scrollbar font-inter text-foreground"
+                  className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 p-3 sm:p-4 z-50 max-h-[min(420px,55vh)] overflow-y-auto custom-scrollbar font-inter text-foreground"
                 >
-                  {/* Category: Метро */}
-                  {suggestions.metro.length > 0 && (
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <TrainFront className="w-3.5 h-3.5 text-blue-600" />
-                        <span>{suggestions.isPopular ? 'Популярне метро' : 'Станції метро'}</span>
+                  {suggestions.isPopular ? (
+                    /* 2-Column Balanced Layout for Popular Items */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Left: Популярне метро */}
+                      <div>
+                        <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                          <TrainFront className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Популярне метро</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {suggestions.metro.map((m) => {
+                            const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'metro' && x.value === m.value)
+                            const isHighlighted = highlightedIndex === flatIdx
+                            return (
+                              <button
+                                key={m.value}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault()
+                                  handleSelectSuggestion('metro', m.value)
+                                }}
+                                tabIndex={0}
+                                className={cn(
+                                  'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                  isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                  <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">м. {m.label}</span>
+                                  <span className="text-xs text-muted-foreground truncate hidden sm:inline">({m.line})</span>
+                                </div>
+                                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        {suggestions.metro.map((m) => (
-                          <button
-                            key={m.value}
-                            type="button"
-                            onClick={() => handleSelectSuggestion('metro', m.value)}
-                            tabIndex={0}
-                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">м. {m.label}</span>
-                              <span className="text-xs text-muted-foreground truncate hidden sm:inline">({m.line})</span>
-                            </div>
-                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          </button>
-                        ))}
+
+                      {/* Right: Популярні райони та ЖК */}
+                      <div>
+                        <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                          <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Популярні райони та ЖК</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {suggestions.districts.map((d) => {
+                            const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'district' && x.value === d.value)
+                            const isHighlighted = highlightedIndex === flatIdx
+                            return (
+                              <button
+                                key={d.value}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault()
+                                  handleSelectSuggestion('district', d.value)
+                                }}
+                                tabIndex={0}
+                                className={cn(
+                                  'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                  isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                  <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">р-н {d.label}</span>
+                                  <span className="text-xs text-muted-foreground truncate hidden sm:inline">Харків</span>
+                                </div>
+                                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                              </button>
+                            )
+                          })}
+
+                          {suggestions.complexes.map((c) => {
+                            const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'complex' && x.value === c.value)
+                            const isHighlighted = highlightedIndex === flatIdx
+                            return (
+                              <button
+                                key={c.value}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault()
+                                  handleSelectSuggestion('complex', c.value)
+                                }}
+                                tabIndex={0}
+                                className={cn(
+                                  'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                  isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                                  <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{c.label}</span>
+                                  {c.address && <span className="text-xs text-muted-foreground truncate hidden sm:inline">({c.address})</span>}
+                                </div>
+                                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
                     </div>
-                  )}
-
-                  {/* Category: Райони */}
-                  {suggestions.districts.length > 0 && (
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                        <span>{suggestions.isPopular ? 'Популярні райони' : 'Райони міста'}</span>
-                      </div>
-                      <div className="space-y-0.5">
-                        {suggestions.districts.map((d) => (
-                          <button
-                            key={d.value}
-                            type="button"
-                            onClick={() => handleSelectSuggestion('district', d.value)}
-                            tabIndex={0}
-                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">р-н {d.label}</span>
-                              <span className="text-xs text-muted-foreground truncate hidden sm:inline">Харків</span>
+                  ) : suggestions.hasResults ? (
+                    /* Search results organized in 2-column or structured sections */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Column 1: Metro & Districts */}
+                      <div className="space-y-3">
+                        {suggestions.metro.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                              <TrainFront className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Станції метро</span>
                             </div>
-                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          </button>
-                        ))}
+                            <div className="space-y-0.5">
+                              {suggestions.metro.map((m) => {
+                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'metro' && x.value === m.value)
+                                const isHighlighted = highlightedIndex === flatIdx
+                                return (
+                                  <button
+                                    key={m.value}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault()
+                                      handleSelectSuggestion('metro', m.value)
+                                    }}
+                                    tabIndex={0}
+                                    className={cn(
+                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">м. {m.label}</span>
+                                      <span className="text-xs text-muted-foreground truncate hidden sm:inline">({m.line})</span>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {suggestions.districts.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                              <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Райони</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {suggestions.districts.map((d) => {
+                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'district' && x.value === d.value)
+                                const isHighlighted = highlightedIndex === flatIdx
+                                return (
+                                  <button
+                                    key={d.value}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault()
+                                      handleSelectSuggestion('district', d.value)
+                                    }}
+                                    tabIndex={0}
+                                    className={cn(
+                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">р-н {d.label}</span>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Column 2: Complexes & Streets */}
+                      <div className="space-y-3">
+                        {suggestions.complexes.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                              <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                              <span>Житлові комплекси (ЖК)</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {suggestions.complexes.map((c) => {
+                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'complex' && x.value === c.value)
+                                const isHighlighted = highlightedIndex === flatIdx
+                                return (
+                                  <button
+                                    key={c.value}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault()
+                                      handleSelectSuggestion('complex', c.value)
+                                    }}
+                                    tabIndex={0}
+                                    className={cn(
+                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{c.label}</span>
+                                      {c.address && <span className="text-xs text-muted-foreground truncate hidden sm:inline">({c.address})</span>}
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {suggestions.streets.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                              <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Вулиці</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {suggestions.streets.map((s) => {
+                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'street' && x.value === s.value)
+                                const isHighlighted = highlightedIndex === flatIdx
+                                return (
+                                  <button
+                                    key={s.value}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault()
+                                      handleSelectSuggestion('street', s.value)
+                                    }}
+                                    tabIndex={0}
+                                    className={cn(
+                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{s.label}</span>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-
-                  {/* Category: Житлові комплекси */}
-                  {suggestions.complexes.length > 0 && (
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <Building2 className="w-3.5 h-3.5 text-purple-600" />
-                        <span>Житлові комплекси (ЖК)</span>
-                      </div>
-                      <div className="space-y-0.5">
-                        {suggestions.complexes.map((c) => (
-                          <button
-                            key={c.value}
-                            type="button"
-                            onClick={() => handleSelectSuggestion('complex', c.value)}
-                            tabIndex={0}
-                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{c.label}</span>
-                              {c.address && <span className="text-xs text-muted-foreground truncate hidden sm:inline">{c.address}</span>}
-                            </div>
-                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Category: Вулиці */}
-                  {suggestions.streets.length > 0 && (
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Вулиці Харкова</span>
-                      </div>
-                      <div className="space-y-0.5">
-                        {suggestions.streets.map((s) => (
-                          <button
-                            key={s.value}
-                            type="button"
-                            onClick={() => handleSelectSuggestion('street', s.value)}
-                            tabIndex={0}
-                            className="w-full text-left px-3 py-2 rounded-xl hover:bg-muted/80 transition-colors flex items-center justify-between group cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                              <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{s.label}</span>
-                            </div>
-                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Free Search fallback action */}
-                  {query.trim().length > 0 && (
-                    <div className="pt-2 border-t border-border/50">
+                  ) : (
+                    /* Friendly Empty State with Direct Search */
+                    <div className="py-6 px-4 text-center">
+                      <p className="text-sm text-foreground/80 font-medium mb-1">
+                        Не знайдено точних назв серед метро, районів чи ЖК
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Ви можете знайти «{query.trim()}» по всій базі описів та оголошень
+                      </p>
                       <button
                         type="button"
-                        onClick={() => handleSelectSuggestion('query', query.trim())}
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          handleSelectSuggestion('query', query.trim())
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-xs font-semibold rounded-xl hover:bg-navy/90 transition-colors shadow-sm"
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>Шукати «{query.trim()}» у каталозі</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Free Search fallback action at bottom when typing */}
+                  {query.trim().length > 0 && suggestions.hasResults && (
+                    <div className="pt-2.5 mt-3 border-t border-border/60">
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          handleSelectSuggestion('query', query.trim())
+                        }}
                         tabIndex={0}
-                        className="w-full text-left px-3 py-2.5 rounded-xl bg-muted/50 hover:bg-navy hover:text-white transition-colors flex items-center justify-between group cursor-pointer"
+                        className="w-full text-left px-3.5 py-2.5 rounded-xl bg-muted/60 hover:bg-navy hover:text-white transition-colors flex items-center justify-between group cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
                           <Search className="w-4 h-4 text-gold shrink-0 group-hover:text-white transition-colors" />
