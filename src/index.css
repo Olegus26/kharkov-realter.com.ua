@@ -15,7 +15,7 @@
     --font-cormorant: var(--font-heading);
     --font-inter: var(--font-body);
 
-    --background: 220 14% 97%;
+    --background: 215 28% 95%;
     --foreground: 222 47% 12%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 12%;
@@ -23,16 +23,16 @@
     --popover-foreground: 222 47% 12%;
     --primary: 222 55% 20%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 93%;
+    --secondary: 215 20% 92%;
     --secondary-foreground: 222 47% 12%;
-    --muted: 220 13% 94%;
+    --muted: 215 20% 92%;
     --muted-foreground: 222 15% 44%;
     --accent: 222 55% 20%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 48%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 12% 88%;
-    --input: 220 12% 92%;
+    --border: 215 20% 89%;
+    --input: 215 20% 92%;
     --ring: 222 55% 20%;
     --radius: 1rem;
 

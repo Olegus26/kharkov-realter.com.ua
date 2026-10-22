@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import FloatingTelegram from './FloatingTelegram'
-import AmbientWaveBackground from './AmbientWaveBackground'
 
 const CATALOG_PATHS = ['/flats', '/houses', '/realtys']
 
@@ -20,9 +19,6 @@ const SiteLayout = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-x-hidden">
-      {/* Living ambient wave background that reacts to scroll in parallax and gently breathes */}
-      <AmbientWaveBackground />
-
       <Navbar />
       <motion.main
         key={layoutKey}
