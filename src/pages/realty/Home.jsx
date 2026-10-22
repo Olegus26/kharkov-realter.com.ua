@@ -497,64 +497,81 @@ const HomePage = () => {
                       </div>
                     </div>
                   ) : suggestions.hasResults ? (
-                    /* Search results organized in 2-column or structured sections */
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Column 1: Metro & Districts */}
-                      <div className="space-y-3">
-                        {suggestions.metro.length > 0 && (
-                          <div>
-                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                              <TrainFront className="w-3.5 h-3.5 text-blue-600" />
-                              <span>Станції метро</span>
-                            </div>
-                            <div className="space-y-0.5">
-                              {suggestions.metro.map((m) => {
-                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'metro' && x.value === m.value)
-                                const isHighlighted = highlightedIndex === flatIdx
-                                return (
-                                  <button
-                                    key={m.value}
-                                    type="button"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault()
-                                      handleSelectSuggestion('metro', m.value)
-                                    }}
-                                    tabIndex={0}
-                                    className={cn(
-                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
-                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">м. {m.label}</span>
-                                      <span className="text-xs text-muted-foreground truncate hidden sm:inline">({m.line})</span>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
+                    (() => {
+                      const activeGroups = []
+                      if (suggestions.metro?.length > 0) {
+                        activeGroups.push({
+                          id: 'metro',
+                          title: 'Станції метро',
+                          icon: TrainFront,
+                          iconColor: 'text-blue-600',
+                          dotColor: 'bg-blue-500',
+                          items: suggestions.metro,
+                          type: 'metro',
+                          renderSub: (m) => (m.line ? `(${m.line})` : null),
+                          prefix: 'м. '
+                        })
+                      }
+                      if (suggestions.districts?.length > 0) {
+                        activeGroups.push({
+                          id: 'districts',
+                          title: 'Райони',
+                          icon: MapPin,
+                          iconColor: 'text-amber-600',
+                          dotColor: 'bg-amber-500',
+                          items: suggestions.districts,
+                          type: 'district',
+                          renderSub: () => 'Харків',
+                          prefix: 'р-н '
+                        })
+                      }
+                      if (suggestions.complexes?.length > 0) {
+                        activeGroups.push({
+                          id: 'complexes',
+                          title: 'Житлові комплекси (ЖК)',
+                          icon: Building2,
+                          iconColor: 'text-purple-600',
+                          dotColor: 'bg-purple-500',
+                          items: suggestions.complexes,
+                          type: 'complex',
+                          renderSub: (c) => (c.address ? `(${c.address})` : null),
+                          prefix: ''
+                        })
+                      }
+                      if (suggestions.streets?.length > 0) {
+                        activeGroups.push({
+                          id: 'streets',
+                          title: 'Вулиці',
+                          icon: Navigation,
+                          iconColor: 'text-emerald-600',
+                          dotColor: 'bg-emerald-500',
+                          items: suggestions.streets,
+                          type: 'street',
+                          renderSub: () => null,
+                          prefix: ''
+                        })
+                      }
 
-                        {suggestions.districts.length > 0 && (
-                          <div>
+                      const renderGroup = (g, isSingleGroup = false) => {
+                        const IconComp = g.icon
+                        return (
+                          <div key={g.id}>
                             <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                              <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Райони</span>
+                              <IconComp className={cn('w-3.5 h-3.5', g.iconColor)} />
+                              <span>{g.title}</span>
                             </div>
-                            <div className="space-y-0.5">
-                              {suggestions.districts.map((d) => {
-                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'district' && x.value === d.value)
+                            <div className={cn('space-y-0.5', isSingleGroup && 'grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 space-y-0')}>
+                              {g.items.map((item) => {
+                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === g.type && x.value === item.value)
                                 const isHighlighted = highlightedIndex === flatIdx
+                                const subText = g.renderSub(item)
                                 return (
                                   <button
-                                    key={d.value}
+                                    key={item.value}
                                     type="button"
                                     onMouseDown={(e) => {
                                       e.preventDefault()
-                                      handleSelectSuggestion('district', d.value)
+                                      handleSelectSuggestion(g.type, item.value)
                                     }}
                                     tabIndex={0}
                                     className={cn(
@@ -563,8 +580,15 @@ const HomePage = () => {
                                     )}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0">
-                                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">р-н {d.label}</span>
+                                      <span className={cn('w-2 h-2 rounded-full shrink-0', g.dotColor)} />
+                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">
+                                        {g.prefix}{item.label}
+                                      </span>
+                                      {subText && (
+                                        <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                                          {subText}
+                                        </span>
+                                      )}
                                     </div>
                                     <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                                   </button>
@@ -572,85 +596,32 @@ const HomePage = () => {
                               })}
                             </div>
                           </div>
-                        )}
-                      </div>
+                        )
+                      }
 
-                      {/* Column 2: Complexes & Streets */}
-                      <div className="space-y-3">
-                        {suggestions.complexes.length > 0 && (
-                          <div>
-                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                              <Building2 className="w-3.5 h-3.5 text-purple-600" />
-                              <span>Житлові комплекси (ЖК)</span>
-                            </div>
-                            <div className="space-y-0.5">
-                              {suggestions.complexes.map((c) => {
-                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'complex' && x.value === c.value)
-                                const isHighlighted = highlightedIndex === flatIdx
-                                return (
-                                  <button
-                                    key={c.value}
-                                    type="button"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault()
-                                      handleSelectSuggestion('complex', c.value)
-                                    }}
-                                    tabIndex={0}
-                                    className={cn(
-                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
-                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{c.label}</span>
-                                      {c.address && <span className="text-xs text-muted-foreground truncate hidden sm:inline">({c.address})</span>}
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                                  </button>
-                                )
-                              })}
-                            </div>
+                      if (activeGroups.length === 1) {
+                        return (
+                          <div className="w-full">
+                            {renderGroup(activeGroups[0], true)}
                           </div>
-                        )}
+                        )
+                      }
 
-                        {suggestions.streets.length > 0 && (
-                          <div>
-                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                              <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Вулиці</span>
-                            </div>
-                            <div className="space-y-0.5">
-                              {suggestions.streets.map((s) => {
-                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'street' && x.value === s.value)
-                                const isHighlighted = highlightedIndex === flatIdx
-                                return (
-                                  <button
-                                    key={s.value}
-                                    type="button"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault()
-                                      handleSelectSuggestion('street', s.value)
-                                    }}
-                                    tabIndex={0}
-                                    className={cn(
-                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
-                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{s.label}</span>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                                  </button>
-                                )
-                              })}
-                            </div>
+                      const mid = Math.ceil(activeGroups.length / 2)
+                      const col1 = activeGroups.slice(0, mid)
+                      const col2 = activeGroups.slice(mid)
+
+                      return (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-3">
+                            {col1.map((g) => renderGroup(g, false))}
                           </div>
-                        )}
-                      </div>
-                    </div>
+                          <div className="space-y-3">
+                            {col2.map((g) => renderGroup(g, false))}
+                          </div>
+                        </div>
+                      )
+                    })()
                   ) : (
                     /* Friendly Empty State with Direct Search */
                     <div className="py-6 px-4 text-center">

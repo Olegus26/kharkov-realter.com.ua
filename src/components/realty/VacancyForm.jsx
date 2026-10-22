@@ -1,13 +1,40 @@
-import { useState } from 'react'
-import { Send, CheckCircle, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Send, CheckCircle, AlertCircle, Sparkles } from 'lucide-react'
 import { formatPhone } from '@/lib/utils'
 import { submitLead } from '@/lib/leadService'
 
-const VacancyForm = () => {
-  const [form, setForm] = useState({ name: '', phone: '', about: '' })
+const QUICK_TAGS = [
+  'Без досвіду, готовий вчитися',
+  'Є досвід у продажах / сфері послуг',
+  'Шукаю гнучкий графік',
+  'Хочу офіс поруч з домом',
+  'Цікавить високий відсоток від угод'
+]
+
+const VacancyForm = ({ initialAbout = '' }) => {
+  const [form, setForm] = useState({ name: '', phone: '', about: initialAbout })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    if (initialAbout) {
+      setForm((prev) => ({
+        ...prev,
+        about: prev.about ? `${prev.about}\n${initialAbout}` : initialAbout
+      }))
+    }
+  }, [initialAbout])
+
+  const handleToggleTag = (tag) => {
+    setForm((prev) => {
+      const current = prev.about || ''
+      if (current.includes(tag)) {
+        return { ...prev, about: current.replace(tag, '').replace(/\n\n+/g, '\n').trim() }
+      }
+      return { ...prev, about: current ? `${current}, ${tag}` : tag }
+    })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -78,7 +105,37 @@ const VacancyForm = () => {
       </div>
 
       <div>
-        <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-2 font-semibold">Коротко про себе (досвід, побажання)</label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter font-semibold">
+            Коротко про себе (досвід, побажання)
+          </label>
+          <span className="text-[10px] text-gold flex items-center gap-1 font-inter font-semibold">
+            <Sparkles className="w-3 h-3" /> Швидкий вибір:
+          </span>
+        </div>
+
+        {/* Quick Tags Chips */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {QUICK_TAGS.map((tag) => {
+            const isSelected = form.about?.includes(tag)
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => handleToggleTag(tag)}
+                tabIndex={0}
+                className={`text-xs px-3 py-1.5 rounded-full font-inter transition-all duration-200 border ${
+                  isSelected
+                    ? 'bg-gold/15 text-gold border-gold/40 font-semibold shadow-sm'
+                    : 'bg-muted/70 text-muted-foreground border-border/60 hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                {isSelected ? `✓ ${tag}` : `+ ${tag}`}
+              </button>
+            )
+          })}
+        </div>
+
         <textarea
           value={form.about}
           onChange={(e) => setForm((prev) => ({ ...prev, about: e.target.value }))}

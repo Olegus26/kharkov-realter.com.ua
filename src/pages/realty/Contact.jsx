@@ -3,11 +3,10 @@ import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle, AlertCircle, MessageSquare } from 'lucide-react'
 import { formatPhone, cn } from '@/lib/utils'
 import { submitLead } from '@/lib/leadService'
-import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
+import { getPhoneLink } from '@/lib/phones'
 import { OFFICES, HOTLINE_PHONE, GENERAL_EMAIL } from '@/data/offices'
 
 const ContactPage = () => {
-  const phones = getPhonesForToday()
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', type: 'buy' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -43,7 +42,7 @@ const ContactPage = () => {
         <p className="text-xs tracking-[0.4em] uppercase text-gold mb-3 font-inter font-semibold">Зворотній зв'язок</p>
         <h1 className="font-cormorant text-5xl sm:text-6xl font-bold text-foreground">Зв'яжіться з нами</h1>
         <p className="text-muted-foreground font-inter text-sm mt-3 max-w-xl">
-          Оберіть зручний офіс у вашому районі, зателефонуйте черговому спеціалісту або залиште запит на підбір нерухомості.
+          Оберіть зручний офіс у вашому районі серед 13 філій або залиште запит на консультацію експерта.
         </p>
       </section>
 
@@ -56,7 +55,7 @@ const ContactPage = () => {
                 <CheckCircle className="w-16 h-16 text-emerald-500 mb-6" />
                 <h2 className="font-cormorant text-4xl mb-3 font-bold text-foreground">Дякуємо!</h2>
                 <p className="text-muted-foreground font-inter text-sm max-w-md">
-                  Ми успішно отримали вашу заявку. Черговий спеціаліст зв'яжеться з вами протягом 15 хвилин.
+                  Ми успішно отримали вашу заявку. Наш експерт зв'яжеться з вами протягом 15 хвилин.
                 </p>
                 <button
                   type="button"
@@ -175,7 +174,7 @@ const ContactPage = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-8">
             <div className="space-y-4">
               <div className="flex flex-col gap-3 p-6 border border-border bg-card rounded-3xl shadow-sm">
-                <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Консультації та черговий номер</p>
+                <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Консультація та підбір об'єктів</p>
                 <a href={getPhoneLink(HOTLINE_PHONE)} className="flex items-center gap-3 group">
                   <div className="w-10 h-10 rounded-full gradient-gold flex items-center justify-center text-white shrink-0">
                     <Phone className="w-5 h-5" />

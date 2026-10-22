@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Instagram, Facebook, Send as Telegram, MessageCircle, X } from 'lucide-react'
-import { getPhoneLink } from '@/lib/phones'
-import { OFFICES, GENERAL_EMAIL, HOTLINE_PHONE } from '@/data/offices'
+import { Mail, Instagram, Facebook, Send as Telegram, MessageCircle, X, ArrowRight } from 'lucide-react'
+import { OFFICES, GENERAL_EMAIL } from '@/data/offices'
 import AddressRevolver from './AddressRevolver'
 
 const Footer = () => {
@@ -121,28 +120,22 @@ const Footer = () => {
             <div className="space-y-4 font-inter">
               <AddressRevolver addresses={OFFICES} />
 
-              {/* Central Office */}
-              <div className="p-3.5 rounded-2xl bg-gold/5 border border-gold/20 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-gold">Головний офіс</p>
-                  <a
-                    href={getPhoneLink(HOTLINE_PHONE)}
-                    className="font-bold text-sm text-foreground hover:text-gold transition-colors"
-                  >
-                    {HOTLINE_PHONE}
-                  </a>
-                </div>
-                <span className="text-[10px] text-muted-foreground bg-card/80 px-2 py-0.5 rounded-md font-medium border border-border/50">
-                  9:00–19:00
-                </span>
-              </div>
-
-              {/* General Email */}
+              {/* General Email & Contacts link */}
               <div className="flex items-center gap-2.5 text-xs text-muted-foreground px-1">
                 <Mail className="w-3.5 h-3.5 text-gold shrink-0" />
                 <a href={`mailto:${GENERAL_EMAIL}`} className="hover:text-gold transition-colors font-medium">
                   {GENERAL_EMAIL}
                 </a>
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  to="/kontakty"
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-gold hover:text-foreground transition-colors"
+                >
+                  <span>Всі 13 відділень та телефони</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
           </div>
