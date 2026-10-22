@@ -59,7 +59,7 @@ export const submitLead = async ({ type = 'consult', name, phone, email = '', me
       console.error('Telegram notification error:', data)
       return {
         success: false,
-        error: 'Не вдалося надіслати заявку онлайн. Будь ласка, зателефонуйте нам за номером гарячої лінії.'
+        error: 'Не вдалося надіслати заявку онлайн. Будь ласка, зателефонуйте нам або напишіть у месенджер.'
       }
     }
 

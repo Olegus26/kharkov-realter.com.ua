@@ -2,13 +2,12 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, MessageCircle } from 'lucide-react'
+import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, MessageCircle, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
 import { getAllObjects, mapObject } from '@/lib/novostoyApi'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
 import { submitLead } from '@/lib/leadService'
 import { formatPhone, cn } from '@/lib/utils'
-import { HOTLINE_PHONE } from '@/data/offices'
 import PropertyCard from '@/components/realty/PropertyCard'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
@@ -242,7 +241,7 @@ const PropertyDetail = () => {
 
   const primaryCallPhone = property.agent_phones?.[0]
     ? `tel:+38${property.agent_phones[0]}`
-    : `tel:+380507136363`
+    : 'tel:+380957372261'
 
   return (
     <div className="pt-24 pb-20" onKeyDown={handleKeyDownGallery} tabIndex={0}>
@@ -351,8 +350,38 @@ const PropertyDetail = () => {
 
             {/* Info block */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="border-t border-border pt-8">
-              <p className="text-xs tracking-[0.2em] uppercase text-gold mb-2 font-inter font-semibold">{TYPE_LABELS[property.type]}</p>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                <p className="text-xs tracking-[0.2em] uppercase text-gold font-inter font-semibold">{TYPE_LABELS[property.type]}</p>
+                {property.views > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-inter bg-muted/60 px-3 py-1 rounded-full border border-border/50">
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>{property.views} переглядів</span>
+                  </div>
+                )}
+              </div>
               <h1 className="font-cormorant text-3xl sm:text-5xl font-bold tracking-tight mb-3 text-foreground leading-tight">{property.title}</h1>
+
+              {/* State programs & bargain badges */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {property.erecovery && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded-full text-xs font-inter font-bold shadow-sm">
+                    <Hammer className="w-3.5 h-3.5" />
+                    єВідновлення
+                  </span>
+                )}
+                {property.eoselia && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1a365d] text-white rounded-full text-xs font-inter font-bold shadow-sm">
+                    <HomeIcon className="w-3.5 h-3.5" />
+                    єОселя
+                  </span>
+                )}
+                {property.tender && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/80 text-white rounded-full text-xs font-inter font-bold shadow-sm">
+                    <Handshake className="w-3.5 h-3.5" />
+                    Торг можливий
+                  </span>
+                )}
+              </div>
 
               <div className="flex items-start gap-1.5 text-muted-foreground text-sm mb-8 font-inter">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-gold" />
@@ -585,11 +614,16 @@ const PropertyDetail = () => {
                 )}
               </div>
 
-              {/* ID & Hotline */}
+              {/* ID & Info */}
               <div className="border border-border bg-card p-5 text-center rounded-2xl shadow-sm space-y-1">
                 <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter">ID об'єкта</p>
                 <p className="font-inter text-base text-foreground font-bold">#{property.id}</p>
-                <p className="text-xs text-muted-foreground font-inter pt-2">Гаряча лінія: {HOTLINE_PHONE}</p>
+                {property.views > 0 && (
+                  <p className="text-xs text-muted-foreground font-inter pt-2 flex items-center justify-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>{property.views} переглядів</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>

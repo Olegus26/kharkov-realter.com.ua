@@ -1,5 +1,7 @@
-export const HOTLINE_PHONE = '+380 (50) 713-63-63'
-export const HOTLINE_RAW = '+380507136363'
+export const MAIN_PHONE = '+380 (95) 737-22-61'
+export const MAIN_PHONE_RAW = '+380957372261'
+export const HOTLINE_PHONE = MAIN_PHONE
+export const HOTLINE_RAW = MAIN_PHONE_RAW
 export const GENERAL_EMAIL = 'info@kharkov-realter.com.ua'
 
 export const OFFICES = [

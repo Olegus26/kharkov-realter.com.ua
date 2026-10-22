@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { BedDouble, Maximize2, MapPin, Heart, Building, Eye, Home, Hammer, Handshake } from 'lucide-react'
+import { BedDouble, Maximize2, MapPin, Heart, Building, Home, Hammer, Handshake } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
 
@@ -14,9 +14,8 @@ const TYPE_LABELS = {
 }
 
 const PROGRAM_BADGES = [
-  { key: 'eoselia', label: 'єОселя', icon: Home, className: 'gradient-gold text-white' },
   { key: 'erecovery', label: 'єВідновлення', icon: Hammer, className: 'bg-emerald-600/90 backdrop-blur text-white' },
-  { key: 'tender', label: 'Торг', icon: Handshake, className: 'bg-navy/80 backdrop-blur text-white' },
+  { key: 'eoselia', label: 'єОселя', icon: Home, className: 'bg-[#1a365d]/90 backdrop-blur text-white' },
 ]
 
 const STATUS_STAMPS = [
@@ -88,7 +87,7 @@ const PropertyCard = memo(({ property, className = '' }) => {
           </div>
         )}
 
-        {/* Badges */}
+        {/* Badges: Top, Новобудова, єВідновлення (first), єОселя (second) */}
         <div className="absolute top-4 left-4 right-16 flex flex-wrap gap-2">
           {property.featured && (
             <span className="px-3 py-1 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full">
@@ -128,20 +127,22 @@ const PropertyCard = memo(({ property, className = '' }) => {
           </motion.button>
         </div>
 
-        {/* Price on image */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+        {/* Price and Торг on image (Торг placed where views were) */}
+        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2">
           <div>
             <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price, property.deal)}</p>
             {property.deal === 'rent' && <p className="text-[10px] text-white/70 font-inter">/місяць</p>}
           </div>
-          <span
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-black/30 backdrop-blur text-white/90 text-[11px] font-inter font-medium rounded-full"
-            title="Кількість переглядів"
-            aria-label={`Переглядів: ${property.views}`}
-          >
-            <Eye className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            {property.views.toLocaleString('uk-UA')}
-          </span>
+
+          {property.tender && (
+            <span
+              className="flex items-center gap-1.5 px-3 py-1 bg-navy/85 backdrop-blur text-white text-[11px] font-inter font-semibold rounded-full shadow-md shrink-0"
+              title="Можливий торг"
+            >
+              <Handshake className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span>Торг</span>
+            </span>
+          )}
         </div>
       </Link>
 

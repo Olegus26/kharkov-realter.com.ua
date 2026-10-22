@@ -175,14 +175,14 @@ const ContactPage = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-8">
             <div className="space-y-4">
               <div className="flex flex-col gap-3 p-6 border border-border bg-card rounded-3xl shadow-sm">
-                <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Гаряча лінія та чергові номери</p>
+                <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Консультації та черговий номер</p>
                 <a href={getPhoneLink(HOTLINE_PHONE)} className="flex items-center gap-3 group">
                   <div className="w-10 h-10 rounded-full gradient-gold flex items-center justify-center text-white shrink-0">
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
                     <p className="font-inter font-bold text-xl text-foreground group-hover:text-gold transition-colors">{HOTLINE_PHONE}</p>
-                    <p className="text-xs text-muted-foreground font-inter">Багатоканальний диспетчерський зв'язок</p>
+                    <p className="text-xs text-muted-foreground font-inter">Щоденні консультації та запис на огляд</p>
                   </div>
                 </a>
 

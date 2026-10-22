@@ -105,7 +105,12 @@ const Footer = () => {
               <li>
                 <Link to="/flats?deal=rent" className="hover:text-foreground transition-colors">Оренда нерухомості</Link>
               </li>
-              <li>Супровід програм єОселя та єВідновлення</li>
+              <li>
+                <Link to="/evidnovlennya" className="hover:text-foreground transition-colors">Житловий сертифікат єВідновлення</Link>
+              </li>
+              <li>
+                <Link to="/eoselia" className="hover:text-foreground transition-colors">Державна іпотека єОселя</Link>
+              </li>
               <li>Експертна оцінка та юридичний супровід</li>
             </ul>
           </div>
@@ -116,10 +121,10 @@ const Footer = () => {
             <div className="space-y-4 font-inter">
               <AddressRevolver addresses={OFFICES} />
 
-              {/* Central Hotline */}
+              {/* Central Office */}
               <div className="p-3.5 rounded-2xl bg-gold/5 border border-gold/20 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-gold">Гаряча лінія</p>
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-gold">Головний офіс</p>
                   <a
                     href={getPhoneLink(HOTLINE_PHONE)}
                     className="font-bold text-sm text-foreground hover:text-gold transition-colors"
@@ -208,7 +213,7 @@ const Footer = () => {
               </p>
               <h4 className="font-bold text-foreground text-sm">3. Ваші права</h4>
               <p>
-                Користувач має право відкликати згоду на обробку персональних даних у будь-який момент, звернувшись на гарячу лінію або електронну пошту info@kharkov-realter.com.ua.
+                Користувач має право відкликати згоду на обробку персональних даних у будь-який момент, звернувшись за телефоном або електронною поштою info@kharkov-realter.com.ua.
               </p>
             </div>
 
