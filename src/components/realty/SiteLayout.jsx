@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import FloatingTelegram from './FloatingTelegram'
+import AmbientWaveBackground from './AmbientWaveBackground'
 
 const CATALOG_PATHS = ['/flats', '/houses', '/realtys']
 
@@ -18,26 +19,9 @@ const SiteLayout = () => {
   const layoutKey = getLayoutKey(location.pathname)
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col relative">
-      {/* Left side atmospheric blur & gradient towards center (matching PropertyCard style) */}
-      <div
-        className="pointer-events-none fixed inset-y-0 left-0 w-8 sm:w-24 md:w-40 lg:w-64 xl:w-80 2xl:w-[420px] z-30 bg-gradient-to-r from-navy/45 via-navy/15 to-transparent backdrop-blur-[3px]"
-        style={{
-          maskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0) 100%)'
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Right side atmospheric blur & gradient towards center (matching PropertyCard style) */}
-      <div
-        className="pointer-events-none fixed inset-y-0 right-0 w-8 sm:w-24 md:w-40 lg:w-64 xl:w-80 2xl:w-[420px] z-30 bg-gradient-to-l from-navy/45 via-navy/15 to-transparent backdrop-blur-[3px]"
-        style={{
-          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0) 100%)'
-        }}
-        aria-hidden="true"
-      />
+    <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-x-hidden">
+      {/* Living ambient wave background that reacts to scroll in parallax and gently breathes */}
+      <AmbientWaveBackground />
 
       <Navbar />
       <motion.main
@@ -48,7 +32,7 @@ const SiteLayout = () => {
           duration: 0.5,
           ease: [0.22, 1, 0.36, 1],
         }}
-        className="flex-grow"
+        className="flex-grow relative z-10"
       >
         <Outlet />
       </motion.main>
