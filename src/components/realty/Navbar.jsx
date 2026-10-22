@@ -14,7 +14,8 @@ import {
   LifeBuoy,
   Home as HomeIcon,
   Building2,
-  PhoneCall
+  PhoneCall,
+  Key
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
@@ -113,11 +114,17 @@ const Navbar = () => {
 
   const isHomeActive = location.pathname === '/'
 
-  const isCatalogActive = ['/flats', '/houses', '/realtys'].some((path) =>
-    location.pathname.startsWith(path)
-  )
+  const isCatalogActive =
+    (location.pathname.startsWith('/flats') && !location.search.includes('deal=rent')) ||
+    location.pathname.startsWith('/houses') ||
+    location.pathname.startsWith('/realtys')
 
-  const isAboutActive = ['/o-korporatcii', '/agents', '/vakansii', '/utilities'].includes(
+  const isRentActive =
+    location.pathname.startsWith('/flats') && location.search.includes('deal=rent')
+
+  const isAgentsActive = location.pathname === '/agents'
+
+  const isAboutActive = ['/o-korporatcii', '/vakansii', '/utilities'].includes(
     location.pathname
   )
 
@@ -147,13 +154,13 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop Navigation: Головна · Каталог · Про нас ▾ · Контакти */}
-        <nav className="hidden lg:flex items-center gap-8" aria-label="Основна навігація">
+        {/* Desktop Navigation: Головна · Каталог · Оренда · Експерти · Про нас ▾ · Контакти */}
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-2" aria-label="Основна навігація">
           <Link
             to="/"
             className={cn(
-              'text-sm font-medium transition-colors duration-200',
-              isHomeActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+              'px-3.5 py-2 rounded-full text-sm font-medium transition-colors duration-200',
+              isHomeActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
             Головна
@@ -162,11 +169,31 @@ const Navbar = () => {
           <Link
             to="/flats?deal=sale"
             className={cn(
-              'text-sm font-medium transition-colors duration-200',
-              isCatalogActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+              'px-3.5 py-2 rounded-full text-sm font-medium transition-colors duration-200',
+              isCatalogActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
             Каталог
+          </Link>
+
+          <Link
+            to="/flats?deal=rent"
+            className={cn(
+              'px-3.5 py-2 rounded-full text-sm font-medium transition-colors duration-200',
+              isRentActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
+            )}
+          >
+            Оренда
+          </Link>
+
+          <Link
+            to="/agents"
+            className={cn(
+              'px-3.5 py-2 rounded-full text-sm font-medium transition-colors duration-200',
+              isAgentsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
+            )}
+          >
+            Експерти
           </Link>
 
           {/* Про нас ▾ Dropdown */}
@@ -178,8 +205,8 @@ const Navbar = () => {
               aria-haspopup="true"
               aria-label="Меню інформації про агентство"
               className={cn(
-                'flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 outline-none',
-                isAboutOpen || isAboutActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+                'flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-colors duration-200 outline-none',
+                isAboutOpen || isAboutActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
               )}
             >
               <span>Про нас</span>
@@ -298,8 +325,8 @@ const Navbar = () => {
           <Link
             to="/kontakty"
             className={cn(
-              'text-sm font-medium transition-colors duration-200',
-              isContactActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+              'px-3.5 py-2 rounded-full text-sm font-medium transition-colors duration-200',
+              isContactActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
             Контакти
@@ -380,6 +407,30 @@ const Navbar = () => {
             >
               <Building2 className="w-5 h-5 text-gold shrink-0" />
               <span>Каталог нерухомості</span>
+            </Link>
+
+            <Link
+              to="/flats?deal=rent"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isRentActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <Key className="w-5 h-5 text-gold shrink-0" />
+              <span>Оренда квартир</span>
+            </Link>
+
+            <Link
+              to="/agents"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isAgentsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <Users className="w-5 h-5 text-gold shrink-0" />
+              <span>Експерти</span>
             </Link>
 
             {/* Mobile "Про нас" Accordion */}

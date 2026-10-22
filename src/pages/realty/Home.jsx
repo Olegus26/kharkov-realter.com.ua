@@ -270,8 +270,108 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* State Programs: eOselia & eRecovery */}
+      <section className="max-w-7xl mx-auto px-6 py-12">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-inter rounded-full uppercase tracking-wider mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Державна підтримка
+          </span>
+          <h2 className="font-cormorant font-extrabold tracking-tight text-3xl sm:text-5xl text-foreground">
+            Програми «єОселя» та «єВідновлення»
+          </h2>
+          <p className="text-muted-foreground font-inter text-sm sm:text-base mt-3">
+            Корпорація «Харків Ріелтер» — акредитований партнер банків. Забезпечуємо повний супровід від вибору нерухомості до реєстрації права власності.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card 1: єОселя */}
+          <div className="bg-card border border-border/80 rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md hover:border-gold/30 transition-all flex flex-col justify-between relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-gold/10 transition-colors" />
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <span className="px-3 py-1 bg-gold/10 text-gold text-xs font-bold font-inter rounded-full uppercase tracking-wider">
+                  Пільгова іпотека від 3% до 7%
+                </span>
+                <span className="text-xs font-bold font-inter text-muted-foreground">Державна програма</span>
+              </div>
+              <h3 className="font-cormorant font-bold text-2xl sm:text-3xl text-foreground mb-3">
+                Програма «єОселя»
+              </h3>
+              <p className="text-muted-foreground text-sm font-inter leading-relaxed mb-6">
+                Кредитування житла за зниженими ставками для військовослужбовців, медиків, педагогів, науковців (3%), а також ветеранів, захисників та ВПО (7%).
+              </p>
+              <ul className="space-y-3 text-xs sm:text-sm font-inter text-foreground mb-8">
+                <li className="flex items-center gap-2.5">
+                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Акредитація в банках: Ощадбанк, ПриватБанк, Укргазбанк</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Швидкий підбір об'єктів під нормативну площу та бюджет</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Супровід оцінки та банківської верифікації без черг</span>
+                </li>
+              </ul>
+            </div>
+
+            <Link
+              to="/flats?deal=sale"
+              className="w-full py-3.5 px-6 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full text-center hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2"
+            >
+              <span>Об'єкти під єОселя</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Card 2: єВідновлення */}
+          <div className="bg-card border border-border/80 rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md hover:border-gold/30 transition-all flex flex-col justify-between relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/10 transition-colors" />
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <span className="px-3 py-1 bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-inter rounded-full uppercase tracking-wider">
+                  Сертифікати через «Дія»
+                </span>
+                <span className="text-xs font-bold font-inter text-muted-foreground">Компенсація</span>
+              </div>
+              <h3 className="font-cormorant font-bold text-2xl sm:text-3xl text-foreground mb-3">
+                Програма «єВідновлення»
+              </h3>
+              <p className="text-muted-foreground text-sm font-inter leading-relaxed mb-6">
+                Купівля нової квартири або будинку взамін зруйнованого житла за рахунок державного житлового сертифіката у Харкові та передмісті.
+              </p>
+              <ul className="space-y-3 text-xs sm:text-sm font-inter text-foreground mb-8">
+                <li className="flex items-center gap-2.5">
+                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Повна юридична перевірка правовстановлюючих документів</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Безпечне бронювання коштів сертифіката через Дію</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Нотаріальне оформлення угоди без затримок та ризиків</span>
+                </li>
+              </ul>
+            </div>
+
+            <Link
+              to="/kontakty"
+              className="w-full py-3.5 px-6 border border-border text-foreground hover:border-gold hover:text-gold text-xs tracking-widest uppercase font-inter font-bold rounded-full text-center hover:bg-muted/60 transition-colors flex items-center justify-center gap-2"
+            >
+              <span>Консультація щодо сертифіката</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA — signature navy block */}
-      <section className="max-w-7xl mx-auto px-6 pt-24 pb-24">
+      <section className="max-w-7xl mx-auto px-6 pt-16 pb-24">
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}

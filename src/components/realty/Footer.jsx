@@ -1,15 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Phone, Mail, Instagram, Facebook, Send as Telegram, MessageCircle, X } from 'lucide-react'
-import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
+import { Mail, Instagram, Facebook, Send as Telegram, MessageCircle, X } from 'lucide-react'
+import { getPhoneLink } from '@/lib/phones'
 import { OFFICES, GENERAL_EMAIL, HOTLINE_PHONE } from '@/data/offices'
 import AddressRevolver from './AddressRevolver'
 
 const Footer = () => {
-  const [activeOfficeIdx, setActiveOfficeIdx] = useState(0)
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
-  const activeOffice = OFFICES[activeOfficeIdx] || OFFICES[0]
-  const phones = activeOffice?.phones || getPhonesForToday()
 
   return (
     <footer className="bg-card border-t border-border">
@@ -76,6 +73,7 @@ const Footer = () => {
               {[
                 ['/', 'Головна'],
                 ['/flats?deal=sale', 'Каталог нерухомості'],
+                ['/flats?deal=rent', 'Оренда квартир'],
                 ['/agents', 'Експерти'],
                 ['/o-korporatcii', 'Про нас'],
                 ['/kontakty', 'Контакти'],
@@ -115,32 +113,33 @@ const Footer = () => {
           {/* Contacts */}
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-gold mb-5 font-inter font-semibold">Контакти</p>
-            <ul className="space-y-4 font-inter">
-              <li className="flex text-sm text-muted-foreground w-full">
-                <AddressRevolver addresses={OFFICES} onChange={setActiveOfficeIdx} />
-              </li>
-              <li className="flex flex-col gap-2">
-                {phones.map((p, idx) => (
+            <div className="space-y-4 font-inter">
+              <AddressRevolver addresses={OFFICES} />
+
+              {/* Central Hotline */}
+              <div className="p-3.5 rounded-2xl bg-gold/5 border border-gold/20 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-gold">Гаряча лінія</p>
                   <a
-                    key={idx}
-                    href={getPhoneLink(p)}
-                    className="flex items-center gap-3 text-sm text-muted-foreground hover:text-gold transition-colors font-semibold"
+                    href={getPhoneLink(HOTLINE_PHONE)}
+                    className="font-bold text-sm text-foreground hover:text-gold transition-colors"
                   >
-                    <Phone className="w-4 h-4 text-gold shrink-0" />
-                    <span>{p}</span>
+                    {HOTLINE_PHONE}
                   </a>
-                ))}
-              </li>
-              <li className="text-xs text-muted-foreground">
-                Гаряча лінія: <a href={getPhoneLink(HOTLINE_PHONE)} className="text-foreground hover:text-gold font-semibold">{HOTLINE_PHONE}</a>
-              </li>
-              <li className="flex gap-3 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-                <a href={`mailto:${GENERAL_EMAIL}`} className="hover:text-gold transition-colors">
+                </div>
+                <span className="text-[10px] text-muted-foreground bg-card/80 px-2 py-0.5 rounded-md font-medium border border-border/50">
+                  9:00–19:00
+                </span>
+              </div>
+
+              {/* General Email */}
+              <div className="flex items-center gap-2.5 text-xs text-muted-foreground px-1">
+                <Mail className="w-3.5 h-3.5 text-gold shrink-0" />
+                <a href={`mailto:${GENERAL_EMAIL}`} className="hover:text-gold transition-colors font-medium">
                   {GENERAL_EMAIL}
                 </a>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         </div>
 
