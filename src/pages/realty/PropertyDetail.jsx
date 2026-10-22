@@ -482,7 +482,7 @@ const PropertyDetail = () => {
               )}
 
               {/* Mortgage Calculator - eOselia */}
-              {property.deal === 'sale' && property.price > 0 && (
+              {Boolean(property.eoselia) && property.deal === 'sale' && property.price > 0 && (
                 <div className="mt-8 border border-border bg-card p-6 sm:p-7 rounded-2xl shadow-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <div>

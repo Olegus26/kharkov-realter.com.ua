@@ -7,10 +7,6 @@ import {
   Phone,
   Heart,
   ChevronDown,
-  Info,
-  Users,
-  MessageSquare,
-  Briefcase,
   LifeBuoy,
   Home as HomeIcon,
   Building2,
@@ -21,24 +17,18 @@ import {
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
-import { OFFICES } from '@/data/offices'
 import PhoneDropdown from './PhoneDropdown'
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProgramsOpen, setIsProgramsOpen] = useState(false)
-  const [isAboutOpen, setIsAboutOpen] = useState(false)
-  const [isReviewsSubOpen, setIsReviewsSubOpen] = useState(false)
   const [isMobileProgramsOpen, setIsMobileProgramsOpen] = useState(false)
-  const [isMobileAboutOpen, setIsMobileAboutOpen] = useState(false)
-  const [isMobileReviewsOpen, setIsMobileReviewsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   const location = useLocation()
   const { favorites } = useFavorites()
   const favoritesCount = favorites.length
   const programsRef = useRef(null)
-  const aboutRef = useRef(null)
   const phones = getPhonesForToday()
 
   const handleToggleMobileMenu = () => {
@@ -53,40 +43,14 @@ const Navbar = () => {
     setIsMobileProgramsOpen((prev) => !prev)
   }
 
-  const handleToggleAbout = () => {
-    setIsAboutOpen((prev) => !prev)
-  }
-
-  const handleToggleReviewsSubmenu = (e) => {
-    e.stopPropagation()
-    setIsReviewsSubOpen((prev) => !prev)
-  }
-
-  const handleToggleMobileAbout = () => {
-    setIsMobileAboutOpen((prev) => !prev)
-  }
-
-  const handleToggleMobileReviews = (e) => {
-    e.stopPropagation()
-    setIsMobileReviewsOpen((prev) => !prev)
-  }
-
   const handleCloseAll = () => {
     setIsMobileMenuOpen(false)
     setIsProgramsOpen(false)
-    setIsAboutOpen(false)
-    setIsReviewsSubOpen(false)
     setIsMobileProgramsOpen(false)
-    setIsMobileAboutOpen(false)
-    setIsMobileReviewsOpen(false)
   }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (aboutRef.current && !aboutRef.current.contains(e.target)) {
-        setIsAboutOpen(false)
-        setIsReviewsSubOpen(false)
-      }
       if (programsRef.current && !programsRef.current.contains(e.target)) {
         setIsProgramsOpen(false)
       }
@@ -137,10 +101,6 @@ const Navbar = () => {
     location.pathname.startsWith('/realtys')
 
   const isProgramsActive = ['/evidnovlennya', '/eoselia', '/utilities'].includes(
-    location.pathname
-  )
-
-  const isAboutActive = ['/o-korporatcii', '/vakansii', '/agents'].includes(
     location.pathname
   )
 
@@ -268,117 +228,7 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
-          {/* Про нас ▾ Dropdown */}
-          <div className="relative" ref={aboutRef}>
-            <button
-              type="button"
-              onClick={handleToggleAbout}
-              aria-expanded={isAboutOpen}
-              aria-haspopup="true"
-              aria-label="Меню інформації про агентство"
-              className={cn(
-                'flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-colors duration-200 outline-none',
-                isAboutOpen || isAboutActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
-              )}
-            >
-              <span>Про нас</span>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isAboutOpen && 'rotate-180')} />
-            </button>
 
-            <AnimatePresence>
-              {isAboutOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50">
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-72 bg-white rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] border border-border/70 p-2"
-                  >
-                    <Link
-                      to="/o-korporatcii"
-                      onClick={handleCloseAll}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
-                        <Info className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold text-foreground">Про компанію</span>
-                        <span className="text-[10px] text-muted-foreground truncate">Досвід та стандарти з 1996 року</span>
-                      </div>
-                    </Link>
-
-                    <Link
-                      to="/agents"
-                      onClick={handleCloseAll}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
-                        <Users className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold text-foreground">Експерти</span>
-                        <span className="text-[10px] text-muted-foreground truncate">Сертифіковані ріелтори та юристи</span>
-                      </div>
-                    </Link>
-
-                    {/* Google Reviews branch selector */}
-                    <div className="border-t border-b border-border/40 my-1 py-1">
-                      <button
-                        type="button"
-                        onClick={handleToggleReviewsSubmenu}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors text-left group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
-                            <MessageSquare className="w-4 h-4" />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-semibold text-foreground">Відгуки за філіями</span>
-                            <span className="text-[10px] text-muted-foreground truncate">Google Maps рейтинги</span>
-                          </div>
-                        </div>
-                        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', isReviewsSubOpen && 'rotate-180')} />
-                      </button>
-
-                      {isReviewsSubOpen && (
-                        <div className="mt-1 pl-11 pr-2 py-1 space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
-                          {OFFICES.map((office) => (
-                            <a
-                              key={office.id}
-                              href={office.reviewUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={handleCloseAll}
-                              className="flex items-center justify-between py-1.5 px-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                            >
-                              <span className="font-semibold text-[11px] text-foreground">{office.name}</span>
-                              <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{office.shortAddress}</span>
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <Link
-                      to="/vakansii"
-                      onClick={handleCloseAll}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
-                        <Briefcase className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold text-foreground">Вакансії</span>
-                        <span className="text-[10px] text-muted-foreground truncate">Робота та стажування в АН</span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
 
           <Link
             to="/kontakty"
@@ -515,83 +365,7 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile "Про нас" Accordion */}
-            <div className="flex flex-col pt-1">
-              <button
-                type="button"
-                onClick={handleToggleMobileAbout}
-                aria-expanded={isMobileAboutOpen}
-                className={cn(
-                  'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
-                  isMobileAboutOpen || isAboutActive ? 'bg-muted/80 text-foreground font-semibold' : 'text-foreground/80 active:bg-black/5'
-                )}
-              >
-                <Info className="w-5 h-5 text-gold shrink-0" />
-                <span>Про нас</span>
-                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', isMobileAboutOpen && 'rotate-180')} />
-              </button>
 
-              {isMobileAboutOpen && (
-                <div className="pl-4 pr-1 py-1 space-y-1">
-                  <Link
-                    to="/o-korporatcii"
-                    onClick={handleCloseAll}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
-                  >
-                    <span>Про компанію</span>
-                  </Link>
-
-                  <Link
-                    to="/agents"
-                    onClick={handleCloseAll}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
-                  >
-                    <span>Експерти</span>
-                  </Link>
-
-                  {/* Reviews Sub-Accordion */}
-                  <div className="flex flex-col">
-                    <button
-                      type="button"
-                      onClick={handleToggleMobileReviews}
-                      className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground w-full"
-                    >
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="w-3.5 h-3.5 text-gold" />
-                        <span>Відгуки за філіями</span>
-                      </div>
-                      <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isMobileReviewsOpen && 'rotate-180')} />
-                    </button>
-
-                    {isMobileReviewsOpen && (
-                      <div className="ml-3 pl-3 border-l border-border/50 space-y-1 py-1 max-h-48 overflow-y-auto">
-                        {OFFICES.map((office) => (
-                          <a
-                            key={office.id}
-                            href={office.reviewUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={handleCloseAll}
-                            className="block py-1.5 px-2 rounded-lg text-xs text-muted-foreground hover:text-foreground"
-                          >
-                            <div className="font-semibold text-foreground text-[12px]">{office.name}</div>
-                            <div className="text-[10px] text-muted-foreground truncate">{office.shortAddress}</div>
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <Link
-                    to="/vakansii"
-                    onClick={handleCloseAll}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
-                  >
-                    <span>Вакансії</span>
-                  </Link>
-                </div>
-              )}
-            </div>
 
             <Link
               to="/kontakty"

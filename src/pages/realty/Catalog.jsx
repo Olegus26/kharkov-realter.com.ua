@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, startTransition } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
-import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, Filter, ChevronUp, Check } from 'lucide-react'
+import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, Filter, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import MapView from '@/components/realty/MapView'
 import { useCatalogObjects } from '@/lib/useCatalogObjects'
@@ -253,6 +253,16 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [maxFloor, setMaxFloor] = useState(searchParams.get('maxFloor') || '')
   const [minFloorsTotal, setMinFloorsTotal] = useState(searchParams.get('minFloorsTotal') || '')
   const [maxFloorsTotal, setMaxFloorsTotal] = useState(searchParams.get('maxFloorsTotal') || '')
+  const [filterEoselia, setFilterEoselia] = useState(searchParams.get('eoselia') === 'true' || searchParams.get('program') === 'eoselia')
+  const [filterErecovery, setFilterErecovery] = useState(searchParams.get('erecovery') === 'true' || searchParams.get('program') === 'erecovery')
+
+  const handleToggleEoselia = () => {
+    setFilterEoselia((prev) => !prev)
+  }
+
+  const handleToggleErecovery = () => {
+    setFilterErecovery((prev) => !prev)
+  }
 
   useEffect(() => {
     Promise.all([
@@ -368,6 +378,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     if (maxFloor) params.set('maxFloor', maxFloor)
     if (minFloorsTotal) params.set('minFloorsTotal', minFloorsTotal)
     if (maxFloorsTotal) params.set('maxFloorsTotal', maxFloorsTotal)
+    if (filterEoselia) params.set('eoselia', 'true')
+    if (filterErecovery) params.set('erecovery', 'true')
     if (viewMode !== 'list') params.set('viewMode', viewMode)
     if (currentPage > 1) params.set('page', currentPage)
     
@@ -379,7 +391,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
     
     setSearchParams(params, { replace: true })
-  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode, currentPage, setSearchParams])
+  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, filterEoselia, filterErecovery, viewMode, currentPage, setSearchParams])
 
   // Reset page when filters change
   useEffect(() => {
@@ -388,7 +400,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       return
     }
     setCurrentPage(1)
-  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, viewMode])
+  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, filterEoselia, filterErecovery, viewMode])
 
   // Lock body scroll in map view to prevent seeing footer
   useEffect(() => {
@@ -491,6 +503,9 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
         if (!metroStations.some(s => (p.metro || p.mregion)?.toLowerCase().includes(s.toLowerCase()))) return false
       }
 
+      if (filterEoselia && !p.eoselia) return false
+      if (filterErecovery && !p.erecovery) return false
+
       return true
     })
 
@@ -507,7 +522,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       default:
         return [...list].sort((a, b) => b.date_edit - a.date_edit || Number(b.id) - Number(a.id))
     }
-  }, [properties, minPrice, maxPrice, minArea, maxArea, category, searchQuery, searchComplex, subTypes, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, sortBy])
+  }, [properties, minPrice, maxPrice, minArea, maxArea, category, searchQuery, searchComplex, subTypes, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, filterEoselia, filterErecovery, sortBy])
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
   const currentItems = viewMode === 'list'
@@ -531,6 +546,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setMaxFloor('')
     setMinFloorsTotal('')
     setMaxFloorsTotal('')
+    setFilterEoselia(false)
+    setFilterErecovery(false)
   }
   const clearFilters = handleClearFilters
   const hasFilters = Boolean(
@@ -549,7 +566,9 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     minFloor ||
     maxFloor ||
     minFloorsTotal ||
-    maxFloorsTotal
+    maxFloorsTotal ||
+    filterEoselia ||
+    filterErecovery
   )
 
   // Dynamic SEO calculation
@@ -852,6 +871,42 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 </Popover>
               )}
 
+              {/* Програма: єВідновлення */}
+              <button
+                type="button"
+                onClick={handleToggleErecovery}
+                aria-pressed={filterErecovery}
+                aria-label="Фільтр об'єктів за програмою єВідновлення"
+                tabIndex="0"
+                className={cn(
+                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                  filterErecovery
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
+                )}
+              >
+                <Hammer className={cn('w-4 h-4', filterErecovery ? 'text-white' : 'text-emerald-600')} />
+                <span>єВідновлення</span>
+              </button>
+
+              {/* Програма: єОселя */}
+              <button
+                type="button"
+                onClick={handleToggleEoselia}
+                aria-pressed={filterEoselia}
+                aria-label="Фільтр об'єктів за програмою єОселя"
+                tabIndex="0"
+                className={cn(
+                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                  filterEoselia
+                    ? 'bg-navy text-white border-navy shadow-sm'
+                    : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
+                )}
+              >
+                <HomeIcon className={cn('w-4 h-4', filterEoselia ? 'text-white' : 'text-navy')} />
+                <span>єОселя</span>
+              </button>
+
               {/* Advanced Filters Toggle Button */}
               <button 
                 type="button"
@@ -1060,6 +1115,22 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
                     Вулиця: {searchStreet} {searchHouse}
                     <button type="button" onClick={() => { setSearchStreet(''); setSearchHouse('') }} aria-label="Скинути фільтр вулиці" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {filterErecovery && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600/10 text-emerald-700 rounded-full font-semibold">
+                    Програма: єВідновлення
+                    <button type="button" onClick={() => setFilterErecovery(false)} aria-label="Скинути фільтр єВідновлення" className="hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {filterEoselia && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-semibold">
+                    Програма: єОселя
+                    <button type="button" onClick={() => setFilterEoselia(false)} aria-label="Скинути фільтр єОселя" className="hover:text-destructive transition-colors">
                       <X className="w-3 h-3" />
                     </button>
                   </span>

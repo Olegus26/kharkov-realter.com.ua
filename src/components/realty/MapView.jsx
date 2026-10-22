@@ -258,9 +258,11 @@ const MapView = ({ properties = [] }) => {
 
                 <Link
                   to={`/property/${p.id}`}
-                  className={`flex items-center justify-center w-full py-3.5 text-white text-sm font-inter font-medium rounded-xl transition-colors mt-auto shrink-0 ${isVisited(p.id) ? 'bg-gray-400 hover:bg-gray-500' : 'bg-navy hover:bg-navy/90'}`}
+                  aria-label={`Переглянути оголошення ${p.title}`}
+                  tabIndex="0"
+                  className="flex items-center justify-center w-full py-3.5 text-white text-sm font-inter font-semibold rounded-xl transition-all duration-200 mt-auto shrink-0 bg-navy hover:bg-navy/90 active:scale-[0.99] shadow-sm"
                 >
-                  {isVisited(p.id) ? 'Переглянуто' : 'Дивитися оголошення'}
+                  Переглянути
                 </Link>
               </div>
             ))}
