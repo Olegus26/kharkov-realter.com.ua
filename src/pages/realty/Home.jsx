@@ -293,7 +293,7 @@ const HomePage = () => {
       </section>
 
       {/* Sell with Us block */}
-      <section className="bg-secondary/40 py-24 my-12 border-y border-border">
+      <section id="sell" className="bg-secondary/40 py-24 my-12 border-y border-border scroll-mt-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>

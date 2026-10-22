@@ -1,38 +1,88 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Phone, Heart, Home as HomeIcon, Building2, Users, Info, LifeBuoy, Contact as ContactIcon, ChevronDown, MessageSquare, Briefcase } from 'lucide-react'
+import {
+  Menu,
+  X,
+  Phone,
+  Heart,
+  ChevronDown,
+  Info,
+  Users,
+  MessageSquare,
+  Briefcase,
+  LifeBuoy,
+  Building2,
+  Tag,
+  KeyRound,
+  FileSpreadsheet
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
 import { OFFICES } from '@/data/offices'
-import PhoneRevolver from './PhoneRevolver'
-
-const links = [
-  { to: '/', label: 'Головна', icon: HomeIcon },
-  { to: '/flats?deal=sale', label: 'Каталог', icon: Building2, activePaths: ['/flats', '/houses', '/realtys'] },
-  { to: '/utilities', label: 'Служби', icon: LifeBuoy },
-  { to: '/agents', label: 'Агенти', icon: Users },
-  { to: '/o-korporatcii', label: 'Про нас', icon: Info },
-  { to: '/kontakty', label: 'Контакти', icon: ContactIcon },
-  { to: '/vakansii', label: 'Вакансії', icon: Briefcase },
-]
+import PhoneDropdown from './PhoneDropdown'
 
 const Navbar = () => {
-  const [open, setOpen] = useState(false)
-  const [reviewsOpen, setReviewsOpen] = useState(false)
-  const [mobileReviewsOpen, setMobileReviewsOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isAboutOpen, setIsAboutOpen] = useState(false)
+  const [isReviewsSubOpen, setIsReviewsSubOpen] = useState(false)
+  const [isMobileAboutOpen, setIsMobileAboutOpen] = useState(false)
+  const [isMobileReviewsOpen, setIsMobileReviewsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+
   const location = useLocation()
   const { favorites } = useFavorites()
-  const count = favorites.length
-  const reviewsRef = useRef(null)
+  const favoritesCount = favorites.length
+  const aboutRef = useRef(null)
   const phones = getPhonesForToday()
+
+  const handleToggleMobileMenu = () => {
+    setIsMobileMenuOpen((prev) => !prev)
+  }
+
+  const handleToggleAbout = () => {
+    setIsAboutOpen((prev) => !prev)
+  }
+
+  const handleToggleReviewsSubmenu = (e) => {
+    e.stopPropagation()
+    setIsReviewsSubOpen((prev) => !prev)
+  }
+
+  const handleToggleMobileAbout = () => {
+    setIsMobileAboutOpen((prev) => !prev)
+  }
+
+  const handleToggleMobileReviews = (e) => {
+    e.stopPropagation()
+    setIsMobileReviewsOpen((prev) => !prev)
+  }
+
+  const handleCloseAll = () => {
+    setIsMobileMenuOpen(false)
+    setIsAboutOpen(false)
+    setIsReviewsSubOpen(false)
+    setIsMobileAboutOpen(false)
+    setIsMobileReviewsOpen(false)
+  }
+
+  const handleSellClick = (e) => {
+    if (location.pathname === '/') {
+      const el = document.getElementById('sell')
+      if (el) {
+        e.preventDefault()
+        el.scrollIntoView({ behavior: 'smooth' })
+        handleCloseAll()
+      }
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (reviewsRef.current && !reviewsRef.current.contains(e.target)) {
-        setReviewsOpen(false)
+      if (aboutRef.current && !aboutRef.current.contains(e.target)) {
+        setIsAboutOpen(false)
+        setIsReviewsSubOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -40,7 +90,9 @@ const Navbar = () => {
   }, [])
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40)
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40)
+    }
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -48,9 +100,7 @@ const Navbar = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        setOpen(false)
-        setReviewsOpen(false)
-        setMobileReviewsOpen(false)
+        handleCloseAll()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -59,7 +109,7 @@ const Navbar = () => {
 
   useEffect(() => {
     if (typeof document === 'undefined') return
-    if (open) {
+    if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
@@ -67,13 +117,23 @@ const Navbar = () => {
     return () => {
       document.body.style.overflow = ''
     }
-  }, [open])
+  }, [isMobileMenuOpen])
 
   useEffect(() => {
-    setOpen(false)
-    setReviewsOpen(false)
-    setMobileReviewsOpen(false)
-  }, [location])
+    handleCloseAll()
+  }, [location.pathname, location.search])
+
+  const isBuyActive = (location.pathname === '/flats' || location.pathname === '/houses') &&
+    (location.search.includes('deal=sale') || !location.search.includes('deal=rent'))
+
+  const isRentActive = (location.pathname === '/flats' || location.pathname === '/houses') &&
+    location.search.includes('deal=rent')
+
+  const isCommercialActive = location.pathname === '/realtys'
+
+  const isAboutActive = ['/o-korporatcii', '/agents', '/vakansii', '/utilities'].includes(location.pathname)
+
+  const isContactActive = location.pathname === '/kontakty'
 
   return (
     <header className={cn(
@@ -82,7 +142,12 @@ const Navbar = () => {
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 shrink-0 group">
+        <Link
+          to="/"
+          onClick={handleCloseAll}
+          aria-label="На головну Харків Ріелтер"
+          className="flex items-center gap-3 shrink-0 group focus:outline-none"
+        >
           <img
             src="/logo.png"
             alt="Харків Ріелтер логотип"
@@ -94,210 +159,419 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-6" aria-label="Основна навігація">
-          {links.map((l) => {
-            const isActive = l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to
-            return (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={cn(
-                  'text-sm font-medium transition-colors duration-300',
-                  isActive ? 'text-gold font-semibold' : 'text-foreground/70 hover:text-foreground'
-                )}
-              >
-                {l.label}
-              </Link>
-            )
-          })}
+        {/* Streamlined Desktop Navigation: Купити · Орендувати · Продати · Комерція · Про нас ▾ · Контакти */}
+        <nav className="hidden lg:flex items-center gap-7" aria-label="Основна навігація">
+          <Link
+            to="/flats?deal=sale"
+            className={cn(
+              'text-sm font-medium transition-colors duration-200',
+              isBuyActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+            )}
+          >
+            Купити
+          </Link>
 
-          {/* Reviews Dropdown (Desktop) */}
-          <div className="relative" ref={reviewsRef}>
+          <Link
+            to="/flats?deal=rent"
+            className={cn(
+              'text-sm font-medium transition-colors duration-200',
+              isRentActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+            )}
+          >
+            Орендувати
+          </Link>
+
+          <Link
+            to="/#sell"
+            onClick={handleSellClick}
+            className="text-sm font-medium text-foreground/75 hover:text-foreground transition-colors duration-200"
+          >
+            Продати
+          </Link>
+
+          <Link
+            to="/realtys?deal=sale"
+            className={cn(
+              'text-sm font-medium transition-colors duration-200',
+              isCommercialActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+            )}
+          >
+            Комерція
+          </Link>
+
+          {/* Про нас ▾ Dropdown */}
+          <div className="relative" ref={aboutRef}>
             <button
               type="button"
-              onClick={() => setReviewsOpen((prev) => !prev)}
-              aria-expanded={reviewsOpen}
+              onClick={handleToggleAbout}
+              aria-expanded={isAboutOpen}
+              aria-haspopup="true"
+              aria-label="Меню інформації про агентство"
               className={cn(
-                'flex items-center gap-1 text-sm font-medium transition-colors duration-300',
-                reviewsOpen ? 'text-gold' : 'text-foreground/70 hover:text-foreground'
+                'flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 outline-none',
+                isAboutOpen || isAboutActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
               )}
             >
-              <span>Відгуки</span>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', reviewsOpen && 'rotate-180')} />
+              <span>Про нас</span>
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isAboutOpen && 'rotate-180')} />
             </button>
 
             <AnimatePresence>
-              {reviewsOpen && (
-                <div className="absolute top-full right-0 mt-7 z-50">
+              {isAboutOpen && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50">
                   <motion.div
                     initial={{ opacity: 0, y: -6, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                    style={{ transformOrigin: 'top right' }}
-                    className="w-[280px] max-h-[340px] overflow-y-auto custom-scrollbar bg-white rounded-2xl shadow-[0_14px_36px_rgba(15,23,42,0.14)] border border-border/60 p-2"
+                    className="w-72 bg-white rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] border border-border/70 p-2"
                   >
-                    <div className="px-3 py-1.5 border-b border-border/40 mb-1">
-                      <p className="text-[10px] tracking-widest uppercase font-semibold text-muted-foreground font-inter">Відгуки Google Maps за філіями</p>
-                    </div>
-                    {OFFICES.map((office) => (
-                      <a
-                        key={office.id}
-                        href={office.reviewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-col px-3 py-2 hover:bg-navy/5 rounded-xl transition-colors group"
-                        onClick={() => setReviewsOpen(false)}
+                    <Link
+                      to="/o-korporatcii"
+                      onClick={handleCloseAll}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
+                        <Info className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-foreground">Про компанію</span>
+                        <span className="text-[10px] text-muted-foreground truncate">Досвід та стандарти з 1996 року</span>
+                      </div>
+                    </Link>
+
+                    <Link
+                      to="/agents"
+                      onClick={handleCloseAll}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
+                        <Users className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-foreground">Експерти</span>
+                        <span className="text-[10px] text-muted-foreground truncate">Сертифіковані ріелтори та юристи</span>
+                      </div>
+                    </Link>
+
+                    {/* Google Reviews branch selector */}
+                    <div className="border-t border-b border-border/40 my-1 py-1">
+                      <button
+                        type="button"
+                        onClick={handleToggleReviewsSubmenu}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors text-left group"
                       >
-                        <span className="font-semibold text-sm text-foreground group-hover:text-navy transition-colors">{office.name}</span>
-                        <span className="text-[11px] text-muted-foreground truncate">{office.shortAddress}</span>
-                      </a>
-                    ))}
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
+                            <MessageSquare className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-semibold text-foreground">Відгуки за філіями</span>
+                            <span className="text-[10px] text-muted-foreground truncate">Google Maps рейтинги</span>
+                          </div>
+                        </div>
+                        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', isReviewsSubOpen && 'rotate-180')} />
+                      </button>
+
+                      {isReviewsSubOpen && (
+                        <div className="mt-1 pl-11 pr-2 py-1 space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
+                          {OFFICES.map((office) => (
+                            <a
+                              key={office.id}
+                              href={office.reviewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={handleCloseAll}
+                              className="flex items-center justify-between py-1.5 px-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            >
+                              <span className="font-semibold text-[11px] text-foreground">{office.name}</span>
+                              <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{office.shortAddress}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Link
+                      to="/vakansii"
+                      onClick={handleCloseAll}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
+                        <Briefcase className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-foreground">Вакансії</span>
+                        <span className="text-[10px] text-muted-foreground truncate">Робота та стажування в АН</span>
+                      </div>
+                    </Link>
+
+                    <Link
+                      to="/utilities"
+                      onClick={handleCloseAll}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
+                        <LifeBuoy className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-foreground">Комунальні служби</span>
+                        <span className="text-[10px] text-muted-foreground truncate">Довідник телефонів Харкова</span>
+                      </div>
+                    </Link>
                   </motion.div>
                 </div>
               )}
             </AnimatePresence>
           </div>
+
+          <Link
+            to="/kontakty"
+            className={cn(
+              'text-sm font-medium transition-colors duration-200',
+              isContactActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+            )}
+          >
+            Контакти
+          </Link>
         </nav>
 
-        {/* Right section */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Favorites heart */}
+        {/* Right Section: Favorites, Phone Dropdown, Consultation CTA & Mobile Hamburger */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Favorites Heart */}
           <Link
             to="/favorites"
-            aria-label={`Збережені об'єкти (${count})`}
+            onClick={handleCloseAll}
+            aria-label={`Збережені об'єкти (${favoritesCount})`}
             className={cn(
-              'relative w-10 h-10 rounded-full flex items-center justify-center transition-colors',
+              'relative w-10 h-10 rounded-full flex items-center justify-center transition-colors focus:outline-none',
               location.pathname === '/favorites' ? 'text-gold' : 'text-foreground/60 hover:text-gold'
             )}
           >
             <Heart className={cn('w-5 h-5', location.pathname === '/favorites' && 'fill-gold text-gold')} />
-            {count > 0 && (
+            {favoritesCount > 0 && (
               <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[9px] font-bold flex items-center justify-center rounded-full shadow-sm">
-                {count}
+                {favoritesCount}
               </span>
             )}
           </Link>
 
-          {/* Phone revolver */}
-          <PhoneRevolver phones={phones} />
+          {/* Intuitive Phone Dropdown (replaces wheel-based PhoneRevolver) */}
+          <PhoneDropdown phones={phones} />
 
           <Link
             to="/kontakty"
-            className="hidden lg:block px-6 py-2.5 gradient-gold rounded-full text-xs tracking-wide uppercase font-inter font-semibold hover:opacity-90 transition-opacity text-white shadow-sm"
+            className="hidden lg:block px-5 py-2.5 gradient-gold rounded-full text-xs tracking-wide uppercase font-inter font-semibold hover:opacity-90 transition-opacity text-white shadow-sm"
           >
             Консультація
           </Link>
 
-          {/* Hamburger — mobile only */}
+          {/* Accessible Hamburger Toggle */}
           <button
             type="button"
-            onClick={() => setOpen((prev) => !prev)}
-            aria-label={open ? 'Закрити меню' : 'Відкрити меню'}
-            aria-expanded={open}
-            className="lg:hidden w-10 h-10 rounded-full flex items-center justify-center text-foreground active:bg-black/5 transition-colors"
+            onClick={handleToggleMobileMenu}
+            aria-label={isMobileMenuOpen ? 'Закрити меню навігації' : 'Відкрити меню навігації'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation"
+            tabIndex={0}
+            className="lg:hidden w-10 h-10 rounded-full flex items-center justify-center text-foreground hover:bg-black/5 active:bg-black/10 transition-colors focus:outline-none focus:ring-2 focus:ring-gold/40"
           >
-            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {open && (
-        <div className="lg:hidden bg-white/95 backdrop-blur-xl border-t border-black/5 px-4 py-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
+      {/* Mobile Navigation Drawer */}
+      {isMobileMenuOpen && (
+        <div
+          id="mobile-navigation"
+          className="lg:hidden bg-white/98 backdrop-blur-xl border-t border-black/5 px-4 py-4 max-h-[calc(100vh-4rem)] overflow-y-auto"
+        >
           <nav className="space-y-1">
-            {links.map((l) => {
-              const isActive = l.activePaths ? l.activePaths.includes(location.pathname) : location.pathname === l.to
-              return (
-                <Link
-                  key={l.to}
-                  to={l.to}
-                  className={cn(
-                    'flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                    isActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
-                  )}
-                >
-                  <l.icon className="w-5 h-5" />
-                  <span>{l.label}</span>
-                </Link>
-              )
-            })}
+            <Link
+              to="/flats?deal=sale"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isBuyActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <KeyRound className="w-5 h-5 text-gold shrink-0" />
+              <span>Купити</span>
+            </Link>
+
+            <Link
+              to="/flats?deal=rent"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isRentActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <Tag className="w-5 h-5 text-gold shrink-0" />
+              <span>Орендувати</span>
+            </Link>
+
+            <Link
+              to="/#sell"
+              onClick={(e) => {
+                handleSellClick(e)
+                handleCloseAll()
+              }}
+              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium text-foreground/80 active:bg-black/5 transition-colors"
+            >
+              <Building2 className="w-5 h-5 text-gold shrink-0" />
+              <span>Продати нерухомість</span>
+            </Link>
+
+            <Link
+              to="/realtys?deal=sale"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isCommercialActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <FileSpreadsheet className="w-5 h-5 text-gold shrink-0" />
+              <span>Комерція</span>
+            </Link>
+
+            {/* Mobile "Про нас" Accordion */}
+            <div className="flex flex-col pt-1">
+              <button
+                type="button"
+                onClick={handleToggleMobileAbout}
+                aria-expanded={isMobileAboutOpen}
+                className={cn(
+                  'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
+                  isMobileAboutOpen || isAboutActive ? 'bg-muted/80 text-foreground font-semibold' : 'text-foreground/80 active:bg-black/5'
+                )}
+              >
+                <Info className="w-5 h-5 text-gold shrink-0" />
+                <span>Про нас</span>
+                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', isMobileAboutOpen && 'rotate-180')} />
+              </button>
+
+              {isMobileAboutOpen && (
+                <div className="pl-4 pr-1 py-1 space-y-1">
+                  <Link
+                    to="/o-korporatcii"
+                    onClick={handleCloseAll}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
+                  >
+                    <span>Про компанію</span>
+                  </Link>
+
+                  <Link
+                    to="/agents"
+                    onClick={handleCloseAll}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
+                  >
+                    <span>Експерти</span>
+                  </Link>
+
+                  {/* Reviews Sub-Accordion */}
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={handleToggleMobileReviews}
+                      className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground w-full"
+                    >
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-3.5 h-3.5 text-gold" />
+                        <span>Відгуки за філіями</span>
+                      </div>
+                      <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isMobileReviewsOpen && 'rotate-180')} />
+                    </button>
+
+                    {isMobileReviewsOpen && (
+                      <div className="ml-3 pl-3 border-l border-border/50 space-y-1 py-1 max-h-48 overflow-y-auto">
+                        {OFFICES.map((office) => (
+                          <a
+                            key={office.id}
+                            href={office.reviewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={handleCloseAll}
+                            className="block py-1.5 px-2 rounded-lg text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <div className="font-semibold text-foreground text-[12px]">{office.name}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{office.shortAddress}</div>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    to="/vakansii"
+                    onClick={handleCloseAll}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
+                  >
+                    <span>Вакансії</span>
+                  </Link>
+
+                  <Link
+                    to="/utilities"
+                    onClick={handleCloseAll}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
+                  >
+                    <span>Комунальні служби</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <Link
+              to="/kontakty"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isContactActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <Phone className="w-5 h-5 text-gold shrink-0" />
+              <span>Контакти</span>
+            </Link>
 
             <Link
               to="/favorites"
+              onClick={handleCloseAll}
               className={cn(
-                'flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
                 location.pathname === '/favorites' ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
               )}
             >
               <Heart className={cn('w-5 h-5', location.pathname === '/favorites' && 'fill-gold text-gold')} />
-              <span>Обране {count > 0 && <span className="text-sm text-gold font-semibold">({count})</span>}</span>
+              <span>Обране {favoritesCount > 0 && <span className="text-sm text-gold font-semibold">({favoritesCount})</span>}</span>
             </Link>
-
-            {/* Mobile Reviews Accordion */}
-            <div className="flex flex-col pt-1">
-              <button
-                type="button"
-                onClick={() => setMobileReviewsOpen((prev) => !prev)}
-                className={cn(
-                  'flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
-                  mobileReviewsOpen ? 'bg-navy/5 text-navy' : 'text-foreground/80 active:bg-black/5'
-                )}
-              >
-                <MessageSquare className="w-5 h-5" />
-                <span>Відгуки за філіями</span>
-                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', mobileReviewsOpen && 'rotate-180')} />
-              </button>
-
-              <AnimatePresence>
-                {mobileReviewsOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-3 py-2 mt-1 space-y-1 bg-muted/40 rounded-xl ml-4 max-h-[260px] overflow-y-auto custom-scrollbar">
-                      {OFFICES.map((office) => (
-                        <a
-                          key={office.id}
-                          href={office.reviewUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex flex-col py-2 px-3 hover:bg-navy/5 rounded-lg transition-colors"
-                          onClick={() => setOpen(false)}
-                        >
-                          <span className="font-semibold text-sm text-foreground">{office.name}</span>
-                          <span className="text-[11px] text-muted-foreground">{office.shortAddress}</span>
-                        </a>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </nav>
 
-          <div className="flex flex-col gap-1 mt-4 pt-3 border-t border-border/50">
+          {/* Mobile phone numbers */}
+          <div className="flex flex-col gap-1 mt-5 pt-4 border-t border-border/60">
+            <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground px-4 mb-1">Чергові номери</p>
             {phones.map((p, idx) => (
               <a
                 key={idx}
                 href={getPhoneLink(p)}
-                className="flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium text-foreground/80 active:bg-black/5"
+                onClick={handleCloseAll}
+                className="flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold text-foreground hover:bg-muted/60 transition-colors"
               >
-                <Phone className="w-4 h-4 text-gold shrink-0" />
-                <span>{p}</span>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gold shrink-0" />
+                  <span>{p}</span>
+                </div>
+                <span className="text-[11px] text-muted-foreground font-normal">Дзвінок</span>
               </a>
             ))}
           </div>
 
           <Link
             to="/kontakty"
-            className="block mt-4 mb-2 px-5 py-3.5 gradient-gold rounded-2xl text-xs tracking-wide uppercase font-semibold text-center text-white shadow-sm"
+            onClick={handleCloseAll}
+            className="block mt-5 mb-2 px-5 py-3.5 gradient-gold rounded-2xl text-xs tracking-wide uppercase font-semibold text-center text-white shadow-sm"
           >
-            Консультація
+            Замовити консультацію
           </Link>
         </div>
       )}

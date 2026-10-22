@@ -505,7 +505,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     ? filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
     : filtered
 
-  const clearFilters = () => {
+  const handleClearFilters = () => {
     setSearchQuery('')
     setSubTypes([])
     setMinPrice('')
@@ -604,16 +604,18 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
               <LayoutGroup id={viewMode}>
               <div className="p-4 sm:p-6 flex flex-col gap-5">
             {/* Top row: Deal Tabs + View Toggle */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-border/50 pb-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
               
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto overflow-x-auto no-scrollbar pb-2 sm:pb-0">
+              <div className="flex flex-wrap items-center gap-3">
                 {/* Deal tabs */}
                 <div className="flex p-1 bg-muted rounded-full shrink-0 relative">
                   {[['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
                     <button
                       key={v}
+                      type="button"
                       onClick={() => setDeal(v)}
-                      className={cn('relative z-10 px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
+                      aria-label={`Обрати тип угоди: ${l}`}
+                      className={cn('relative z-10 px-5 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
                         'text-white': deal === v,
                         'text-muted-foreground hover:text-foreground': deal !== v
                       })}
@@ -636,7 +638,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                       key={c.value}
                       type="button"
                       onClick={() => handleCategoryChange(c.value)}
-                      className={cn('relative z-10 px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap', {
+                      aria-label={`Обрати категорію: ${c.label}`}
+                      className={cn('relative z-10 px-4 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap', {
                         'text-white': category === c.value,
                         'text-muted-foreground hover:text-foreground': category !== c.value
                       })}
@@ -652,12 +655,18 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                     </button>
                   ))}
                 </div>
-                  {hasFilters && (
-                    <button onClick={clearFilters} className="text-sm font-inter font-semibold text-destructive hover:text-destructive/80 transition-colors flex items-center justify-center gap-1.5 shrink-0 px-4 py-2 bg-destructive/10 rounded-full h-[40px]">
-                      <X className="w-4 h-4 shrink-0" /> <span>Скинути</span>
-                    </button>
-                  )}
-                </div>
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    aria-label="Скинути всі вибрані фільтри"
+                    className="text-xs font-inter font-semibold text-destructive hover:text-destructive/80 transition-colors flex items-center justify-center gap-1.5 shrink-0 px-4 py-2 bg-destructive/10 hover:bg-destructive/15 rounded-full h-[38px] whitespace-nowrap"
+                  >
+                    <X className="w-3.5 h-3.5 shrink-0" />
+                    <span>Скинути</span>
+                  </button>
+                )}
+              </div>
 
               {/* Sort & View Toggle */}
               <div className="flex items-center gap-3 lg:gap-4 flex-wrap">
