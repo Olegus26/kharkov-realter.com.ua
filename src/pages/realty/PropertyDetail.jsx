@@ -2,13 +2,14 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send } from 'lucide-react'
+import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, MessageCircle } from 'lucide-react'
 import { getAllObjects, mapObject } from '@/lib/novostoyApi'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
 import { submitLead } from '@/lib/leadService'
 import { formatPhone, cn } from '@/lib/utils'
 import { HOTLINE_PHONE } from '@/data/offices'
+import PropertyCard from '@/components/realty/PropertyCard'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
 
@@ -101,6 +102,51 @@ const PropertyDetail = () => {
     if (e.key === 'ArrowLeft') handlePrevImage()
     if (e.key === 'ArrowRight') handleNextImage()
   }, [handlePrevImage, handleNextImage])
+
+  const [copiedShare, setCopiedShare] = useState(false)
+
+  const handleShare = async () => {
+    if (!property) return
+    const shareData = {
+      title: property.title,
+      text: `${property.title} — Харків Ріелтер`,
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+        return
+      } catch {
+        // Fallback to clipboard
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopiedShare(true)
+      setTimeout(() => setCopiedShare(false), 2500)
+    } catch {
+      // Ignored
+    }
+  }
+
+  const { data: allObjects = [] } = useQuery({
+    queryKey: ['novostoy-objects', property?.deal || 'sale'],
+    queryFn: async () => {
+      const items = await getAllObjects({ sell_type: property?.deal === 'rent' ? '1' : '2' })
+      return items.map(mapObject)
+    },
+    enabled: Boolean(property?.id),
+    staleTime: 10 * 60 * 1000,
+  })
+
+  const similarProperties = useMemo(() => {
+    if (!property || !allObjects.length) return []
+    return allObjects
+      .filter((p) => p.id !== property.id && !p.is_sold && (p.region === property.region || p.type === property.type))
+      .slice(0, 3)
+  }, [property, allObjects])
 
   const handleToggleFavorite = useCallback((e) => {
     e.preventDefault()
@@ -405,6 +451,60 @@ const PropertyDetail = () => {
                   <ExternalLink className="w-3.5 h-3.5" /> Оригінальна сторінка об'єкта
                 </a>
               )}
+
+              {/* Mortgage Calculator - eOselia */}
+              {property.deal === 'sale' && property.price > 0 && (
+                <div className="mt-8 border border-border bg-card p-6 sm:p-7 rounded-2xl shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                      <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Державна іпотека</p>
+                      <h3 className="font-cormorant text-2xl font-bold">Калькулятор «єОселя»</h3>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-600/10 text-emerald-600 text-xs font-bold font-inter rounded-full">
+                      від 3% річних
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground font-inter mb-5 leading-relaxed">
+                    Розрахунок за державною програмою доступного кредитування житла (строк 20 років, перший внесок 20%):
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                    <div className="p-4 bg-muted/40 rounded-xl">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-inter mb-1">Перший внесок (20%)</p>
+                      <p className="font-inter font-bold text-lg text-foreground">${Math.round(property.price * 0.2).toLocaleString('uk-UA')}</p>
+                      <p className="text-[11px] text-muted-foreground">≈ {Math.round(property.price * 0.2 * 41.5).toLocaleString('uk-UA')} грн</p>
+                    </div>
+
+                    <div className="p-4 bg-muted/40 rounded-xl">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-inter mb-1">Сума кредиту (80%)</p>
+                      <p className="font-inter font-bold text-lg text-foreground">${Math.round(property.price * 0.8).toLocaleString('uk-UA')}</p>
+                      <p className="text-[11px] text-muted-foreground">≈ {Math.round(property.price * 0.8 * 41.5).toLocaleString('uk-UA')} грн</p>
+                    </div>
+
+                    <div className="p-4 bg-gold/10 rounded-xl border border-gold/20">
+                      <p className="text-[10px] uppercase tracking-wider text-gold font-inter font-semibold mb-1">Платіж на місяць (від 3%)</p>
+                      <p className="font-inter font-bold text-xl text-navy">
+                        ${Math.round(property.price * 0.8 * 0.0055).toLocaleString('uk-UA')}<span className="text-xs font-normal text-muted-foreground">/міс</span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground font-semibold">
+                        ≈ {Math.round(property.price * 0.8 * 0.0055 * 41.5).toLocaleString('uk-UA')} грн/міс
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBookingForm((prev) => ({ ...prev, note: 'Консультація щодо програми єОселя' }))
+                      setIsBookingOpen(true)
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full hover:bg-navy/90 transition-colors"
+                  >
+                    <span>Отримати консультацію щодо єОселя</span>
+                  </button>
+                </div>
+              )}
             </motion.div>
           </div>
 
@@ -457,6 +557,16 @@ const PropertyDetail = () => {
                   <span>{isFavorite(property.id) ? 'В обраному' : 'Додати в обране'}</span>
                 </button>
 
+                {/* Share button */}
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="w-full mt-2.5 py-3 border border-border bg-transparent flex items-center justify-center gap-2 hover:bg-muted transition-colors font-inter rounded-full text-xs font-semibold uppercase tracking-wider text-foreground"
+                >
+                  <Share2 className="w-4 h-4 text-muted-foreground" />
+                  <span>{copiedShare ? 'Посилання скопійовано!' : 'Поділитися'}</span>
+                </button>
+
                 {/* Agent phones list if multiple */}
                 {property.agent_phones?.length > 1 && (
                   <div className="space-y-2 mt-6 pt-6 border-t border-border">
@@ -484,6 +594,26 @@ const PropertyDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Similar properties section */}
+        {similarProperties.length > 0 && (
+          <div className="mt-16 pt-12 border-t border-border">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="text-[10px] tracking-[0.25em] uppercase text-gold font-inter font-semibold mb-1">Рекомендації</p>
+                <h2 className="font-cormorant font-bold text-3xl sm:text-4xl text-foreground">Схожі об'єкти поруч</h2>
+              </div>
+              <Link to={catalogBackLink} className="text-xs font-semibold text-gold hover:underline font-inter">
+                Всі пропозиції →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {similarProperties.map((p) => (
+                <PropertyCard key={p.id} property={p} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Booking Modal */}
@@ -582,6 +712,44 @@ const PropertyDetail = () => {
           </div>
         </div>
       )}
+
+      {/* Mobile sticky action bar */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-t border-border px-3 py-2.5 shadow-2xl flex items-center gap-2">
+        <a
+          href={primaryCallPhone}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-navy text-white text-xs font-inter font-bold rounded-xl active:scale-95 transition-transform"
+        >
+          <Phone className="w-3.5 h-3.5" />
+          <span>Дзвінок</span>
+        </a>
+
+        <a
+          href={`viber://chat?number=%2B38${property.agent_phones?.[0] || '0507136363'}`}
+          className="flex items-center justify-center p-3 bg-[#7360f2] text-white rounded-xl active:scale-95 transition-transform"
+          aria-label="Написати у Viber"
+        >
+          <MessageCircle className="w-4 h-4" />
+        </a>
+
+        <a
+          href="https://t.me/kharkov_realter"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center p-3 bg-[#0088cc] text-white rounded-xl active:scale-95 transition-transform"
+          aria-label="Написати у Telegram"
+        >
+          <Send className="w-4 h-4" />
+        </a>
+
+        <button
+          type="button"
+          onClick={() => setIsBookingOpen(true)}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 gradient-gold text-white text-xs font-inter font-bold rounded-xl active:scale-95 transition-transform"
+        >
+          <CalendarCheck className="w-3.5 h-3.5" />
+          <span>Огляд</span>
+        </button>
+      </div>
     </div>
   )
 }

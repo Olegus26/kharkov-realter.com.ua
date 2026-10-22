@@ -151,7 +151,7 @@ const MapView = ({ properties = [] }) => {
         className="z-0"
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors | 3D by OSMBuildings'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           className="map-tiles-grayscale"
         />
@@ -195,8 +195,7 @@ const MapView = ({ properties = [] }) => {
       {selectedGroup && createPortal(
         <div 
           key={selectedGroup.groupKey}
-          className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-auto z-[60] w-auto sm:w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50" 
-          style={{ height: '480px' }}
+          className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-auto z-[60] w-auto sm:w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50 max-h-[75vh] h-[480px]" 
         >
           <div className="p-4 flex items-center justify-between border-b border-border bg-white z-10 shrink-0">
             <div className="pr-2 flex-1">
@@ -218,20 +217,21 @@ const MapView = ({ properties = [] }) => {
               <div key={p.id} className="p-4 h-full w-full shrink-0 snap-start snap-always flex flex-col justify-between">
                 <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative" style={{ height: '180px' }}>
                   <img
-                    src={p.image_url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'}
+                    src={p.image_url || '/hero-bg.jpg'}
                     alt={p.title}
                     loading="lazy"
                     decoding="async"
+                    onError={(e) => { e.currentTarget.src = '/hero-bg.jpg' }}
                     className="w-full h-full object-cover"
                   />
                   {(p.is_sold || p.deposit) && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
                       <img
                         src={p.is_sold ? '/stamp-sold.png' : '/stamp-deposit.png'}
                         alt={p.is_sold ? 'Продано' : 'Завдаток'}
                         className="w-3/4 h-3/4 object-contain drop-shadow-md"
                         onError={(e) => {
-                          e.currentTarget.src = p.is_sold ? '/Продано.png' : '/Завдаток.png'
+                          e.currentTarget.style.display = 'none'
                         }}
                       />
                     </div>
@@ -258,7 +258,7 @@ const MapView = ({ properties = [] }) => {
 
                 <Link
                   to={`/property/${p.id}`}
-                  className={`flex items-center justify-center w-full py-3.5 text-white text-sm font-inter font-medium rounded-xl transition-colors mt-auto shrink-0 ${isVisited(p.id) ? 'bg-gray-400 hover:bg-gray-500' : 'bg-navy hover:bg-navy-light'}`}
+                  className={`flex items-center justify-center w-full py-3.5 text-white text-sm font-inter font-medium rounded-xl transition-colors mt-auto shrink-0 ${isVisited(p.id) ? 'bg-gray-400 hover:bg-gray-500' : 'bg-navy hover:bg-navy/90'}`}
                 >
                   {isVisited(p.id) ? 'Переглянуто' : 'Дивитися оголошення'}
                 </Link>

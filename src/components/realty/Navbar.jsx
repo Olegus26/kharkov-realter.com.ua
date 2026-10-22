@@ -21,6 +21,7 @@ const links = [
 const Navbar = () => {
   const [open, setOpen] = useState(false)
   const [reviewsOpen, setReviewsOpen] = useState(false)
+  const [mobileReviewsOpen, setMobileReviewsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
   const { favorites } = useFavorites()
@@ -45,8 +46,33 @@ const Navbar = () => {
   }, [])
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        setReviewsOpen(false)
+        setMobileReviewsOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
+  useEffect(() => {
     setOpen(false)
     setReviewsOpen(false)
+    setMobileReviewsOpen(false)
   }, [location])
 
   return (
@@ -213,19 +239,19 @@ const Navbar = () => {
             <div className="flex flex-col pt-1">
               <button
                 type="button"
-                onClick={() => setReviewsOpen((prev) => !prev)}
+                onClick={() => setMobileReviewsOpen((prev) => !prev)}
                 className={cn(
                   'flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
-                  reviewsOpen ? 'bg-navy/5 text-navy' : 'text-foreground/80 active:bg-black/5'
+                  mobileReviewsOpen ? 'bg-navy/5 text-navy' : 'text-foreground/80 active:bg-black/5'
                 )}
               >
                 <MessageSquare className="w-5 h-5" />
                 <span>Відгуки за філіями</span>
-                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', reviewsOpen && 'rotate-180')} />
+                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', mobileReviewsOpen && 'rotate-180')} />
               </button>
 
               <AnimatePresence>
-                {reviewsOpen && (
+                {mobileReviewsOpen && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}

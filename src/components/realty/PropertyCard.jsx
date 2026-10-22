@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { BedDouble, Maximize2, MapPin, Heart, UtensilsCrossed, Building, Eye, Home, Hammer, Handshake } from 'lucide-react'
+import { BedDouble, Maximize2, MapPin, Heart, Building, Eye, Home, Hammer, Handshake } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
 
@@ -24,6 +24,8 @@ const STATUS_STAMPS = [
   { key: 'deposit', src: '/stamp-deposit.png', alt: 'Завдаток' },
 ]
 
+const FALLBACK_IMAGE = '/hero-bg.jpg'
+
 const formatPrice = (price, deal) => {
   if (!price) return '—'
   if (deal === 'rent') return `${price.toLocaleString('uk-UA')} грн`
@@ -37,11 +39,23 @@ const PropertyCard = memo(({ property, className = '' }) => {
 
   const stamp = STATUS_STAMPS.find(({ key }) => property[key])
 
+  const pricePerM2 = property.price && property.area
+    ? Math.round(property.price / property.area)
+    : null
+
   const handleToggleFavorite = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
     toggleFavorite(property.id)
   }, [property.id, toggleFavorite])
+
+  const handleImageError = (e) => {
+    e.currentTarget.src = FALLBACK_IMAGE
+  }
+
+  const handleStampError = (e) => {
+    e.currentTarget.style.display = 'none'
+  }
 
   return (
     <div
@@ -49,25 +63,27 @@ const PropertyCard = memo(({ property, className = '' }) => {
     >
       <Link to={`/property/${property.id}`} className="relative aspect-[4/3] overflow-hidden block">
         <img
-          src={property.image_url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'}
+          src={property.image_url || FALLBACK_IMAGE}
           alt={property.title}
           loading="lazy"
           decoding="async"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 will-change-transform"
+          onError={handleImageError}
+          className={cn(
+            'w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 will-change-transform',
+            property.is_sold && 'grayscale-[35%]'
+          )}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent opacity-90" />
 
         {stamp && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-black/35 backdrop-blur-[0.5px] flex items-center justify-center pointer-events-none">
             <img
               src={stamp.src}
               alt={stamp.alt}
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-contain scale-125 drop-shadow-lg"
-              onError={(e) => {
-                e.currentTarget.src = stamp.alt === 'Продано' ? '/Продано.png' : '/Завдаток.png'
-              }}
+              className="w-3/4 h-3/4 object-contain scale-110 drop-shadow-xl"
+              onError={handleStampError}
             />
           </div>
         )}
@@ -84,19 +100,19 @@ const PropertyCard = memo(({ property, className = '' }) => {
               Новобудова
             </span>
           )}
-          {PROGRAM_BADGES.filter(({ key }) => property[key]).map(({ key, label, icon: Icon, className }) => (
+          {PROGRAM_BADGES.filter(({ key }) => property[key]).map(({ key, label, icon: Icon, className: badgeClass }) => (
             <span
               key={key}
-              className={cn('flex items-center gap-1.5 px-3 py-1 text-[11px] tracking-wide font-inter font-semibold rounded-full shadow-md', className)}
+              className={cn('flex items-center gap-1.5 px-3 py-1 text-[11px] tracking-wide font-inter font-semibold rounded-full shadow-md', badgeClass)}
             >
               <Icon className="w-3 h-3 shrink-0" aria-hidden="true" />
               {label}
             </span>
           ))}
         </div>
-        
+
         <div className="absolute top-4 right-4">
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleToggleFavorite}
@@ -104,9 +120,9 @@ const PropertyCard = memo(({ property, className = '' }) => {
             aria-label={liked ? 'Видалити з обраного' : 'Додати в обране'}
           >
             <motion.div animate={{ scale: liked ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
-              <Heart className={cn("w-4 h-4 transition-colors", {
-                "text-red-500 fill-red-500": liked,
-                "text-white/70 group-hover/btn:text-white": !liked
+              <Heart className={cn('w-4 h-4 transition-colors', {
+                'text-red-500 fill-red-500': liked,
+                'text-white/70 group-hover/btn:text-white': !liked,
               })} />
             </motion.div>
           </motion.button>
@@ -131,43 +147,42 @@ const PropertyCard = memo(({ property, className = '' }) => {
 
       {/* Info */}
       <div className="p-5 flex flex-col flex-grow bg-card">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-2 font-medium">{TYPE_LABELS[property.type]}</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-semibold">{TYPE_LABELS[property.type]}</p>
+          {pricePerM2 && (
+            <span className="text-xs font-inter font-semibold text-gold">
+              {property.deal === 'rent' ? `${pricePerM2.toLocaleString('uk-UA')} грн/м²` : `$${pricePerM2.toLocaleString('uk-UA')}/м²`}
+            </span>
+          )}
+        </div>
+
         <h3 className="font-inter text-lg font-semibold mb-2 text-foreground group-hover:text-navy transition-colors line-clamp-1 tracking-tight">
           {property.title}
         </h3>
 
         <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-4">
-          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">{property.location}</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-border/50 text-[11px] text-muted-foreground font-inter mt-auto">
-          {property.rooms > 0 && (
-            <span className="flex items-center gap-1.5" title="Кількість кімнат">
-              <BedDouble className="w-3.5 h-3.5 shrink-0" />
-              {property.rooms} кімн.
-            </span>
-          )}
-          {property.area > 0 && (
-            <span className="flex items-center gap-1.5" title="Загальна площа">
-              <Maximize2 className="w-3.5 h-3.5 shrink-0" />
-              {property.area} м²
-            </span>
-          )}
-          {property.area_live > 0 && (
-            <span className="flex items-center gap-1.5" title="Житлова площа">
-              <BedDouble className="w-3.5 h-3.5 shrink-0" />
-              {property.area_live} м²
-            </span>
-          )}
-          {property.area_kitchen > 0 && (
-            <span className="flex items-center gap-1.5" title="Площа кухні">
-              <UtensilsCrossed className="w-3.5 h-3.5 shrink-0" />
-              {property.area_kitchen} м²
-            </span>
-          )}
+        <div className="flex items-center justify-between gap-2 pt-4 border-t border-border/50 text-xs text-muted-foreground font-inter mt-auto">
+          <div className="flex items-center gap-3">
+            {property.rooms > 0 && (
+              <span className="flex items-center gap-1.5" title="Кількість кімнат">
+                <BedDouble className="w-3.5 h-3.5 shrink-0" />
+                {property.rooms} кімн.
+              </span>
+            )}
+            {property.area > 0 && (
+              <span className="flex items-center gap-1.5" title="Загальна площа">
+                <Maximize2 className="w-3.5 h-3.5 shrink-0" />
+                {property.area} м²
+              </span>
+            )}
+          </div>
+
           {property.floor > 0 && (
-            <span className="flex items-center gap-1.5 ml-auto" title="Поверх">
+            <span className="flex items-center gap-1.5" title="Поверх">
               <Building className="w-3.5 h-3.5 shrink-0" />
               {property.floor}/{property.floors_total} пов.
             </span>

@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Phone, Mail, Instagram, Facebook, Send as Telegram, MessageCircle } from 'lucide-react'
+import { Phone, Mail, Instagram, Facebook, Send as Telegram, MessageCircle, X } from 'lucide-react'
 import { getPhonesForToday, getPhoneLink } from '@/lib/phones'
 import { OFFICES, GENERAL_EMAIL, HOTLINE_PHONE } from '@/data/offices'
 import AddressRevolver from './AddressRevolver'
 
 const Footer = () => {
   const [activeOfficeIdx, setActiveOfficeIdx] = useState(0)
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
   const activeOffice = OFFICES[activeOfficeIdx] || OFFICES[0]
   const phones = activeOffice?.phones || getPhonesForToday()
 
@@ -79,7 +80,7 @@ const Footer = () => {
                 ['/o-korporatcii', 'Про нас'],
                 ['/kontakty', 'Контакти'],
                 ['/vakansii', 'Вакансії'],
-                ['/utilities', 'Комунальні служби']
+                ['/utilities', 'Комунальні служби'],
               ].map(([to, label]) => (
                 <li key={to}>
                   <Link to={to} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
@@ -146,6 +147,14 @@ const Footer = () => {
         <div className="mt-12 pt-8 border-t border-border flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-xs text-muted-foreground text-center lg:text-left shrink-0 font-inter">
             <p>© 1996–{new Date().getFullYear()} Корпорація «Харків Ріелтер». Всі права захищені.</p>
+            <span className="hidden sm:inline opacity-40">•</span>
+            <button
+              type="button"
+              onClick={() => setIsPrivacyOpen(true)}
+              className="hover:text-foreground transition-colors underline underline-offset-4"
+            >
+              Політика конфіденційності
+            </button>
           </div>
 
           {/* Partner logos */}
@@ -167,6 +176,55 @@ const Footer = () => {
           </div>
         </div>
       </div>
+
+      {/* Privacy Policy Modal */}
+      {isPrivacyOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-3xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
+            <button
+              type="button"
+              onClick={() => setIsPrivacyOpen(false)}
+              aria-label="Закрити вікно"
+              className="absolute top-5 right-5 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="mb-4">
+              <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold mb-1">Юридична інформація</p>
+              <h3 className="font-cormorant font-bold text-2xl sm:text-3xl text-foreground">Політика конфіденційності</h3>
+            </div>
+
+            <div className="overflow-y-auto space-y-4 text-xs sm:text-sm text-muted-foreground font-inter leading-relaxed pr-2 custom-scrollbar">
+              <p>
+                Ця Політика конфіденційності визначає порядок обробки та захисту персональних даних користувачів сайту Корпорації «Харків Ріелтер» відповідно до Закону України «Про захист персональних даних».
+              </p>
+              <h4 className="font-bold text-foreground text-sm">1. Збір та використання даних</h4>
+              <p>
+                Ми збираємо контактні дані (ім'я, номер телефону, коментарі), які користувач добровільно надає при заповненні форм зворотного зв'язку, запису на огляд об'єкта або відгуку на вакансію. Ці дані використовуються виключно для надання консультацій та організації перегляду нерухомості.
+              </p>
+              <h4 className="font-bold text-foreground text-sm">2. Захист та нерозголошення</h4>
+              <p>
+                Ми гарантуємо конфіденційність наданої інформації. Дані не передаються третім особам, крім випадків, прямо передбачених чинним законодавством України.
+              </p>
+              <h4 className="font-bold text-foreground text-sm">3. Ваші права</h4>
+              <p>
+                Користувач має право відкликати згоду на обробку персональних даних у будь-який момент, звернувшись на гарячу лінію або електронну пошту info@kharkov-realter.com.ua.
+              </p>
+            </div>
+
+            <div className="pt-6 border-t border-border mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsPrivacyOpen(false)}
+                className="px-6 py-2.5 bg-navy text-white text-xs font-inter font-semibold rounded-full hover:bg-navy/90 transition-colors"
+              >
+                Зрозуміло
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </footer>
   )
 }

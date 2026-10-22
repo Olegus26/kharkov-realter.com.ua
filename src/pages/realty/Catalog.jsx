@@ -149,6 +149,75 @@ const STATES = [
   { value: '9', label: 'Під обробку' }
 ]
 
+const checkSubTypeMatch = (p, st) => {
+  if (st === 'rooms_1') return p.rooms === 1
+  if (st === 'rooms_2') return p.rooms === 2
+  if (st === 'rooms_3') return p.rooms === 3
+  if (st === 'rooms_4') return p.rooms === 4
+  if (st === 'rooms_5+') return p.rooms >= 5
+
+  const text = `${p.title || ''} ${p.description || ''}`.toLowerCase()
+
+  if (st === 'gostinka') {
+    return text.includes('гостинк') || text.includes('гостинка') || text.includes('малогабарит')
+  }
+  if (st === 'gostinka_su') {
+    const isGost = text.includes('гостинк') || text.includes('гостинка')
+    const hasSu = text.includes('свой с/у') || text.includes('своїм с/в') || text.includes('свій с/в') || text.includes('санвуз') || text.includes('сануз')
+    return isGost && hasSu
+  }
+  if (st === 'podselenie') {
+    return text.includes('подселен') || text.includes('підселен') || text.includes('комнат') || text.includes('кімнат')
+  }
+  if (st === 'whole') {
+    return p.type === 'house' && !text.includes('1/2') && !text.includes('1/3') && !text.includes('часть') && !text.includes('частин') && !text.includes('дач')
+  }
+  if (st === 'half') {
+    return text.includes('1/2') || text.includes('полдома') || text.includes('півбудинк') || text.includes('часть') || text.includes('частин')
+  }
+  if (st === 'third') {
+    return text.includes('1/3') || text.includes('треть')
+  }
+  if (st === 'dacha') {
+    return text.includes('дач')
+  }
+  if (st === 'land' || st === 'land_comm') {
+    return text.includes('участок') || text.includes('ділянк') || text.includes('земл')
+  }
+  if (st === 'office') {
+    return text.includes('офис') || text.includes('офіс')
+  }
+  if (st === 'shop') {
+    return text.includes('магазин') || text.includes('торгов')
+  }
+  if (st === 'warehouse') {
+    return text.includes('склад')
+  }
+  if (st === 'production') {
+    return text.includes('производ') || text.includes('виробниц') || text.includes('цех')
+  }
+  if (st === 'garage') {
+    return text.includes('гараж') || text.includes('паркинг') || text.includes('паркінг') || text.includes('машином')
+  }
+  if (st === 'cafe') {
+    return text.includes('кафе') || text.includes('ресторан') || text.includes('общепит') || text.includes('харчуван')
+  }
+  if (st === 'kiosk') {
+    return text.includes('киоск') || text.includes('кіоск') || text.includes('павильон') || text.includes('павільйон')
+  }
+  if (st === 'sto') {
+    return text.includes('сто') || text.includes('автосервис') || text.includes('автосервіс') || text.includes('мойка') || text.includes('мийка')
+  }
+  if (st === 'premises') {
+    return p.type === 'commercial'
+  }
+  if (st === 'building' || st === 'non_res_complex') {
+    return text.includes('здание') || text.includes('будівля') || text.includes('комплекс')
+  }
+
+  return true
+}
+
 const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   
@@ -188,6 +257,23 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
   const streetOptions = useMemo(() => geoData.streets.map(s => ({ label: s.current_name, value: s.current_name })), [geoData.streets])
   const complexOptions = useMemo(() => geoData.complexes.map(c => ({ label: c.jk_name, value: c.jk_name })), [geoData.complexes])
+  const houseOptions = useMemo(() => {
+    if (!searchStreet || !geoData?.streets || !geoData?.houses) return []
+    const q = searchStreet.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim()
+    const st = geoData.streets.find(s => {
+      const cur = s.current_name.toLowerCase()
+      if (cur.length > 2 && (q.includes(cur) || cur.includes(q))) return true
+      if (s.old_names) {
+        return s.old_names.some(o => {
+          const old = o.toLowerCase()
+          return old.length > 2 && (q.includes(old) || old.includes(q))
+        })
+      }
+      return false
+    })
+    if (!st || !geoData.houses[st.street_id]) return []
+    return Object.keys(geoData.houses[st.street_id]).map(h => ({ label: h, value: h }))
+  }, [searchStreet, geoData])
 
   const handleComplexSelect = (val) => {
     setSearchComplex(val)
@@ -364,14 +450,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       }
 
       if (subTypes.length > 0) {
-        const matches = subTypes.some(st => {
-          if (st === 'rooms_1') return p.rooms === 1
-          if (st === 'rooms_2') return p.rooms === 2
-          if (st === 'rooms_3') return p.rooms === 3
-          if (st === 'rooms_4') return p.rooms === 4
-          if (st === 'rooms_5+') return p.rooms >= 5
-          return true
-        })
+        const matches = subTypes.some(st => checkSubTypeMatch(p, st))
         if (!matches) return false
       }
 
@@ -615,7 +694,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   ].map(v => (
                     <button
                       key={v.id}
-                      onClick={() => startTransition(() => setViewMode(v.id))}
+                      onClick={() => startTransition(() => handleViewModeChange(v.id))}
                       className={cn('relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
                         'text-white': viewMode === v.id,
                         'text-muted-foreground hover:text-foreground': viewMode !== v.id
@@ -668,21 +747,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 <Autocomplete
                   placeholder="Дім..."
                   disabled={!searchStreet}
-                  options={(() => {
-                    if (!searchStreet) return []
-                    const q = searchStreet.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim()
-                    const st = geoData.streets.find(s => {
-                        const cur = s.current_name.toLowerCase()
-                        if (cur.length > 2 && (q.includes(cur) || cur.includes(q))) return true
-                        if (s.old_names) return s.old_names.some(o => {
-                            const old = o.toLowerCase()
-                            return old.length > 2 && (q.includes(old) || old.includes(q))
-                        })
-                        return false
-                    })
-                    if (!st || !geoData.houses[st.street_id]) return []
-                    return Object.keys(geoData.houses[st.street_id]).map(h => ({ label: h, value: h }))
-                  })()}
+                  options={houseOptions}
                   value={searchHouse}
                   onChange={setSearchHouse}
                   onInputChange={setSearchHouse}
