@@ -87,6 +87,8 @@ export const generateLocalBusinessSchema = () => {
   }
 }
 
+export const generateRealEstateAgentSchema = generateLocalBusinessSchema
+
 export const generateBreadcrumbSchema = (crumbs = []) => {
   return {
     '@context': 'https://schema.org',

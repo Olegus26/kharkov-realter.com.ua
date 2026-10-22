@@ -523,6 +523,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setMinFloorsTotal('')
     setMaxFloorsTotal('')
   }
+  const clearFilters = handleClearFilters
   const hasFilters = Boolean(
     searchQuery ||
     subTypes.length > 0 ||
@@ -1101,7 +1102,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                 )}
                 <button
                   type="button"
-                  onClick={clearFilters}
+                  onClick={handleClearFilters}
+                  aria-label="Скинути всі вибрані фільтри"
                   className="text-xs text-destructive hover:underline font-semibold ml-auto transition-colors"
                 >
                   Скинути все

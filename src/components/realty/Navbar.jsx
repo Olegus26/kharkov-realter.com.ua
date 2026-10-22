@@ -12,10 +12,9 @@ import {
   MessageSquare,
   Briefcase,
   LifeBuoy,
+  Home as HomeIcon,
   Building2,
-  Tag,
-  KeyRound,
-  FileSpreadsheet
+  PhoneCall
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
@@ -67,17 +66,6 @@ const Navbar = () => {
     setIsMobileReviewsOpen(false)
   }
 
-  const handleSellClick = (e) => {
-    if (location.pathname === '/') {
-      const el = document.getElementById('sell')
-      if (el) {
-        e.preventDefault()
-        el.scrollIntoView({ behavior: 'smooth' })
-        handleCloseAll()
-      }
-    }
-  }
-
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (aboutRef.current && !aboutRef.current.contains(e.target)) {
@@ -123,15 +111,15 @@ const Navbar = () => {
     handleCloseAll()
   }, [location.pathname, location.search])
 
-  const isBuyActive = (location.pathname === '/flats' || location.pathname === '/houses') &&
-    (location.search.includes('deal=sale') || !location.search.includes('deal=rent'))
+  const isHomeActive = location.pathname === '/'
 
-  const isRentActive = (location.pathname === '/flats' || location.pathname === '/houses') &&
-    location.search.includes('deal=rent')
+  const isCatalogActive = ['/flats', '/houses', '/realtys'].some((path) =>
+    location.pathname.startsWith(path)
+  )
 
-  const isCommercialActive = location.pathname === '/realtys'
-
-  const isAboutActive = ['/o-korporatcii', '/agents', '/vakansii', '/utilities'].includes(location.pathname)
+  const isAboutActive = ['/o-korporatcii', '/agents', '/vakansii', '/utilities'].includes(
+    location.pathname
+  )
 
   const isContactActive = location.pathname === '/kontakty'
 
@@ -159,44 +147,26 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Streamlined Desktop Navigation: Купити · Орендувати · Продати · Комерція · Про нас ▾ · Контакти */}
-        <nav className="hidden lg:flex items-center gap-7" aria-label="Основна навігація">
+        {/* Desktop Navigation: Головна · Каталог · Про нас ▾ · Контакти */}
+        <nav className="hidden lg:flex items-center gap-8" aria-label="Основна навігація">
+          <Link
+            to="/"
+            className={cn(
+              'text-sm font-medium transition-colors duration-200',
+              isHomeActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+            )}
+          >
+            Головна
+          </Link>
+
           <Link
             to="/flats?deal=sale"
             className={cn(
               'text-sm font-medium transition-colors duration-200',
-              isBuyActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
+              isCatalogActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
             )}
           >
-            Купити
-          </Link>
-
-          <Link
-            to="/flats?deal=rent"
-            className={cn(
-              'text-sm font-medium transition-colors duration-200',
-              isRentActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
-            )}
-          >
-            Орендувати
-          </Link>
-
-          <Link
-            to="/#sell"
-            onClick={handleSellClick}
-            className="text-sm font-medium text-foreground/75 hover:text-foreground transition-colors duration-200"
-          >
-            Продати
-          </Link>
-
-          <Link
-            to="/realtys?deal=sale"
-            className={cn(
-              'text-sm font-medium transition-colors duration-200',
-              isCommercialActive ? 'text-gold font-semibold' : 'text-foreground/75 hover:text-foreground'
-            )}
-          >
-            Комерція
+            Каталог
           </Link>
 
           {/* Про нас ▾ Dropdown */}
@@ -389,51 +359,27 @@ const Navbar = () => {
         >
           <nav className="space-y-1">
             <Link
+              to="/"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isHomeActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <HomeIcon className="w-5 h-5 text-gold shrink-0" />
+              <span>Головна</span>
+            </Link>
+
+            <Link
               to="/flats?deal=sale"
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isBuyActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                isCatalogActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
               )}
-            >
-              <KeyRound className="w-5 h-5 text-gold shrink-0" />
-              <span>Купити</span>
-            </Link>
-
-            <Link
-              to="/flats?deal=rent"
-              onClick={handleCloseAll}
-              className={cn(
-                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isRentActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
-              )}
-            >
-              <Tag className="w-5 h-5 text-gold shrink-0" />
-              <span>Орендувати</span>
-            </Link>
-
-            <Link
-              to="/#sell"
-              onClick={(e) => {
-                handleSellClick(e)
-                handleCloseAll()
-              }}
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium text-foreground/80 active:bg-black/5 transition-colors"
             >
               <Building2 className="w-5 h-5 text-gold shrink-0" />
-              <span>Продати нерухомість</span>
-            </Link>
-
-            <Link
-              to="/realtys?deal=sale"
-              onClick={handleCloseAll}
-              className={cn(
-                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isCommercialActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
-              )}
-            >
-              <FileSpreadsheet className="w-5 h-5 text-gold shrink-0" />
-              <span>Комерція</span>
+              <span>Каталог нерухомості</span>
             </Link>
 
             {/* Mobile "Про нас" Accordion */}
@@ -530,7 +476,7 @@ const Navbar = () => {
                 isContactActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
               )}
             >
-              <Phone className="w-5 h-5 text-gold shrink-0" />
+              <PhoneCall className="w-5 h-5 text-gold shrink-0" />
               <span>Контакти</span>
             </Link>
 
