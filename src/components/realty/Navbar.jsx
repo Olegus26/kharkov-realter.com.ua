@@ -26,16 +26,16 @@ import PhoneDropdown from './PhoneDropdown'
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isProgramsOpen, setIsProgramsOpen] = useState(false)
+  const [isServicesOpen, setIsServicesOpen] = useState(false)
   const [isReviewsOpen, setIsReviewsOpen] = useState(false)
-  const [isMobileProgramsOpen, setIsMobileProgramsOpen] = useState(false)
+  const [isMobileServicesOpen, setIsMobileServicesOpen] = useState(false)
   const [isMobileReviewsOpen, setIsMobileReviewsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   const location = useLocation()
   const { favorites } = useFavorites()
   const favoritesCount = favorites.length
-  const programsRef = useRef(null)
+  const servicesRef = useRef(null)
   const reviewsRef = useRef(null)
   const phones = getPhonesForToday()
 
@@ -43,18 +43,18 @@ const Navbar = () => {
     setIsMobileMenuOpen((prev) => !prev)
   }
 
-  const handleTogglePrograms = () => {
-    setIsProgramsOpen((prev) => !prev)
+  const handleToggleServices = () => {
+    setIsServicesOpen((prev) => !prev)
     setIsReviewsOpen(false)
   }
 
   const handleToggleReviews = () => {
     setIsReviewsOpen((prev) => !prev)
-    setIsProgramsOpen(false)
+    setIsServicesOpen(false)
   }
 
-  const handleToggleMobilePrograms = () => {
-    setIsMobileProgramsOpen((prev) => !prev)
+  const handleToggleMobileServices = () => {
+    setIsMobileServicesOpen((prev) => !prev)
   }
 
   const handleToggleMobileReviews = () => {
@@ -63,16 +63,16 @@ const Navbar = () => {
 
   const handleCloseAll = () => {
     setIsMobileMenuOpen(false)
-    setIsProgramsOpen(false)
+    setIsServicesOpen(false)
     setIsReviewsOpen(false)
-    setIsMobileProgramsOpen(false)
+    setIsMobileServicesOpen(false)
     setIsMobileReviewsOpen(false)
   }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (programsRef.current && !programsRef.current.contains(e.target)) {
-        setIsProgramsOpen(false)
+      if (servicesRef.current && !servicesRef.current.contains(e.target)) {
+        setIsServicesOpen(false)
       }
       if (reviewsRef.current && !reviewsRef.current.contains(e.target)) {
         setIsReviewsOpen(false)
@@ -124,11 +124,10 @@ const Navbar = () => {
     location.pathname.startsWith('/realtys') ||
     location.pathname.startsWith('/property')
 
-  const isProgramsActive = ['/evidnovlennya', '/eoselia'].includes(location.pathname)
-  const isAgentsActive = location.pathname === '/agents'
+  const isServicesActive = ['/eoselia', '/evidnovlennya', '/utilities'].includes(location.pathname)
   const isAboutActive = location.pathname === '/o-korporatcii'
+  const isAgentsActive = location.pathname === '/agents'
   const isVacanciesActive = location.pathname === '/vakansii'
-  const isUtilitiesActive = location.pathname === '/utilities'
   const isContactActive = location.pathname === '/kontakty'
 
   return (
@@ -136,7 +135,7 @@ const Navbar = () => {
       'fixed top-0 inset-x-0 z-50 transition-all duration-300',
       scrolled ? 'bg-white/95 backdrop-blur-xl border-b border-black/5 shadow-sm' : 'bg-white/85 backdrop-blur-xl border-b border-transparent'
     )}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-3 xl:gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2.5 xl:gap-4">
         {/* Logo */}
         <Link
           to="/"
@@ -155,12 +154,12 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop Navigation: Головна · Каталог · Програми ▾ · Агенти · Про нас · Відгуки ▾ · Вакансії · Служби · Контакти */}
-        <nav className="hidden lg:flex items-center gap-1 xl:gap-2.5" aria-label="Основна навігація">
+        {/* Desktop Navigation: Головна · Каталог · Послуги ▾ · Про нас · Агенти · Відгуки ▾ · Вакансії · Контакти */}
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-2" aria-label="Основна навігація">
           <Link
             to="/"
             className={cn(
-              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200',
+              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200',
               isHomeActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
@@ -170,32 +169,32 @@ const Navbar = () => {
           <Link
             to="/flats?deal=sale"
             className={cn(
-              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200',
+              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200',
               isCatalogActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
             Каталог
           </Link>
 
-          {/* Програми ▾ Dropdown */}
-          <div className="relative" ref={programsRef}>
+          {/* Послуги ▾ Dropdown (єОселя, єВідновлення, Комунальні служби) */}
+          <div className="relative" ref={servicesRef}>
             <button
               type="button"
-              onClick={handleTogglePrograms}
-              aria-expanded={isProgramsOpen}
+              onClick={handleToggleServices}
+              aria-expanded={isServicesOpen}
               aria-haspopup="true"
-              aria-label="Меню державних програм"
+              aria-label="Меню послуг та державних програм"
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200 outline-none',
-                isProgramsOpen || isProgramsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
+                'flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200 outline-none',
+                isServicesOpen || isServicesActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
               )}
             >
-              <span>Програми</span>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isProgramsOpen && 'rotate-180')} />
+              <span>Послуги</span>
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', isServicesOpen && 'rotate-180')} />
             </button>
 
             <AnimatePresence>
-              {isProgramsOpen && (
+              {isServicesOpen && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50">
                   <motion.div
                     initial={{ opacity: 0, y: -6, scale: 0.96 }}
@@ -204,6 +203,20 @@ const Navbar = () => {
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                     className="w-80 bg-white rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] border border-border/70 p-2 space-y-1"
                   >
+                    <Link
+                      to="/eoselia"
+                      onClick={handleCloseAll}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#1a365d]/10 text-navy flex items-center justify-center shrink-0 group-hover:bg-navy group-hover:text-white transition-colors">
+                        <HomeIcon className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-foreground">єОселя</span>
+                        <span className="text-[10px] text-muted-foreground truncate">Пільгова іпотека від 3% та 7%</span>
+                      </div>
+                    </Link>
+
                     <Link
                       to="/evidnovlennya"
                       onClick={handleCloseAll}
@@ -218,17 +231,19 @@ const Navbar = () => {
                       </div>
                     </Link>
 
+                    <div className="border-t border-border/40 my-1" />
+
                     <Link
-                      to="/eoselia"
+                      to="/utilities"
                       onClick={handleCloseAll}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted/70 transition-colors group"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[#1a365d]/10 text-navy flex items-center justify-center shrink-0 group-hover:bg-navy group-hover:text-white transition-colors">
-                        <HomeIcon className="w-4 h-4" />
+                      <div className="w-8 h-8 rounded-lg bg-gold/10 text-gold flex items-center justify-center shrink-0 group-hover:bg-gold group-hover:text-white transition-colors">
+                        <LifeBuoy className="w-4 h-4" />
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold text-foreground">єОселя</span>
-                        <span className="text-[10px] text-muted-foreground truncate">Пільгова іпотека від 3% та 7%</span>
+                        <span className="text-xs font-semibold text-foreground">Комунальні служби</span>
+                        <span className="text-[10px] text-muted-foreground truncate">Довідник аварійних телефонів Харкова</span>
                       </div>
                     </Link>
                   </motion.div>
@@ -238,23 +253,23 @@ const Navbar = () => {
           </div>
 
           <Link
-            to="/agents"
-            className={cn(
-              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200',
-              isAgentsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
-            )}
-          >
-            Агенти
-          </Link>
-
-          <Link
             to="/o-korporatcii"
             className={cn(
-              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200',
+              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200',
               isAboutActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
             Про нас
+          </Link>
+
+          <Link
+            to="/agents"
+            className={cn(
+              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200',
+              isAgentsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
+            )}
+          >
+            Агенти
           </Link>
 
           {/* Відгуки ▾ Dropdown */}
@@ -266,7 +281,7 @@ const Navbar = () => {
               aria-haspopup="true"
               aria-label="Відгуки за філіями Google Maps"
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200 outline-none',
+                'flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200 outline-none',
                 isReviewsOpen ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
               )}
             >
@@ -309,7 +324,7 @@ const Navbar = () => {
           <Link
             to="/vakansii"
             className={cn(
-              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200',
+              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200',
               isVacanciesActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
@@ -317,19 +332,9 @@ const Navbar = () => {
           </Link>
 
           <Link
-            to="/utilities"
-            className={cn(
-              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200',
-              isUtilitiesActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
-            )}
-          >
-            Служби
-          </Link>
-
-          <Link
             to="/kontakty"
             className={cn(
-              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium transition-colors duration-200',
+              'px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200',
               isContactActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
             )}
           >
@@ -345,7 +350,7 @@ const Navbar = () => {
             onClick={handleCloseAll}
             aria-label={`Збережені об'єкти (${favoritesCount})`}
             className={cn(
-              'relative w-10 h-10 rounded-full flex items-center justify-center transition-colors focus:outline-none',
+              'relative w-10 h-10 rounded-full flex items-center justify-center transition-colors focus:outline-none shrink-0',
               location.pathname === '/favorites' ? 'text-gold' : 'text-foreground/60 hover:text-gold'
             )}
           >
@@ -362,7 +367,7 @@ const Navbar = () => {
 
           <Link
             to="/kontakty"
-            className="hidden lg:block px-5 py-2.5 gradient-gold rounded-full text-xs tracking-wide uppercase font-inter font-semibold hover:opacity-90 transition-opacity text-white shadow-sm"
+            className="hidden lg:block px-5 py-2.5 gradient-gold rounded-full text-xs tracking-wide uppercase font-inter font-semibold hover:opacity-90 transition-opacity text-white shadow-sm shrink-0 whitespace-nowrap"
           >
             Консультація
           </Link>
@@ -413,56 +418,53 @@ const Navbar = () => {
               <span>Каталог нерухомості</span>
             </Link>
 
-            {/* Mobile "Програми" Accordion */}
+            {/* Mobile "Послуги" Accordion */}
             <div className="flex flex-col pt-1">
               <button
                 type="button"
-                onClick={handleToggleMobilePrograms}
-                aria-expanded={isMobileProgramsOpen}
+                onClick={handleToggleMobileServices}
+                aria-expanded={isMobileServicesOpen}
                 className={cn(
                   'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
-                  isMobileProgramsOpen || isProgramsActive ? 'bg-muted/80 text-foreground font-semibold' : 'text-foreground/80 active:bg-black/5'
+                  isMobileServicesOpen || isServicesActive ? 'bg-muted/80 text-foreground font-semibold' : 'text-foreground/80 active:bg-black/5'
                 )}
               >
                 <Layers className="w-5 h-5 text-gold shrink-0" />
-                <span>Програми</span>
-                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', isMobileProgramsOpen && 'rotate-180')} />
+                <span>Послуги</span>
+                <ChevronDown className={cn('w-4 h-4 ml-auto transition-transform duration-200', isMobileServicesOpen && 'rotate-180')} />
               </button>
 
-              {isMobileProgramsOpen && (
+              {isMobileServicesOpen && (
                 <div className="pl-4 pr-1 py-1 space-y-1">
-                  <Link
-                    to="/evidnovlennya"
-                    onClick={handleCloseAll}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
-                  >
-                    <Hammer className="w-4 h-4 text-emerald-600" />
-                    <span>єВідновлення</span>
-                  </Link>
-
                   <Link
                     to="/eoselia"
                     onClick={handleCloseAll}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
                   >
                     <HomeIcon className="w-4 h-4 text-navy" />
-                    <span>єОселя</span>
+                    <span>єОселя (іпотека 3% та 7%)</span>
+                  </Link>
+
+                  <Link
+                    to="/evidnovlennya"
+                    onClick={handleCloseAll}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
+                  >
+                    <Hammer className="w-4 h-4 text-emerald-600" />
+                    <span>єВідновлення (сертифікати Дія)</span>
+                  </Link>
+
+                  <Link
+                    to="/utilities"
+                    onClick={handleCloseAll}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground/80 hover:text-foreground"
+                  >
+                    <LifeBuoy className="w-4 h-4 text-gold" />
+                    <span>Комунальні служби</span>
                   </Link>
                 </div>
               )}
             </div>
-
-            <Link
-              to="/agents"
-              onClick={handleCloseAll}
-              className={cn(
-                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isAgentsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
-              )}
-            >
-              <Users className="w-5 h-5 text-gold shrink-0" />
-              <span>Агенти</span>
-            </Link>
 
             <Link
               to="/o-korporatcii"
@@ -474,6 +476,18 @@ const Navbar = () => {
             >
               <Info className="w-5 h-5 text-gold shrink-0" />
               <span>Про нас</span>
+            </Link>
+
+            <Link
+              to="/agents"
+              onClick={handleCloseAll}
+              className={cn(
+                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
+                isAgentsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+              )}
+            >
+              <Users className="w-5 h-5 text-gold shrink-0" />
+              <span>Агенти</span>
             </Link>
 
             {/* Mobile "Відгуки за філіями" Accordion */}
@@ -521,18 +535,6 @@ const Navbar = () => {
             >
               <Briefcase className="w-5 h-5 text-gold shrink-0" />
               <span>Вакансії</span>
-            </Link>
-
-            <Link
-              to="/utilities"
-              onClick={handleCloseAll}
-              className={cn(
-                'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isUtilitiesActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
-              )}
-            >
-              <LifeBuoy className="w-5 h-5 text-gold shrink-0" />
-              <span>Комунальні служби</span>
             </Link>
 
             <Link
