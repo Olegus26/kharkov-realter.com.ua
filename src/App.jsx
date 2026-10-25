@@ -1,18 +1,16 @@
-import { HelmetProvider } from 'react-helmet-async'
-import { Toaster } from "@/components/ui/toaster"
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
-import PageNotFound from './lib/PageNotFound'
+import { HelmetProvider } from 'react-helmet-async'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
+import { Toaster } from '@/components/ui/toaster'
+import { queryClientInstance } from '@/lib/query-client'
+import PageNotFound from '@/lib/PageNotFound'
 import { AuthProvider } from '@/lib/AuthContext'
 import { FavoritesProvider } from '@/lib/FavoritesContext'
-import { ThemeProvider } from '@/components/ThemeProvider'
 import SiteLayout from '@/components/realty/SiteLayout'
 import ScrollToTop from '@/components/realty/ScrollToTop'
 
-// Lazy load all page components for code splitting
-// Only the route the user visits gets downloaded
+// Lazy load all page components for code splitting: only the visited route gets downloaded
 const HomePage = lazy(() => import('@/pages/realty/Home'))
 const CatalogPage = lazy(() => import('@/pages/realty/Catalog'))
 const PropertyDetail = lazy(() => import('@/pages/realty/PropertyDetail'))
@@ -25,110 +23,82 @@ const VacanciesPage = lazy(() => import('@/pages/realty/Vacancies'))
 const EOseliaPage = lazy(() => import('@/pages/realty/EOselia'))
 const EVidnovlennyaPage = lazy(() => import('@/pages/realty/EVidnovlennya'))
 
+const CATALOG_CATEGORY_BY_PATH = {
+  '/flats': 'apartment',
+  '/houses': 'house',
+  '/realtys': 'commercial',
+}
+
 // Minimal loading fallback — just a subtle pulse, no layout shift
 const PageLoader = () => (
-  <div className="min-h-[60vh] flex items-center justify-center">
+  <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="Завантаження">
     <div className="flex gap-1.5">
-      <div className="w-2 h-2 rounded-full bg-gold/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-      <div className="w-2 h-2 rounded-full bg-gold/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-      <div className="w-2 h-2 rounded-full bg-gold/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+      {[0, 150, 300].map((delay) => (
+        <div
+          key={delay}
+          className="w-2 h-2 rounded-full bg-gold/60 animate-bounce"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
     </div>
   </div>
 )
 
 const CatalogWrapper = () => {
-  const location = useLocation()
-  const path = location.pathname
-  
-  if (!path.startsWith('/flats') && !path.startsWith('/houses') && !path.startsWith('/realtys')) {
-    return <PageNotFound />
-  }
+  const { pathname } = useLocation()
+  const category = CATALOG_CATEGORY_BY_PATH[pathname.replace(/\/+$/, '')]
 
-  let category = 'apartment'
-  if (path.startsWith('/houses')) category = 'house'
-  else if (path.startsWith('/realtys')) category = 'commercial'
-  
+  if (!category) return <PageNotFound />
+
   return <CatalogPage defaultCategory={category} />
 }
 
-const AuthenticatedApp = () => {
-  return (
-    <Routes>
-      <Route element={<SiteLayout />}>
-        <Route path="/" element={
-          <Suspense fallback={<PageLoader />}>
-            <HomePage />
-          </Suspense>
-        } />
-        
-        <Route path="/eoselia" element={
-          <Suspense fallback={<PageLoader />}>
-            <EOseliaPage />
-          </Suspense>
-        } />
-        <Route path="/evidnovlennya" element={
-          <Suspense fallback={<PageLoader />}>
-            <EVidnovlennyaPage />
-          </Suspense>
-        } />
+const lazyElement = (Component) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+)
 
-        {/* Single dynamic route guarantees exactly zero unmounts between flats/houses/realtys */}
-        <Route path="/:catalogType" element={<Suspense fallback={<PageLoader />}><CatalogWrapper /></Suspense>} />
-        <Route path="/property/:id" element={
-          <Suspense fallback={<PageLoader />}>
-            <PropertyDetail />
-          </Suspense>
-        } />
-        <Route path="/agents" element={
-          <Suspense fallback={<PageLoader />}>
-            <AgentsPage />
-          </Suspense>
-        } />
-        <Route path="/o-korporatcii" element={
-          <Suspense fallback={<PageLoader />}>
-            <AboutPage />
-          </Suspense>
-        } />
-        <Route path="/kontakty" element={
-          <Suspense fallback={<PageLoader />}>
-            <ContactPage />
-          </Suspense>
-        } />
-        <Route path="/favorites" element={
-          <Suspense fallback={<PageLoader />}>
-            <FavoritesPage />
-          </Suspense>
-        } />
-        <Route path="/utilities" element={
-          <Suspense fallback={<PageLoader />}><UtilitiesPage /></Suspense>
-        } />
-        <Route path="/vakansii" element={
-          <Suspense fallback={<PageLoader />}><VacanciesPage /></Suspense>
-        } />
-      </Route>
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
-  )
-}
+const PAGE_ROUTES = [
+  { path: '/', component: HomePage },
+  { path: '/eoselia', component: EOseliaPage },
+  { path: '/evidnovlennya', component: EVidnovlennyaPage },
+  // Single dynamic route guarantees zero unmounts between flats/houses/realtys
+  { path: '/:catalogType', component: CatalogWrapper },
+  { path: '/property/:id', component: PropertyDetail },
+  { path: '/agents', component: AgentsPage },
+  { path: '/o-korporatcii', component: AboutPage },
+  { path: '/kontakty', component: ContactPage },
+  { path: '/favorites', component: FavoritesPage },
+  { path: '/utilities', component: UtilitiesPage },
+  { path: '/vakansii', component: VacanciesPage },
+]
 
-const App = () => {
-  return (
-    <HelmetProvider>
-      <ThemeProvider defaultTheme="system">
-        <AuthProvider>
-          <FavoritesProvider>
-            <QueryClientProvider client={queryClientInstance}>
-              <Router>
-                <ScrollToTop />
-                <AuthenticatedApp />
-              </Router>
-              <Toaster />
-            </QueryClientProvider>
-          </FavoritesProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </HelmetProvider>
-  )
-}
+const AppRoutes = () => (
+  <Routes>
+    <Route element={<SiteLayout />}>
+      {PAGE_ROUTES.map(({ path, component }) => (
+        <Route key={path} path={path} element={lazyElement(component)} />
+      ))}
+    </Route>
+    <Route path="*" element={<PageNotFound />} />
+  </Routes>
+)
+
+const App = () => (
+  <HelmetProvider>
+    <AuthProvider>
+      <FavoritesProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ScrollToTop />
+            <AppRoutes />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </FavoritesProvider>
+    </AuthProvider>
+  </HelmetProvider>
+)
 
 export default App

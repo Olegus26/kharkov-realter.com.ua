@@ -34,7 +34,7 @@ const AddressRevolver = ({ addresses = [], onChange }) => {
   }
 
   return (
-    <div className="w-full bg-muted/40 dark:bg-muted/20 border border-border/80 rounded-2xl p-4 shadow-sm hover:border-gold/30 transition-all">
+    <div className="w-full bg-muted/40 border border-border/80 rounded-2xl p-4 shadow-sm hover:border-gold/30 transition-all">
       {/* Office Selector Header with Stepper */}
       <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-border/60">
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -87,7 +87,7 @@ const AddressRevolver = ({ addresses = [], onChange }) => {
       {/* Metro station & Address */}
       <div className="mb-3 space-y-1.5">
         {officeMetro && (
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-navy dark:text-gold bg-navy/5 dark:bg-gold/10 px-2.5 py-0.5 rounded-full font-inter">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-navy bg-navy/5 px-2.5 py-0.5 rounded-full font-inter">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>м. {officeMetro}</span>
           </div>

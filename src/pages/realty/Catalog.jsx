@@ -1,160 +1,49 @@
 import { useState, useMemo, useEffect, useRef, startTransition } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
-import { X, LayoutGrid, Map, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, Filter, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
+import { LayoutGrid, Map, AlertCircle, ChevronDown, Filter, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import MapView from '@/components/realty/MapView'
 import { useCatalogObjects } from '@/lib/useCatalogObjects'
-import { useFavorites } from '@/lib/FavoritesContext'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateItemListSchema } from '@/components/seo/JsonLd'
 import { Autocomplete } from '@/components/ui/autocomplete'
 import { cn } from '@/lib/utils'
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
+import {
+  CATEGORIES,
+  SUBTYPES_BY_CATEGORY,
+  STATES,
+  SORT_OPTIONS,
+  checkSubTypeMatch,
+} from '@/pages/realty/catalogConfig'
+import RangeFilter from '@/components/realty/catalog/RangeFilter'
+import CheckboxFilter from '@/components/realty/catalog/CheckboxFilter'
+import ActiveFilterBadge from '@/components/realty/catalog/ActiveFilterBadge'
+import Pagination from '@/components/realty/catalog/Pagination'
+import MascotTelegramCard from '@/components/realty/catalog/MascotTelegramCard'
+import MascotTelegramEmptyState from '@/components/realty/catalog/MascotTelegramEmptyState'
+import MascotTelegramModal from '@/components/realty/catalog/MascotTelegramModal'
 
-const CATEGORIES = [
-  { value: 'apartment', label: 'Квартири', path: '/flats' },
-  { value: 'house', label: 'Будинки', path: '/houses' },
-  { value: 'commercial', label: 'Комерція', path: '/realtys' },
-]
-
-const SUBTYPES_BY_CATEGORY = {
-  apartment: [
-    { value: 'rooms_1', label: '1-кімн. квартира' },
-    { value: 'rooms_2', label: '2-кімн. квартира' },
-    { value: 'rooms_3', label: '3-кімн. квартира' },
-    { value: 'rooms_4', label: '4-кімн. квартира' },
-    { value: 'rooms_5+', label: '5 і більше кімнат' },
-    { value: 'gostinka', label: 'Гостинка' },
-    { value: 'gostinka_su', label: 'Гостинка зі своїм с/в' },
-    { value: 'podselenie', label: 'Підселення' },
-  ],
-  house: [
-    { value: 'whole', label: 'Окремий будинок' },
-    { value: 'half', label: 'Частина будинку (1/2)' },
-    { value: 'third', label: 'Частина будинку (1/3)' },
-    { value: 'dacha', label: 'Дача' },
-    { value: 'land', label: 'Земельна ділянка' },
-  ],
-  commercial: [
-    { value: 'premises', label: 'Нежитлове приміщення' },
-    { value: 'building', label: 'Окрема будівля' },
-    { value: 'land_comm', label: 'Ділянка під комерцію' },
-    { value: 'garage', label: 'Гараж / паркінг' },
-    { value: 'shop', label: 'Магазин / торгова площа' },
-    { value: 'office', label: 'Офіс' },
-    { value: 'production', label: 'Виробниче приміщення' },
-    { value: 'sto', label: 'СТО / автосервіс' },
-    { value: 'warehouse', label: 'Склад' },
-    { value: 'non_res_complex', label: 'Майновий комплекс' },
-    { value: 'cafe', label: 'Кафе / ресторан' },
-    { value: 'kiosk', label: 'Кіоск / павільйон' },
-  ]
-}
-
-
-const STATES = [
-  { value: '1', label: 'Житловий' },
-  { value: '2', label: 'Косметичний ремонт' },
-  { value: '3', label: 'Євроремонт' },
-  { value: '4', label: 'Капітальний ремонт' },
-  { value: '5', label: 'Без ремонту' },
-  { value: '6', label: 'Старий' },
-  { value: '7', label: 'Недобудова' },
-  { value: '8', label: 'Будівельний стан' },
-  { value: '9', label: 'Під обробку' }
-]
-
-const checkSubTypeMatch = (p, st) => {
-  if (st === 'rooms_1') return p.rooms === 1
-  if (st === 'rooms_2') return p.rooms === 2
-  if (st === 'rooms_3') return p.rooms === 3
-  if (st === 'rooms_4') return p.rooms === 4
-  if (st === 'rooms_5+') return p.rooms >= 5
-
-  const text = `${p.title || ''} ${p.description || ''}`.toLowerCase()
-
-  if (st === 'gostinka') {
-    return text.includes('гостинк') || text.includes('гостинка') || text.includes('малогабарит')
-  }
-  if (st === 'gostinka_su') {
-    const isGost = text.includes('гостинк') || text.includes('гостинка')
-    const hasSu = text.includes('свой с/у') || text.includes('своїм с/в') || text.includes('свій с/в') || text.includes('санвуз') || text.includes('сануз')
-    return isGost && hasSu
-  }
-  if (st === 'podselenie') {
-    return text.includes('подселен') || text.includes('підселен') || text.includes('комнат') || text.includes('кімнат')
-  }
-  if (st === 'whole') {
-    return p.type === 'house' && !text.includes('1/2') && !text.includes('1/3') && !text.includes('часть') && !text.includes('частин') && !text.includes('дач')
-  }
-  if (st === 'half') {
-    return text.includes('1/2') || text.includes('полдома') || text.includes('півбудинк') || text.includes('часть') || text.includes('частин')
-  }
-  if (st === 'third') {
-    return text.includes('1/3') || text.includes('треть')
-  }
-  if (st === 'dacha') {
-    return text.includes('дач')
-  }
-  if (st === 'land' || st === 'land_comm') {
-    return text.includes('участок') || text.includes('ділянк') || text.includes('земл')
-  }
-  if (st === 'office') {
-    return text.includes('офис') || text.includes('офіс')
-  }
-  if (st === 'shop') {
-    return text.includes('магазин') || text.includes('торгов')
-  }
-  if (st === 'warehouse') {
-    return text.includes('склад')
-  }
-  if (st === 'production') {
-    return text.includes('производ') || text.includes('виробниц') || text.includes('цех')
-  }
-  if (st === 'garage') {
-    return text.includes('гараж') || text.includes('паркинг') || text.includes('паркінг') || text.includes('машином')
-  }
-  if (st === 'cafe') {
-    return text.includes('кафе') || text.includes('ресторан') || text.includes('общепит') || text.includes('харчуван')
-  }
-  if (st === 'kiosk') {
-    return text.includes('киоск') || text.includes('кіоск') || text.includes('павильон') || text.includes('павільйон')
-  }
-  if (st === 'sto') {
-    return text.includes('сто') || text.includes('автосервис') || text.includes('автосервіс') || text.includes('мойка') || text.includes('мийка')
-  }
-  if (st === 'premises') {
-    return p.type === 'commercial'
-  }
-  if (st === 'building' || st === 'non_res_complex') {
-    return text.includes('здание') || text.includes('будівля') || text.includes('комплекс')
-  }
-
-  return true
-}
-
-const SORT_OPTIONS = [
-  { value: 'date_desc', label: 'Новіші спочатку' },
-  { value: 'price_asc', label: 'Ціна: від дешевших' },
-  { value: 'price_desc', label: 'Ціна: від дорожчих' },
-  { value: 'area_asc', label: 'Площа: від меншої' },
-  { value: 'area_desc', label: 'Площа: від більшої' },
-]
+const ITEMS_PER_PAGE = 18
 
 const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isFirstRender = useRef(true)
+
   const [deal, setDeal] = useState(searchParams.get('deal') || 'sale')
   const [category, setCategory] = useState(defaultCategory)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'date_desc')
   const [isSortOpen, setIsSortOpen] = useState(false)
-  const [subTypes, setSubTypes] = useState(searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : [])
+  const [subTypes, setSubTypes] = useState(
+    searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : []
+  )
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
-
   const [minArea, setMinArea] = useState(searchParams.get('minArea') || '')
   const [maxArea, setMaxArea] = useState(searchParams.get('maxArea') || '')
 
@@ -162,45 +51,76 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchStreet, setSearchStreet] = useState(searchParams.get('searchStreet') || '')
   const [searchHouse, setSearchHouse] = useState(searchParams.get('searchHouse') || '')
   const [geoData, setGeoData] = useState({ streets: [], houses: {}, complexes: [] })
-  
-  const [metroStations, setMetroStations] = useState(searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : [])
-  const [districts, setDistricts] = useState(searchParams.get('districts') ? searchParams.get('districts').split(',') : [])
-  const [states, setStates] = useState(searchParams.get('states') ? searchParams.get('states').split(',') : [])
+
+  const [metroStations, setMetroStations] = useState(
+    searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : []
+  )
+  const [districts, setDistricts] = useState(
+    searchParams.get('districts') ? searchParams.get('districts').split(',') : []
+  )
+  const [states, setStates] = useState(
+    searchParams.get('states') ? searchParams.get('states').split(',') : []
+  )
   const [minFloor, setMinFloor] = useState(searchParams.get('minFloor') || '')
   const [maxFloor, setMaxFloor] = useState(searchParams.get('maxFloor') || '')
   const [minFloorsTotal, setMinFloorsTotal] = useState(searchParams.get('minFloorsTotal') || '')
   const [maxFloorsTotal, setMaxFloorsTotal] = useState(searchParams.get('maxFloorsTotal') || '')
-  const [filterEoselia, setFilterEoselia] = useState(searchParams.get('eoselia') === 'true' || searchParams.get('program') === 'eoselia')
-  const [filterErecovery, setFilterErecovery] = useState(searchParams.get('erecovery') === 'true' || searchParams.get('program') === 'erecovery')
+  const [filterEoselia, setFilterEoselia] = useState(
+    searchParams.get('eoselia') === 'true' || searchParams.get('program') === 'eoselia'
+  )
+  const [filterErecovery, setFilterErecovery] = useState(
+    searchParams.get('erecovery') === 'true' || searchParams.get('program') === 'erecovery'
+  )
 
-  const handleToggleEoselia = () => {
-    setFilterEoselia((prev) => !prev)
-  }
+  const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
+  const [showMapFilters, setShowMapFilters] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
+  )
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1)
+  const [isPromoDismissed, setIsPromoDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return sessionStorage.getItem('kh_catalog_tg_promo_dismissed') === 'true'
+  })
 
-  const handleToggleErecovery = () => {
-    setFilterErecovery((prev) => !prev)
+  const handleDismissPromo = () => {
+    setIsPromoDismissed(true)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('kh_catalog_tg_promo_dismissed', 'true')
+    }
   }
 
   useEffect(() => {
     Promise.all([
-      import('@/data/streets.json').then(m => m.default),
-      import('@/data/houses.json').then(m => m.default),
-      import('@/data/complexes.json').then(m => m.default)
-    ]).then(([streets, houses, complexes]) => {
-      setGeoData({ streets, houses, complexes })
-    }).catch(e => console.error("Error loading geo data", e))
+      import('@/data/streets.json').then((m) => m.default),
+      import('@/data/houses.json').then((m) => m.default),
+      import('@/data/complexes.json').then((m) => m.default),
+    ])
+      .then(([streets, houses, complexes]) => {
+        setGeoData({ streets, houses, complexes })
+      })
+      .catch((e) => console.error('Error loading geo data', e))
   }, [])
 
-  const streetOptions = useMemo(() => geoData.streets.map(s => ({ label: s.current_name, value: s.current_name })), [geoData.streets])
-  const complexOptions = useMemo(() => geoData.complexes.map(c => ({ label: c.jk_name, value: c.jk_name })), [geoData.complexes])
+  const streetOptions = useMemo(
+    () => geoData.streets.map((s) => ({ label: s.current_name, value: s.current_name })),
+    [geoData.streets]
+  )
+  const complexOptions = useMemo(
+    () => geoData.complexes.map((c) => ({ label: c.jk_name, value: c.jk_name })),
+    [geoData.complexes]
+  )
   const houseOptions = useMemo(() => {
     if (!searchStreet || !geoData?.streets || !geoData?.houses) return []
-    const q = searchStreet.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim()
-    const st = geoData.streets.find(s => {
+    const q = searchStreet
+      .toLowerCase()
+      .replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '')
+      .trim()
+    const st = geoData.streets.find((s) => {
       const cur = s.current_name.toLowerCase()
       if (cur.length > 2 && (q.includes(cur) || cur.includes(q))) return true
       if (s.old_names) {
-        return s.old_names.some(o => {
+        return s.old_names.some((o) => {
           const old = o.toLowerCase()
           return old.length > 2 && (q.includes(old) || old.includes(q))
         })
@@ -208,37 +128,23 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       return false
     })
     if (!st || !geoData.houses[st.street_id]) return []
-    return Object.keys(geoData.houses[st.street_id]).map(h => ({ label: h, value: h }))
+    return Object.keys(geoData.houses[st.street_id]).map((h) => ({ label: h, value: h }))
   }, [searchStreet, geoData])
 
   const handleComplexSelect = (val) => {
     setSearchComplex(val)
+    setCurrentPage(1)
     if (!val) return
-    const c = geoData.complexes.find(x => x.jk_name === val)
-    if (c && c.address) {
-      const parts = c.address.split(',')
-      if (parts.length > 0) setSearchStreet(parts[0].replace(/вул\.|пров\.|просп\.|пр-т/g, '').trim())
-      if (parts.length > 1) setSearchHouse(parts[1].trim())
-    }
+    setSearchStreet('')
+    setSearchHouse('')
   }
-
-  const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
-  const [showMapFilters, setShowMapFilters] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true)
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1)
-  const itemsPerPage = 18
-
-  const { favorites } = useFavorites()
-  const isFirstRender = useRef(true)
-  const location = useLocation()
-  const navigate = useNavigate()
 
   const handleCategoryChange = (catValue) => {
     if (category === catValue) return
     setCategory(catValue)
     setSubTypes([])
     setCurrentPage(1)
-    const catObj = CATEGORIES.find(c => c.value === catValue)
+    const catObj = CATEGORIES.find((c) => c.value === catValue)
     if (!catObj) return
     const nextParams = new URLSearchParams(searchParams)
     nextParams.delete('subTypes')
@@ -255,7 +161,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname
-      const found = CATEGORIES.find(c => path.startsWith(c.path))
+      const found = CATEGORIES.find((c) => path.startsWith(c.path))
       if (found && found.value !== category) {
         setCategory(found.value)
         setSubTypes([])
@@ -265,7 +171,6 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [category])
 
-  // Load from sessionStorage if navigated without params
   useEffect(() => {
     if (!location.search) {
       const saved = sessionStorage.getItem('catalogParams')
@@ -275,7 +180,6 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
   }, [location.search, navigate])
 
-  // Synchronize state when navigating from Home or external URL with search parameters
   useEffect(() => {
     if (!location.search) return
     const p = new URLSearchParams(location.search)
@@ -325,28 +229,74 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     if (filterEoselia) params.set('eoselia', 'true')
     if (filterErecovery) params.set('erecovery', 'true')
     if (viewMode !== 'list') params.set('viewMode', viewMode)
-    if (currentPage > 1) params.set('page', currentPage)
-    
+    if (currentPage > 1) params.set('page', String(currentPage))
+
     const searchString = params.toString()
     if (searchString) {
       sessionStorage.setItem('catalogParams', '?' + searchString)
     } else {
       sessionStorage.removeItem('catalogParams')
     }
-    
-    setSearchParams(params, { replace: true })
-  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, filterEoselia, filterErecovery, viewMode, currentPage, setSearchParams])
 
-  // Reset page when filters change
+    setSearchParams(params, { replace: true })
+  }, [
+    deal,
+    category,
+    searchQuery,
+    sortBy,
+    subTypes,
+    minPrice,
+    maxPrice,
+    minArea,
+    maxArea,
+    searchComplex,
+    searchStreet,
+    searchHouse,
+    metroStations,
+    districts,
+    states,
+    minFloor,
+    maxFloor,
+    minFloorsTotal,
+    maxFloorsTotal,
+    filterEoselia,
+    filterErecovery,
+    viewMode,
+    currentPage,
+    setSearchParams,
+  ])
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
       return
     }
     setCurrentPage(1)
-  }, [deal, category, searchQuery, sortBy, subTypes, minPrice, maxPrice, minArea, maxArea, searchComplex, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, filterEoselia, filterErecovery, viewMode])
+  }, [
+    deal,
+    category,
+    searchQuery,
+    sortBy,
+    subTypes,
+    minPrice,
+    maxPrice,
+    minArea,
+    maxArea,
+    searchComplex,
+    searchStreet,
+    searchHouse,
+    metroStations,
+    districts,
+    states,
+    minFloor,
+    maxFloor,
+    minFloorsTotal,
+    maxFloorsTotal,
+    filterEoselia,
+    filterErecovery,
+    viewMode,
+  ])
 
-  // Lock body scroll in map view to prevent seeing footer
   useEffect(() => {
     if (viewMode === 'map') {
       document.body.style.overflow = 'hidden'
@@ -361,12 +311,11 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode)
-    setSearchParams(prev => {
+    setSearchParams((prev) => {
       if (mode === 'list') prev.delete('viewMode')
       else prev.set('viewMode', mode)
       return prev
     })
-    // Auto-hide map filters when entering map mode on mobile for better UX
     if (mode === 'map') setShowMapFilters(false)
   }
 
@@ -382,96 +331,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }, 50)
   }
 
-  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal)
-
-  const filtered = useMemo(() => {
-    const list = properties.filter(p => {
-      if (minPrice && p.price < Number(minPrice)) return false
-      if (maxPrice && p.price > Number(maxPrice)) return false
-
-      if (minArea && p.area < Number(minArea)) return false
-      if (maxArea && p.area > Number(maxArea)) return false
-
-      if (category && p.type !== category) return false
-
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase().trim()
-        const matchesQ = (p.title && p.title.toLowerCase().includes(q)) ||
-                         (p.location && p.location.toLowerCase().includes(q)) ||
-                         (p.street && p.street.toLowerCase().includes(q)) ||
-                         (p.region && p.region.toLowerCase().includes(q)) ||
-                         (p.mregion && p.mregion.toLowerCase().includes(q)) ||
-                         (p.building && p.building.toLowerCase().includes(q)) ||
-                         (p.description && p.description.toLowerCase().includes(q))
-        if (!matchesQ) return false
-      }
-
-      if (searchComplex) {
-        const c = searchComplex.toLowerCase().trim()
-        const matchesC = (p.title && p.title.toLowerCase().includes(c)) ||
-                         (p.location && p.location.toLowerCase().includes(c)) ||
-                         (p.description && p.description.toLowerCase().includes(c))
-        if (!matchesC) return false
-      }
-
-      if (subTypes.length > 0) {
-        const matches = subTypes.some(st => checkSubTypeMatch(p, st))
-        if (!matches) return false
-      }
-
-      if (searchStreet) {
-        const query = searchStreet.toLowerCase().replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '').trim()
-        if (!p.street?.toLowerCase().includes(query)) return false
-      }
-
-      if (districts.length > 0) {
-        if (!districts.includes(p.region) && !districts.includes(p.mregion)) return false
-      }
-
-      if (states.length > 0) {
-        if (!p.state || !states.includes(p.state)) return false
-      }
-
-      if (minFloor && p.floor < Number(minFloor)) return false
-      if (maxFloor && p.floor > Number(maxFloor)) return false
-
-      if (minFloorsTotal && p.floors_total < Number(minFloorsTotal)) return false
-      if (maxFloorsTotal && p.floors_total > Number(maxFloorsTotal)) return false
-
-      if (searchHouse) {
-        const houseQuery = searchHouse.toLowerCase()
-        if (p.building?.toLowerCase() !== houseQuery && !p.building?.toLowerCase().includes(houseQuery)) return false
-      }
-
-      if (metroStations.length > 0) {
-        if (!metroStations.some(s => (p.metro || p.mregion)?.toLowerCase().includes(s.toLowerCase()))) return false
-      }
-
-      if (filterEoselia && !p.eoselia) return false
-      if (filterErecovery && !p.erecovery) return false
-
-      return true
-    })
-
-    switch (sortBy) {
-      case 'price_asc':
-        return [...list].sort((a, b) => a.price - b.price)
-      case 'price_desc':
-        return [...list].sort((a, b) => b.price - a.price)
-      case 'area_desc':
-        return [...list].sort((a, b) => (b.area || 0) - (a.area || 0))
-      case 'area_asc':
-        return [...list].sort((a, b) => (a.area || 0) - (b.area || 0))
-      case 'date_desc':
-      default:
-        return [...list].sort((a, b) => b.date_edit - a.date_edit || Number(b.id) - Number(a.id))
-    }
-  }, [properties, minPrice, maxPrice, minArea, maxArea, category, searchQuery, searchComplex, subTypes, searchStreet, searchHouse, metroStations, districts, states, minFloor, maxFloor, minFloorsTotal, maxFloorsTotal, filterEoselia, filterErecovery, sortBy])
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const currentItems = viewMode === 'list'
-    ? filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-    : filtered
+  const handleToggleEoselia = () => setFilterEoselia((prev) => !prev)
+  const handleToggleErecovery = () => setFilterErecovery((prev) => !prev)
 
   const handleClearFilters = () => {
     setSearchQuery('')
@@ -493,45 +354,218 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setFilterEoselia(false)
     setFilterErecovery(false)
   }
-  const clearFilters = handleClearFilters
+
+  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal)
+
+  const filtered = useMemo(() => {
+    const list = properties.filter((p) => {
+      if (minPrice && p.price < Number(minPrice)) return false
+      if (maxPrice && p.price > Number(maxPrice)) return false
+      if (minArea && p.area < Number(minArea)) return false
+      if (maxArea && p.area > Number(maxArea)) return false
+      if (category && p.type !== category) return false
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase().trim()
+        const matchesQ =
+          (p.title && p.title.toLowerCase().includes(q)) ||
+          (p.location && p.location.toLowerCase().includes(q)) ||
+          (p.street && p.street.toLowerCase().includes(q)) ||
+          (p.region && p.region.toLowerCase().includes(q)) ||
+          (p.mregion && p.mregion.toLowerCase().includes(q)) ||
+          (p.building && p.building.toLowerCase().includes(q)) ||
+          (p.description && p.description.toLowerCase().includes(q))
+        if (!matchesQ) return false
+      }
+
+      if (searchComplex) {
+        const c = searchComplex.toLowerCase().trim()
+        const cClean = c.replace(/^жк\s+/i, '').trim()
+        const text = `${p.title || ''} ${p.location || ''} ${p.description || ''}`.toLowerCase()
+        const matchesC = text.includes(c) || (cClean.length >= 3 && text.includes(cClean))
+        if (!matchesC) return false
+      }
+
+      if (subTypes.length > 0) {
+        const matches = subTypes.some((st) => checkSubTypeMatch(p, st))
+        if (!matches) return false
+      }
+
+      if (searchStreet) {
+        const query = searchStreet
+          .toLowerCase()
+          .replace(/вул\.|пров\.|просп\.|пр-т|м\.|пер\.|ул\.|проспект/g, '')
+          .trim()
+        if (!p.street?.toLowerCase().includes(query)) return false
+      }
+
+      if (districts.length > 0) {
+        if (!districts.includes(p.region) && !districts.includes(p.mregion)) return false
+      }
+
+      if (states.length > 0) {
+        if (!p.state || !states.includes(p.state)) return false
+      }
+
+      if (minFloor && p.floor < Number(minFloor)) return false
+      if (maxFloor && p.floor > Number(maxFloor)) return false
+
+      if (minFloorsTotal && p.floors_total < Number(minFloorsTotal)) return false
+      if (maxFloorsTotal && p.floors_total > Number(maxFloorsTotal)) return false
+
+      if (searchHouse) {
+        const houseQuery = searchHouse.toLowerCase()
+        if (p.building?.toLowerCase() !== houseQuery && !p.building?.toLowerCase().includes(houseQuery)) {
+          return false
+        }
+      }
+
+      if (metroStations.length > 0) {
+        if (!metroStations.some((s) => (p.metro || p.mregion)?.toLowerCase().includes(s.toLowerCase()))) {
+          return false
+        }
+      }
+
+      if (filterEoselia && !p.eoselia) return false
+      if (filterErecovery && !p.erecovery) return false
+
+      return true
+    })
+
+    switch (sortBy) {
+      case 'price_asc':
+        return [...list].sort((a, b) => a.price - b.price)
+      case 'price_desc':
+        return [...list].sort((a, b) => b.price - a.price)
+      case 'area_desc':
+        return [...list].sort((a, b) => (b.area || 0) - (a.area || 0))
+      case 'area_asc':
+        return [...list].sort((a, b) => (a.area || 0) - (b.area || 0))
+      case 'date_desc':
+      default:
+        return [...list].sort((a, b) => b.date_edit - a.date_edit || Number(b.id) - Number(a.id))
+    }
+  }, [
+    properties,
+    minPrice,
+    maxPrice,
+    minArea,
+    maxArea,
+    category,
+    searchQuery,
+    searchComplex,
+    subTypes,
+    searchStreet,
+    searchHouse,
+    metroStations,
+    districts,
+    states,
+    minFloor,
+    maxFloor,
+    minFloorsTotal,
+    maxFloorsTotal,
+    filterEoselia,
+    filterErecovery,
+    sortBy,
+  ])
+
+  const isPromoPage = (currentPage - 1) % 3 === 0
+  const shouldShowPromo = isPromoPage && !isPromoDismissed && filtered.length > 3
+
+  const promoPagesBefore = useMemo(() => {
+    if (isPromoDismissed || currentPage <= 1) return 0
+    return Math.floor((currentPage - 2) / 3) + 1
+  }, [currentPage, isPromoDismissed])
+
+  const promoInsertIndex = useMemo(() => {
+    const min = 2
+    const max = 14
+    return Math.floor(Math.random() * (max - min + 1)) + min
+  }, [currentPage])
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const pageSize = shouldShowPromo ? ITEMS_PER_PAGE - 1 : ITEMS_PER_PAGE
+  const startIndex = Math.max(0, (currentPage - 1) * ITEMS_PER_PAGE - promoPagesBefore)
+
+  const currentItems = useMemo(() => {
+    if (viewMode !== 'list') return filtered
+    return filtered.slice(startIndex, startIndex + pageSize)
+  }, [viewMode, filtered, startIndex, pageSize])
+
+  const gridItems = useMemo(() => {
+    if (viewMode !== 'list') return []
+    const items = currentItems.map((p) => ({ type: 'property', data: p, id: p.id }))
+    if (!shouldShowPromo || items.length === 0) return items
+
+    const insertAt = Math.min(promoInsertIndex, items.length)
+    items.splice(insertAt, 0, {
+      type: 'promo',
+      id: `catalog-tg-promo-keys-${currentPage}`,
+    })
+    return items
+  }, [viewMode, currentItems, shouldShowPromo, promoInsertIndex, currentPage])
+
   const hasFilters = Boolean(
     searchQuery ||
-    subTypes.length > 0 ||
-    minPrice ||
-    maxPrice ||
-    minArea ||
-    maxArea ||
-    searchComplex ||
-    searchStreet ||
-    searchHouse ||
-    metroStations.length > 0 ||
-    districts.length > 0 ||
-    states.length > 0 ||
-    minFloor ||
-    maxFloor ||
-    minFloorsTotal ||
-    maxFloorsTotal ||
-    filterEoselia ||
-    filterErecovery
+      subTypes.length > 0 ||
+      minPrice ||
+      maxPrice ||
+      minArea ||
+      maxArea ||
+      searchComplex ||
+      searchStreet ||
+      searchHouse ||
+      metroStations.length > 0 ||
+      districts.length > 0 ||
+      states.length > 0 ||
+      minFloor ||
+      maxFloor ||
+      minFloorsTotal ||
+      maxFloorsTotal ||
+      filterEoselia ||
+      filterErecovery
   )
 
-  // Dynamic SEO calculation
+  const advancedFiltersActiveCount =
+    (metroStations.length > 0 ? 1 : 0) +
+    (districts.length > 0 ? 1 : 0) +
+    (states.length > 0 ? 1 : 0) +
+    (minFloor || maxFloor ? 1 : 0) +
+    (minFloorsTotal || maxFloorsTotal ? 1 : 0) +
+    (filterErecovery ? 1 : 0) +
+    (filterEoselia ? 1 : 0)
+
   const getSeoTitle = () => {
-    let title = category === 'apartment' ? 'Квартири' : category === 'house' ? 'Будинки та ділянки' : category === 'commercial' ? 'Комерційна нерухомість' : 'Каталог нерухомості'
+    let title =
+      category === 'apartment'
+        ? 'Квартири'
+        : category === 'house'
+        ? 'Будинки та ділянки'
+        : category === 'commercial'
+        ? 'Комерційна нерухомість'
+        : 'Каталог нерухомості'
     if (deal === 'sale') title = `Продаж: ${title.toLowerCase()}`
     if (deal === 'rent') title = `Оренда: ${title.toLowerCase()}`
     if (filtered.length > 0) {
-      const minP = minPrice ? Number(minPrice) : Math.min(...filtered.map(p => p.price))
-      const formattedMinP = deal === 'rent' ? `${minP.toLocaleString('uk-UA')} грн` : `$${minP.toLocaleString('uk-UA')}`
+      const minP = minPrice ? Number(minPrice) : Math.min(...filtered.map((p) => p.price))
+      const formattedMinP =
+        deal === 'rent' ? `${minP.toLocaleString('uk-UA')} грн` : `$${minP.toLocaleString('uk-UA')}`
       title += ` в Харкові. ${filtered.length} об'єктів від ${formattedMinP}`
     } else {
       title += ' в Харкові'
     }
     return title
   }
-  
+
   const getSeoDescription = () => {
-    const catName = category === 'apartment' ? 'квартир' : category === 'house' ? 'будинків' : category === 'commercial' ? 'комерційної нерухомості' : 'нерухомості'
+    const catName =
+      category === 'apartment'
+        ? 'квартир'
+        : category === 'house'
+        ? 'будинків'
+        : category === 'commercial'
+        ? 'комерційної нерухомості'
+        : 'нерухомості'
     const dealName = deal === 'rent' ? 'оренду' : 'продаж'
     return `Актуальний каталог на ${dealName} ${catName} в Харкові та області від агентства Харків Ріелтер. Безпечні угоди, перевірені об'єкти.`
   }
@@ -539,19 +573,18 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const schemaUrl = `https://kharkov-realter.com.ua${location.pathname}${location.search}`
 
   return (
-    <div className={cn("pt-24 flex flex-col", viewMode === 'list' ? 'pb-8 min-h-screen' : 'h-screen overflow-hidden pb-0')} id="catalog-top">
-      <SeoMeta 
-        title={getSeoTitle()} 
-        description={getSeoDescription()} 
-        url={`${location.pathname}${location.search}`} 
-      />
+    <div
+      className={cn('pt-24 flex flex-col', viewMode === 'list' ? 'pb-8 min-h-screen' : 'h-screen overflow-hidden pb-0')}
+      id="catalog-top"
+    >
+      <SeoMeta title={getSeoTitle()} description={getSeoDescription()} url={`${location.pathname}${location.search}`} />
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40">
-        {/* Toggle Filters Button for Mobile Map View */}
         {viewMode === 'map' && (
           <div className="lg:hidden mb-4 relative z-50">
-            <button 
+            <button
+              type="button"
               onClick={() => setShowMapFilters(!showMapFilters)}
               className="w-full py-3 bg-card backdrop-blur-md border border-border rounded-2xl shadow-md text-sm font-inter font-semibold text-foreground flex items-center justify-center gap-2"
             >
@@ -561,617 +594,514 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
           </div>
         )}
 
-        {/* Filters */}
         <AnimatePresence initial={false}>
           {!(viewMode === 'map' && !showMapFilters) && (
-            <motion.div 
+            <motion.div
               initial={false}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className={cn(
-                "bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 mt-2",
-                viewMode === 'map' ? "rounded-3xl" : "rounded-3xl mb-10 sticky top-24"
+                'bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 mt-2',
+                viewMode === 'map' ? 'rounded-3xl' : 'rounded-3xl mb-10 sticky top-24'
               )}
             >
               <LayoutGroup id={viewMode}>
-              <div className="p-4 sm:p-6 flex flex-col gap-5">
-            {/* Top row: Deal Tabs + View Toggle */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
-              
-              <div className="flex items-center gap-3">
-                {/* Deal tabs */}
-                <div className="flex p-1 bg-muted rounded-full shrink-0 relative">
-                  {[['sale', 'Продаж'], ['rent', 'Оренда']].map(([v, l]) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => setDeal(v)}
-                      aria-label={`Обрати тип угоди: ${l}`}
-                      className={cn('relative z-10 px-5 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
-                        'text-white': deal === v,
-                        'text-muted-foreground hover:text-foreground': deal !== v
-                      })}
-                    >
-                      {deal === v && (
-                        <motion.div
-                          layoutId="deal-pill"
-                          className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                      {l}
-                    </button>
-                  ))}
-                </div>
-                {/* Category tabs */}
-                <div className="flex p-1 bg-muted rounded-full w-fit shrink-0 relative">
-                  {CATEGORIES.map(c => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => handleCategoryChange(c.value)}
-                      aria-label={`Обрати категорію: ${c.label}`}
-                      className={cn('relative z-10 px-4 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap', {
-                        'text-white': category === c.value,
-                        'text-muted-foreground hover:text-foreground': category !== c.value
-                      })}
-                    >
-                      {category === c.value && (
-                        <motion.div
-                          layoutId="category-pill"
-                          className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                <div className="p-4 sm:p-6 flex flex-col gap-5">
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex p-1 bg-muted rounded-full shrink-0 relative">
+                        {[
+                          ['sale', 'Продаж'],
+                          ['rent', 'Оренда'],
+                        ].map(([v, l]) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => setDeal(v)}
+                            aria-label={`Обрати тип угоди: ${l}`}
+                            className={cn(
+                              'relative z-10 px-5 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full',
+                              deal === v ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                            )}
+                          >
+                            {deal === v && (
+                              <motion.div
+                                layoutId="deal-pill"
+                                className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                              />
+                            )}
+                            {l}
+                          </button>
+                        ))}
+                      </div>
 
-              {/* Sort & View Toggle */}
-              <div className="flex items-center gap-3 lg:gap-4 flex-wrap ml-auto">
-                {/* Sort Popover: custom styled like other filters, shown ONLY in list mode */}
-                {viewMode === 'list' && (
-                  <Popover open={isSortOpen} onOpenChange={setIsSortOpen}>
-                    <PopoverTrigger asChild>
+                      <div className="flex p-1 bg-muted rounded-full w-fit shrink-0 relative">
+                        {CATEGORIES.map((c) => (
+                          <button
+                            key={c.value}
+                            type="button"
+                            onClick={() => handleCategoryChange(c.value)}
+                            aria-label={`Обрати категорію: ${c.label}`}
+                            className={cn(
+                              'relative z-10 px-4 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap',
+                              category === c.value ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                            )}
+                          >
+                            {category === c.value && (
+                              <motion.div
+                                layoutId="category-pill"
+                                className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                              />
+                            )}
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 lg:gap-4 flex-wrap ml-auto">
+                      {viewMode === 'list' && (
+                        <Popover open={isSortOpen} onOpenChange={setIsSortOpen}>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Сортування каталогу"
+                              className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full px-4 py-2.5 outline-none transition-colors border border-transparent hover:border-border"
+                            >
+                              <span>{SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Новіші спочатку'}</span>
+                              <ChevronDown
+                                className={cn(
+                                  'w-3.5 h-3.5 text-muted-foreground transition-transform duration-200',
+                                  isSortOpen && 'rotate-180'
+                                )}
+                              />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-52 p-1.5 rounded-2xl bg-white shadow-xl border border-border/70 z-50" align="start">
+                            <div className="space-y-0.5">
+                              {SORT_OPTIONS.map((opt) => {
+                                const isSelected = sortBy === opt.value
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setSortBy(opt.value)
+                                      setIsSortOpen(false)
+                                    }}
+                                    className={cn(
+                                      'w-full text-left px-3 py-2 text-xs font-inter rounded-xl transition-colors font-medium flex items-center justify-between',
+                                      isSelected ? 'bg-gold/15 text-gold font-semibold' : 'text-foreground hover:bg-muted/70'
+                                    )}
+                                  >
+                                    <span>{opt.label}</span>
+                                    {isSelected && <Check className="w-3.5 h-3.5 text-gold shrink-0" />}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
+
+                      <p className="text-muted-foreground text-sm font-inter whitespace-nowrap font-medium flex items-center gap-1.5">
+                        {isFetching && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
+                        <span>{filtered.length} об'єктів</span>
+                      </p>
+
+                      <div className="flex p-1 bg-muted rounded-full relative shrink-0">
+                        {[
+                          { id: 'list', icon: LayoutGrid, label: 'Список' },
+                          { id: 'map', icon: Map, label: 'Карта' },
+                        ].map((v) => (
+                          <button
+                            key={v.id}
+                            type="button"
+                            onClick={() => startTransition(() => handleViewModeChange(v.id))}
+                            className={cn(
+                              'relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full',
+                              viewMode === v.id ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                            )}
+                          >
+                            {viewMode === v.id && (
+                              <motion.div
+                                layoutId="view-pill"
+                                className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                              />
+                            )}
+                            <v.icon className="w-4 h-4" />
+                            <span className="hidden sm:inline">{v.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col w-full">
+                    <div className="flex flex-wrap items-center gap-3 w-full font-inter">
+                      <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                        <Autocomplete
+                          placeholder="Оберіть ЖК..."
+                          options={complexOptions}
+                          value={searchComplex}
+                          onChange={handleComplexSelect}
+                          onInputChange={setSearchComplex}
+                        />
+                      </div>
+
+                      <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                        <Autocomplete
+                          placeholder="Вулиця..."
+                          options={streetOptions}
+                          value={searchStreet}
+                          onChange={(val) => {
+                            setSearchStreet(val)
+                            setSearchHouse('')
+                          }}
+                          onInputChange={(val) => {
+                            setSearchStreet(val)
+                            setSearchHouse('')
+                          }}
+                          minChars={1}
+                        />
+                      </div>
+
+                      <div className="relative flex-1 min-w-[100px] lg:max-w-[120px] z-50">
+                        <Autocomplete
+                          placeholder="Дім..."
+                          disabled={!searchStreet}
+                          options={houseOptions}
+                          value={searchHouse}
+                          onChange={setSearchHouse}
+                          onInputChange={setSearchHouse}
+                        />
+                      </div>
+
+                      <RangeFilter
+                        label="Ціна"
+                        title={deal === 'rent' ? 'Ціна (грн)' : 'Ціна ($)'}
+                        minValue={minPrice}
+                        maxValue={maxPrice}
+                        onMinChange={setMinPrice}
+                        onMaxChange={setMaxPrice}
+                      />
+
+                      <RangeFilter
+                        label="Площа"
+                        title="Площа (кв.м)"
+                        minValue={minArea}
+                        maxValue={maxArea}
+                        onMinChange={setMinArea}
+                        onMaxChange={setMaxArea}
+                      />
+
+                      {category && SUBTYPES_BY_CATEGORY[category] && (
+                        <CheckboxFilter
+                          label="Тип нерухомості"
+                          options={SUBTYPES_BY_CATEGORY[category]}
+                          selected={subTypes}
+                          onChange={setSubTypes}
+                          contentClassName="w-[420px]"
+                        />
+                      )}
+
                       <button
                         type="button"
-                        aria-label="Сортування каталогу"
-                        className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full px-4 py-2.5 outline-none transition-colors border border-transparent hover:border-border"
+                        onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                        aria-expanded={showAdvancedFilters}
+                        aria-label="Більше фільтрів"
+                        className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
                       >
-                        <span>{SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Новіші спочатку'}</span>
-                        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', isSortOpen && 'rotate-180')} />
+                        <span>Більше фільтрів</span>
+                        <ChevronDown
+                          className={cn(
+                            'w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200',
+                            showAdvancedFilters && 'rotate-180'
+                          )}
+                        />
+                        {advancedFiltersActiveCount > 0 && !showAdvancedFilters && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">
+                            {advancedFiltersActiveCount}
+                          </span>
+                        )}
                       </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-52 p-1.5 rounded-2xl bg-white shadow-xl border border-border/70 z-50" align="start">
-                      <div className="space-y-0.5">
-                        {SORT_OPTIONS.map((opt) => {
-                          const isSelected = sortBy === opt.value
-                          return (
+                    </div>
+
+                    <AnimatePresence initial={false}>
+                      {showAdvancedFilters && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.22, ease: [0.04, 0.62, 0.23, 0.98] }}
+                          className="overflow-hidden w-full"
+                        >
+                          <div className="flex flex-wrap items-center gap-3 w-full font-inter border-t border-border/50 pt-4 mt-3">
+                            <CheckboxFilter
+                              label="Станція метро"
+                              title="Оберіть станції"
+                              groups={METRO_LINES}
+                              selected={metroStations}
+                              onChange={setMetroStations}
+                              contentClassName="w-[500px]"
+                            />
+
+                            <CheckboxFilter
+                              label="Район"
+                              title="Оберіть район"
+                              options={DISTRICTS}
+                              selected={districts}
+                              onChange={setDistricts}
+                              contentClassName="w-[450px]"
+                            />
+
+                            <RangeFilter
+                              label="Поверх"
+                              minValue={minFloor}
+                              maxValue={maxFloor}
+                              onMinChange={setMinFloor}
+                              onMaxChange={setMaxFloor}
+                            />
+
+                            <RangeFilter
+                              label="Всього поверхів"
+                              minValue={minFloorsTotal}
+                              maxValue={maxFloorsTotal}
+                              onMinChange={setMinFloorsTotal}
+                              onMaxChange={setMaxFloorsTotal}
+                            />
+
+                            <CheckboxFilter
+                              label="Стан"
+                              title="Оберіть стан"
+                              options={STATES}
+                              selected={states}
+                              onChange={setStates}
+                              contentClassName="w-[450px]"
+                            />
+
                             <button
-                              key={opt.value}
                               type="button"
-                              onClick={() => {
-                                setSortBy(opt.value)
-                                setIsSortOpen(false)
-                              }}
+                              onClick={handleToggleErecovery}
+                              aria-pressed={filterErecovery}
+                              aria-label="Фільтр об'єктів за програмою єВідновлення"
+                              tabIndex={0}
                               className={cn(
-                                'w-full text-left px-3 py-2 text-xs font-inter rounded-xl transition-colors font-medium flex items-center justify-between',
-                                isSelected
-                                  ? 'bg-gold/15 text-gold font-semibold'
-                                  : 'text-foreground hover:bg-muted/70'
+                                'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                                filterErecovery
+                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                  : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
                               )}
                             >
-                              <span>{opt.label}</span>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-gold shrink-0" />}
+                              <Hammer className={cn('w-4 h-4', filterErecovery ? 'text-white' : 'text-emerald-600')} />
+                              <span>єВідновлення</span>
                             </button>
-                          )
-                        })}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
 
-                <p className="text-muted-foreground text-sm font-inter whitespace-nowrap font-medium flex items-center gap-1.5">
-                  {isFetching && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
-                  <span>{filtered.length} об'єктів</span>
-                </p>
-
-                <div className="flex p-1 bg-muted rounded-full relative shrink-0">
-                  {[
-                    { id: 'list', icon: LayoutGrid, label: 'Список' },
-                    { id: 'map', icon: Map, label: 'Карта' }
-                  ].map(v => (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => startTransition(() => handleViewModeChange(v.id))}
-                      className={cn('relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full', {
-                        'text-white': viewMode === v.id,
-                        'text-muted-foreground hover:text-foreground': viewMode !== v.id
-                      })}
-                    >
-                      {viewMode === v.id && (
-                        <motion.div
-                          layoutId="view-pill"
-                          className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                      <v.icon className="w-4 h-4" />
-                      <span className="hidden sm:inline">{v.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Filter controls row */}
-            <div className="flex flex-col w-full">
-              <div className="flex flex-wrap items-center gap-3 w-full font-inter">
-              {/* Complex */}
-              <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
-                <Autocomplete
-                  placeholder="Оберіть ЖК..."
-                  options={complexOptions}
-                  value={searchComplex}
-                  onChange={handleComplexSelect}
-                  onInputChange={setSearchComplex}
-                />
-              </div>
-
-              {/* Street */}
-              <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
-                <Autocomplete
-                  placeholder="Вулиця..."
-                  options={streetOptions}
-                  value={searchStreet}
-                  onChange={(val) => { setSearchStreet(val); setSearchHouse('') }}
-                  onInputChange={(val) => { setSearchStreet(val); setSearchHouse('') }}
-                  minChars={1}
-                />
-              </div>
-
-              {/* House */}
-              <div className="relative flex-1 min-w-[100px] lg:max-w-[120px] z-50">
-                <Autocomplete
-                  placeholder="Дім..."
-                  disabled={!searchStreet}
-                  options={houseOptions}
-                  value={searchHouse}
-                  onChange={setSearchHouse}
-                  onInputChange={setSearchHouse}
-                />
-              </div>
-
-              {/* Ціна */}
-              <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
-                  <span className="truncate">Ціна</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                  {(minPrice || maxPrice) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">{deal === 'rent' ? 'Ціна (грн)' : 'Ціна ($)'}</p>
-                  <div className="flex items-center gap-2 mb-2">
-                    <input type="number" placeholder="від" value={minPrice} onChange={e => setMinPrice(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                    <span className="text-muted-foreground">–</span>
-                    <input type="number" placeholder="до" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Площа */}
-              <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
-                  <span className="truncate">Площа</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                  {(minArea || maxArea) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Площа (кв.м)</p>
-                  <div className="flex items-center gap-2 mb-2">
-                    <input type="number" placeholder="від" value={minArea} onChange={e => setMinArea(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                    <span className="text-muted-foreground">–</span>
-                    <input type="number" placeholder="до" value={maxArea} onChange={e => setMaxArea(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Тип нерухомості */}
-              {category && SUBTYPES_BY_CATEGORY[category] && (
-                <Popover>
-                  <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180">
-                    <span className="truncate">Тип нерухомості</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                    {subTypes.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{subTypes.length}</span>}
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[420px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
-                    <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Тип нерухомості</p>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      {SUBTYPES_BY_CATEGORY[category].map(t => (
-                        <label key={t.value} className="flex items-center gap-3 cursor-pointer group">
-                          <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", subTypes.includes(t.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
-                            {subTypes.includes(t.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                            <button
+                              type="button"
+                              onClick={handleToggleEoselia}
+                              aria-pressed={filterEoselia}
+                              aria-label="Фільтр об'єктів за програмою єОселя"
+                              tabIndex={0}
+                              className={cn(
+                                'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                                filterEoselia
+                                  ? 'bg-navy text-white border-navy shadow-sm'
+                                  : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
+                              )}
+                            >
+                              <HomeIcon className={cn('w-4 h-4', filterEoselia ? 'text-white' : 'text-navy')} />
+                              <span>єОселя</span>
+                            </button>
                           </div>
-                          <input
-                            type="checkbox"
-                            className="hidden"
-                            checked={subTypes.includes(t.value)}
-                            onChange={(e) => {
-                              if (e.target.checked) setSubTypes([...subTypes, t.value])
-                              else setSubTypes(subTypes.filter(v => v !== t.value))
-                            }}
-                          />
-                          <span className={cn("text-sm transition-colors", subTypes.includes(t.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")}>{t.label}</span>
-                        </label>
-                      ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {hasFilters && (
+                    <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/50 text-xs font-inter">
+                      <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider mr-1">
+                        Фільтри:
+                      </span>
+                      {searchQuery && (
+                        <ActiveFilterBadge
+                          onRemove={() => setSearchQuery('')}
+                          removeLabel="Скинути пошуковий запит"
+                        >
+                          Пошук: "{searchQuery}"
+                        </ActiveFilterBadge>
+                      )}
+                      {(minPrice || maxPrice) && (
+                        <ActiveFilterBadge
+                          onRemove={() => {
+                            setMinPrice('')
+                            setMaxPrice('')
+                          }}
+                          removeLabel="Скинути фільтр ціни"
+                        >
+                          Ціна: {minPrice ? `від ${minPrice}` : ''} {maxPrice ? `до ${maxPrice}` : ''}{' '}
+                          {deal === 'rent' ? 'грн' : '$'}
+                        </ActiveFilterBadge>
+                      )}
+                      {(minArea || maxArea) && (
+                        <ActiveFilterBadge
+                          onRemove={() => {
+                            setMinArea('')
+                            setMaxArea('')
+                          }}
+                          removeLabel="Скинути фільтр площі"
+                        >
+                          Площа: {minArea ? `від ${minArea}` : ''} {maxArea ? `до ${maxArea}` : ''} м²
+                        </ActiveFilterBadge>
+                      )}
+                      {searchComplex && (
+                        <ActiveFilterBadge
+                          onRemove={() => setSearchComplex('')}
+                          removeLabel="Скинути фільтр ЖК"
+                        >
+                          ЖК: {searchComplex}
+                        </ActiveFilterBadge>
+                      )}
+                      {searchStreet && (
+                        <ActiveFilterBadge
+                          onRemove={() => {
+                            setSearchStreet('')
+                            setSearchHouse('')
+                          }}
+                          removeLabel="Скинути фільтр вулиці"
+                        >
+                          Вулиця: {searchStreet} {searchHouse}
+                        </ActiveFilterBadge>
+                      )}
+                      {filterErecovery && (
+                        <ActiveFilterBadge
+                          onRemove={() => setFilterErecovery(false)}
+                          removeLabel="Скинути фільтр єВідновлення"
+                          tone="emerald"
+                          isBold
+                        >
+                          Програма: єВідновлення
+                        </ActiveFilterBadge>
+                      )}
+                      {filterEoselia && (
+                        <ActiveFilterBadge
+                          onRemove={() => setFilterEoselia(false)}
+                          removeLabel="Скинути фільтр єОселя"
+                          isBold
+                        >
+                          Програма: єОселя
+                        </ActiveFilterBadge>
+                      )}
+                      {subTypes.map((st) => {
+                        const item = (SUBTYPES_BY_CATEGORY[category] || []).find((x) => x.value === st)
+                        return (
+                          <ActiveFilterBadge
+                            key={st}
+                            onRemove={() => setSubTypes(subTypes.filter((v) => v !== st))}
+                            removeLabel={`Видалити тип ${st}`}
+                          >
+                            {item ? item.label : st}
+                          </ActiveFilterBadge>
+                        )
+                      })}
+                      {districts.map((d) => {
+                        const item = DISTRICTS.find((x) => x.value === d)
+                        return (
+                          <ActiveFilterBadge
+                            key={d}
+                            onRemove={() => setDistricts(districts.filter((v) => v !== d))}
+                            removeLabel={`Видалити район ${d}`}
+                          >
+                            {item ? item.label : d}
+                          </ActiveFilterBadge>
+                        )
+                      })}
+                      {metroStations.map((m) => {
+                        let label = m
+                        for (const line of METRO_LINES) {
+                          const found = line.stations.find((s) => s.value === m)
+                          if (found) {
+                            label = found.label
+                            break
+                          }
+                        }
+                        return (
+                          <ActiveFilterBadge
+                            key={m}
+                            onRemove={() => setMetroStations(metroStations.filter((v) => v !== m))}
+                            removeLabel={`Видалити станцію ${label}`}
+                          >
+                            М: {label}
+                          </ActiveFilterBadge>
+                        )
+                      })}
+                      {states.map((s) => {
+                        const item = STATES.find((x) => x.value === s)
+                        return (
+                          <ActiveFilterBadge
+                            key={s}
+                            onRemove={() => setStates(states.filter((v) => v !== s))}
+                            removeLabel={`Видалити стан ${s}`}
+                          >
+                            {item ? item.label : s}
+                          </ActiveFilterBadge>
+                        )
+                      })}
+                      {(minFloor || maxFloor) && (
+                        <ActiveFilterBadge
+                          onRemove={() => {
+                            setMinFloor('')
+                            setMaxFloor('')
+                          }}
+                          removeLabel="Скинути фільтр поверху"
+                        >
+                          Поверх: {minFloor ? `від ${minFloor}` : ''} {maxFloor ? `до ${maxFloor}` : ''}
+                        </ActiveFilterBadge>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleClearFilters}
+                        aria-label="Скинути всі вибрані фільтри"
+                        className="text-xs text-destructive hover:underline font-semibold ml-auto transition-colors"
+                      >
+                        Скинути все
+                      </button>
                     </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+                  )}
+                </div>
+              </LayoutGroup>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-              {/* Advanced Filters Toggle Button */}
-              <button 
-                type="button"
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                aria-expanded={showAdvancedFilters}
-                aria-label="Більше фільтрів"
-                className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
-              >
-                <span>Більше фільтрів</span> 
-                <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200", showAdvancedFilters && "rotate-180")} />
-                {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0) + (filterErecovery ? 1 : 0) + (filterEoselia ? 1 : 0)) > 0 && !showAdvancedFilters && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">
-                    {((metroStations.length > 0 ? 1 : 0) + (districts.length > 0 ? 1 : 0) + (states.length > 0 ? 1 : 0) + (minFloor || maxFloor ? 1 : 0) + (minFloorsTotal || maxFloorsTotal ? 1 : 0) + (filterErecovery ? 1 : 0) + (filterEoselia ? 1 : 0))}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Advanced Filters Row */}
-            <AnimatePresence initial={false}>
-              {showAdvancedFilters && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.22, ease: [0.04, 0.62, 0.23, 0.98] }}
-                  className="overflow-hidden w-full"
-                >
-                  <div className="flex flex-wrap items-center gap-3 w-full font-inter border-t border-border/50 pt-4 mt-3">
-              {/* Станція метро */}
-              <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180">
-                  <span className="truncate">Станція метро</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                  {metroStations.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{metroStations.length}</span>}
-                </PopoverTrigger>
-                <PopoverContent className="w-[500px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Оберіть станції</p>
-                  <div className="max-h-[60vh] overflow-y-auto pr-3 custom-scrollbar">
-                    {METRO_LINES.map(line => (
-                      <div key={line.name} className="mb-6 last:mb-0">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-4 ${line.color}`}>{line.name}</p>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                          {line.stations.map(st => (
-                            <label key={st.value} className="flex items-center gap-3 cursor-pointer group">
-                              <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", metroStations.includes(st.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
-                                {metroStations.includes(st.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
-                              </div>
-                              <input
-                                type="checkbox"
-                                className="hidden"
-                                checked={metroStations.includes(st.value)}
-                                onChange={(e) => {
-                                  if (e.target.checked) setMetroStations([...metroStations, st.value])
-                                  else setMetroStations(metroStations.filter(v => v !== st.value))
-                                }}
-                              />
-                              <span className={cn("text-sm truncate transition-colors", metroStations.includes(st.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")} title={st.label}>{st.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Район */}
-              <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180">
-                  <span className="truncate">Район</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                  {districts.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{districts.length}</span>}
-                </PopoverTrigger>
-                <PopoverContent className="w-[450px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Оберіть район</p>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 max-h-[60vh] overflow-y-auto pr-3 custom-scrollbar">
-                    {DISTRICTS.map(d => (
-                      <label key={d.value} className="flex items-center gap-3 cursor-pointer group">
-                        <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", districts.includes(d.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
-                          {districts.includes(d.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
-                        </div>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={districts.includes(d.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) setDistricts([...districts, d.value])
-                            else setDistricts(districts.filter(v => v !== d.value))
-                          }}
-                        />
-                        <span className={cn("text-sm truncate transition-colors", districts.includes(d.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")} title={d.label}>{d.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Поверх */}
-              <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
-                  <span className="truncate">Поверх</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                  {(minFloor || maxFloor) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Поверх</p>
-                  <div className="flex items-center gap-2 mb-2">
-                    <input type="number" placeholder="від" value={minFloor} onChange={e => setMinFloor(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                    <span className="text-muted-foreground">–</span>
-                    <input type="number" placeholder="до" value={maxFloor} onChange={e => setMaxFloor(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Поверховість */}
-              <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
-                  <span className="truncate">Всього поверхів</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                  {(minFloorsTotal || maxFloorsTotal) && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-5 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3 font-semibold">Всього поверхів</p>
-                  <div className="flex items-center gap-2 mb-2">
-                    <input type="number" placeholder="від" value={minFloorsTotal} onChange={e => setMinFloorsTotal(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                    <span className="text-muted-foreground">–</span>
-                    <input type="number" placeholder="до" value={maxFloorsTotal} onChange={e => setMaxFloorsTotal(e.target.value)}
-                      className="w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground" />
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Стан */}
-              <Popover>
-                <PopoverTrigger className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground min-w-[120px] [&[data-state=open]>svg]:rotate-180">
-                  <span className="truncate">Стан</span> <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200" />
-                  {states.length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">{states.length}</span>}
-                </PopoverTrigger>
-                <PopoverContent className="w-[450px] p-6 border-border bg-card rounded-2xl shadow-lg" align="start">
-                  <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-4 font-semibold">Оберіть стан</p>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                    {STATES.map(st => (
-                      <label key={st.value} className="flex items-center gap-3 cursor-pointer group">
-                        <div className={cn("w-5 h-5 rounded flex items-center justify-center transition-colors border", states.includes(st.value) ? "bg-navy border-navy text-white" : "border-border group-hover:border-navy")}>
-                          {states.includes(st.value) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
-                        </div>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={states.includes(st.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) setStates([...states, st.value])
-                            else setStates(states.filter(v => v !== st.value))
-                          }}
-                        />
-                        <span className={cn("text-sm transition-colors", states.includes(st.value) ? "text-navy font-medium" : "text-foreground group-hover:text-navy")}>{st.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Програма: єВідновлення */}
-              <button
-                type="button"
-                onClick={handleToggleErecovery}
-                aria-pressed={filterErecovery}
-                aria-label="Фільтр об'єктів за програмою єВідновлення"
-                tabIndex={0}
-                className={cn(
-                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
-                  filterErecovery
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                    : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
-                )}
-              >
-                <Hammer className={cn('w-4 h-4', filterErecovery ? 'text-white' : 'text-emerald-600')} />
-                <span>єВідновлення</span>
-              </button>
-
-              {/* Програма: єОселя */}
-              <button
-                type="button"
-                onClick={handleToggleEoselia}
-                aria-pressed={filterEoselia}
-                aria-label="Фільтр об'єктів за програмою єОселя"
-                tabIndex={0}
-                className={cn(
-                  'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
-                  filterEoselia
-                    ? 'bg-navy text-white border-navy shadow-sm'
-                    : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
-                )}
-              >
-                <HomeIcon className={cn('w-4 h-4', filterEoselia ? 'text-white' : 'text-navy')} />
-                <span>єОселя</span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-            </div>
-
-            {/* Active filter badges */}
-            {hasFilters && (
-              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/50 text-xs font-inter">
-                <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider mr-1">Фільтри:</span>
-                {searchQuery && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                    Пошук: "{searchQuery}"
-                    <button type="button" onClick={() => setSearchQuery('')} aria-label="Скинути пошуковий запит" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {(minPrice || maxPrice) && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                    Ціна: {minPrice ? `від ${minPrice}` : ''} {maxPrice ? `до ${maxPrice}` : ''} {deal === 'rent' ? 'грн' : '$'}
-                    <button type="button" onClick={() => { setMinPrice(''); setMaxPrice('') }} aria-label="Скинути фільтр ціни" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {(minArea || maxArea) && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                    Площа: {minArea ? `від ${minArea}` : ''} {maxArea ? `до ${maxArea}` : ''} м²
-                    <button type="button" onClick={() => { setMinArea(''); setMaxArea('') }} aria-label="Скинути фільтр площі" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {searchComplex && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                    ЖК: {searchComplex}
-                    <button type="button" onClick={() => setSearchComplex('')} aria-label="Скинути фільтр ЖК" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {searchStreet && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                    Вулиця: {searchStreet} {searchHouse}
-                    <button type="button" onClick={() => { setSearchStreet(''); setSearchHouse('') }} aria-label="Скинути фільтр вулиці" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {filterErecovery && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600/10 text-emerald-700 rounded-full font-semibold">
-                    Програма: єВідновлення
-                    <button type="button" onClick={() => setFilterErecovery(false)} aria-label="Скинути фільтр єВідновлення" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {filterEoselia && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-semibold">
-                    Програма: єОселя
-                    <button type="button" onClick={() => setFilterEoselia(false)} aria-label="Скинути фільтр єОселя" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {subTypes.map(st => {
-                  const item = (SUBTYPES_BY_CATEGORY[category] || []).find(x => x.value === st)
-                  return (
-                    <span key={st} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                      {item ? item.label : st}
-                      <button type="button" onClick={() => setSubTypes(subTypes.filter(v => v !== st))} aria-label={`Видалити тип ${st}`} className="hover:text-destructive transition-colors">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  )
-                })}
-                {districts.map(d => {
-                  const item = DISTRICTS.find(x => x.value === d)
-                  return (
-                    <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                      {item ? item.label : d}
-                      <button type="button" onClick={() => setDistricts(districts.filter(v => v !== d))} aria-label={`Видалити район ${d}`} className="hover:text-destructive transition-colors">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  )
-                })}
-                {metroStations.map(m => {
-                  let label = m
-                  for (const line of METRO_LINES) {
-                    const found = line.stations.find(s => s.value === m)
-                    if (found) { label = found.label; break }
-                  }
-                  return (
-                    <span key={m} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                      М: {label}
-                      <button type="button" onClick={() => setMetroStations(metroStations.filter(v => v !== m))} aria-label={`Видалити станцію ${label}`} className="hover:text-destructive transition-colors">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  )
-                })}
-                {states.map(s => {
-                  const item = STATES.find(x => x.value === s)
-                  return (
-                    <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                      {item ? item.label : s}
-                      <button type="button" onClick={() => setStates(states.filter(v => v !== s))} aria-label={`Видалити стан ${s}`} className="hover:text-destructive transition-colors">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  )
-                })}
-                {(minFloor || maxFloor) && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-navy/10 text-navy rounded-full font-medium">
-                    Поверх: {minFloor ? `від ${minFloor}` : ''} {maxFloor ? `до ${maxFloor}` : ''}
-                    <button type="button" onClick={() => { setMinFloor(''); setMaxFloor('') }} aria-label="Скинути фільтр поверху" className="hover:text-destructive transition-colors">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  aria-label="Скинути всі вибрані фільтри"
-                  className="text-xs text-destructive hover:underline font-semibold ml-auto transition-colors"
-                >
-                  Скинути все
-                </button>
-              </div>
-            )}
-            </div>
-            </LayoutGroup>
-          </motion.div>
-        )}
-    </AnimatePresence>
-
-        {/* Desktop Toggle Map Filters Button */}
         {viewMode === 'map' && (
           <div className="hidden lg:flex justify-center absolute left-1/2 -bottom-5 -translate-x-1/2 z-50">
-             <button 
-                onClick={() => setShowMapFilters(!showMapFilters)}
-                className="bg-white border border-border shadow-md rounded-full p-1.5 text-muted-foreground hover:text-navy hover:shadow-lg transition-all flex items-center justify-center"
-             >
-                 <ChevronUp className={cn("w-5 h-5 transition-transform duration-300", !showMapFilters && "rotate-180")} />
-             </button>
+            <button
+              type="button"
+              onClick={() => setShowMapFilters(!showMapFilters)}
+              aria-label="Перемкнути видимість панелі фільтрів"
+              className="bg-white border border-border shadow-md rounded-full p-1.5 text-muted-foreground hover:text-navy hover:shadow-lg transition-all flex items-center justify-center"
+            >
+              <ChevronUp
+                className={cn('w-5 h-5 transition-transform duration-300', !showMapFilters && 'rotate-180')}
+              />
+            </button>
           </div>
         )}
 
-        {/* Error */}
         {error && (
-          <div className="flex items-center gap-3 p-4 border border-destructive/40 bg-destructive/10 text-destructive text-sm font-inter mb-6 mt-4">
+          <div className="flex items-center gap-3 p-4 border border-destructive/40 bg-destructive/10 text-destructive text-sm font-inter mb-6 mt-4 rounded-xl">
             <AlertCircle className="w-4 h-4 shrink-0" />
             Помилка завантаження: {error.message}
           </div>
         )}
       </div>
 
-      {/* Content: Map or List */}
       {viewMode === 'map' && (
         <div className="fixed inset-0 top-[80px] z-0">
           {isLoading ? (
@@ -1188,100 +1118,64 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => <div key={i} className="bg-card border border-border aspect-[4/5] animate-pulse rounded-2xl" />)}
-            </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-24">
-            <p className="font-cormorant text-3xl text-muted-foreground mb-2">Об'єкти не знайдено</p>
-            <p className="text-sm text-muted-foreground font-inter">Спробуйте змінити параметри пошуку</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-10">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentItems.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: (i % 20) * 0.04 }}
-                >
-                  <PropertyCard property={p} />
-                </motion.div>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-card border border-border aspect-[4/5] animate-pulse rounded-2xl" />
               ))}
             </div>
-
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 border-t border-border">
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    aria-label="Попередня сторінка"
-                    className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors text-sm font-inter"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">Назад</span>
-                  </button>
-
-                  {/* Pagination logic */}
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    const page = i + 1
-                    const isCurrent = page === currentPage
-                    const isNear = Math.abs(currentPage - page) <= 2
-                    const isEdge = page === 1 || page === totalPages
-
-                    if (!isNear && !isEdge) {
-                      if (page === 2 || page === totalPages - 1) {
-                        return <span key={page} className="px-2 text-muted-foreground">...</span>
-                      }
-                      return null
-                    }
-
+          ) : filtered.length === 0 ? (
+            <MascotTelegramEmptyState
+              deal={deal}
+              onClearFilters={handleClearFilters}
+            />
+          ) : (
+            <div className="flex flex-col gap-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {gridItems.map((item, i) => {
+                  if (item.type === 'promo') {
                     return (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        aria-label={`Сторінка ${page}`}
-                        aria-current={isCurrent ? "page" : undefined}
-                        className={cn('relative z-10 w-10 h-10 flex items-center justify-center text-sm font-inter transition-colors rounded-full', {
-                          'text-white': isCurrent,
-                          'text-muted-foreground hover:bg-muted hover:text-foreground': !isCurrent
-                        })}
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.35 }}
+                        className="h-full"
                       >
-                        {isCurrent && (
-                          <motion.div
-                            layoutId="pagination-pill"
-                            className="absolute inset-0 gradient-gold rounded-full -z-10"
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                          />
-                        )}
-                        {page}
-                      </button>
+                        <MascotTelegramCard
+                          variant="keys"
+                          deal={deal}
+                          onDismiss={handleDismissPromo}
+                        />
+                      </motion.div>
                     )
-                  })}
+                  }
 
-                  <button
-                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    aria-label="Наступна сторінка"
-                    className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors text-sm font-inter"
-                  >
-                    <span className="hidden sm:inline">Вперед</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: (i % 18) * 0.03 }}
+                      className="h-full"
+                    >
+                      <PropertyCard property={item.data} />
+                    </motion.div>
+                  )
+                })}
               </div>
-            )}
 
-            {totalPages <= 1 && filtered.length > 0 && (
-              <div className="flex justify-center pt-8 border-t border-border mt-4">
-              </div>
-            )}
-          </div>
-        )}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       )}
+
+      {/* Mascot Telegram Scroll Popup Modal */}
+      <MascotTelegramModal deal={deal} />
     </div>
   )
 }

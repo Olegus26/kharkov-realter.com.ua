@@ -36,6 +36,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://kharkov-realter.com.ua/eoselia</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://kharkov-realter.com.ua/evidnovlennya</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://kharkov-realter.com.ua/vakansii</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

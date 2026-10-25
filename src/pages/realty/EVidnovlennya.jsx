@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import SeoMeta from '@/components/seo/SeoMeta'
 import { submitLead } from '@/lib/leadService'
-import { cn } from '@/lib/utils'
+import { cn, formatPhone, isValidPhone } from '@/lib/utils'
 
 const FAQS = [
   {
@@ -51,8 +51,13 @@ const EVidnovlennya = () => {
 
   const handleSubmitLead = async (e) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.phone.trim()) {
-      setErrorMsg('Будь ласка, вкажіть ваше ім\'я та телефон')
+    if (!form.name.trim()) {
+      setErrorMsg('Будь ласка, вкажіть ваше ім\'я')
+      return
+    }
+
+    if (!isValidPhone(form.phone)) {
+      setErrorMsg('Будь ласка, введіть коректний номер телефону (наприклад: +380 50 123 45 67)')
       return
     }
 
@@ -347,9 +352,9 @@ const EVidnovlennya = () => {
                   <input
                     type="tel"
                     required
-                    placeholder="+380 95 123 45 67"
+                    placeholder="+380 (50) 000-00-00"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) => setForm((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-navy"
                   />
                 </div>

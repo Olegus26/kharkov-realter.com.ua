@@ -2,10 +2,6 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp,
-  MapPin,
-  GraduationCap,
-  CalendarClock,
-  Users,
   CheckCircle2,
   Phone,
   Send,
@@ -22,57 +18,10 @@ import {
   Trophy,
   Flame,
   Zap,
-  Building2,
   Briefcase
 } from 'lucide-react'
 import VacancyForm from '@/components/realty/VacancyForm'
 import SeoMeta from '@/components/seo/SeoMeta'
-import { OFFICES } from '@/data/offices'
-
-const BENEFITS = [
-  {
-    icon: TrendingUp,
-    badge: 'Без стелі',
-    title: 'Необмежений дохід',
-    desc: 'Заробляй від $1 000 до $3 000+ щомісяця. Відсоток виплачується відразу в день закриття угоди без затримок.',
-    gradient: 'from-amber-500/20 to-amber-600/5'
-  },
-  {
-    icon: MapPin,
-    badge: '13 філій',
-    title: 'Офіс біля твого дому',
-    desc: 'Працюй у своєму районі — Салтівка, Центр, Олексіївка, Холодна Гора чи Нові Будинки. Забудь про затори!',
-    gradient: 'from-blue-500/20 to-blue-600/5'
-  },
-  {
-    icon: GraduationCap,
-    badge: '100% Free',
-    title: 'Школа рієлтора з нуля',
-    desc: 'Індивідуальний ментор веде тебе за руку на перших 3 угодах. Стандарти Спілки фахівців з нерухомості (СФНУ).',
-    gradient: 'from-emerald-500/20 to-emerald-600/5'
-  },
-  {
-    icon: CalendarClock,
-    badge: 'Свобода',
-    title: 'Гнучкий вільний графік',
-    desc: 'Сам плануй зустрічі, покази та особистий час. Поєднуй успішну кар’єру зі спортом і сім’єю.',
-    gradient: 'from-purple-500/20 to-purple-600/5'
-  },
-  {
-    icon: ShieldCheck,
-    badge: 'Без стресу',
-    title: 'Штатні юристи за спиною',
-    desc: 'Тобі не треба боятися паперів. Корпоративний юридичний відділ перевіряє всі документи та готує договори.',
-    gradient: 'from-sky-500/20 to-sky-600/5'
-  },
-  {
-    icon: Users,
-    badge: 'Команда',
-    title: 'Найбільша база лідів',
-    desc: 'Сучасна CRM з щогодинним оновленням ліквідних об’єктів та постійний потік гарячих заявок від компанії.',
-    gradient: 'from-rose-500/20 to-rose-600/5'
-  }
-]
 
 const DAILY_SCHEDULE = [
   {
@@ -124,7 +73,7 @@ const CAREER_LADDER = [
     step: '01',
     level: 'Стажер',
     period: '1–2 місяці',
-    income: '25 000 – 45 000 ₴',
+    income: '15 000 – 30 000 ₴',
     desc: 'Безкоштовна «Школа рієлтора», персональний ментор 24/7, спільні покази та перші успішні закриття угод під наглядом керівника.',
     color: 'border-blue-500/40 bg-blue-500/5 text-blue-600'
   },
@@ -132,7 +81,7 @@ const CAREER_LADDER = [
     step: '02',
     level: 'Експерт з нерухомості',
     period: '3–12 місяців',
-    income: '50 000 – 90 000 ₴',
+    income: '30 000 – 60 000 ₴',
     desc: 'Власна база постійних клієнтів, рекомендації, стабільні 2–3 угоди на місяць, підвищений відсоток комісії.',
     color: 'border-emerald-500/40 bg-emerald-500/5 text-emerald-600'
   },
@@ -140,7 +89,7 @@ const CAREER_LADDER = [
     step: '03',
     level: 'Топ-брокер / VIP-напрямок',
     period: '1–2 роки',
-    income: '100 000 – 160 000+ ₴',
+    income: '60 000 – 100 000+ ₴',
     desc: 'Елітні квартири, пентхауси, комерційна нерухомість, інвестиційні пули. Ти формуєш особистий бренд та навчаєш новачків.',
     color: 'border-amber-500/40 bg-amber-500/5 text-amber-600'
   },
@@ -148,7 +97,7 @@ const CAREER_LADDER = [
     step: '04',
     level: 'Керівник філії / Партнер',
     period: 'від 2 років',
-    income: '200 000+ ₴',
+    income: '100 000+ ₴',
     desc: 'Керівництво одним із 13 офісів у Харкові, формування власної команди та отримання пасивного % від обороту відділення.',
     color: 'border-purple-500/40 bg-purple-500/5 text-purple-600'
   }
@@ -216,11 +165,12 @@ const VacanciesPage = () => {
   const [quizScore, setQuizScore] = useState(null)
   const [activeTimeIndex, setActiveTimeIndex] = useState(0)
 
+  
   // Calculations
   const calculatedIncome = useMemo(() => {
-    // Commission is ~4% total, agent gets 50% on start, 55% at 3+ deals, 60% at 5+ deals
+    // Agency commission is 5% total, agent gets 50% on start, 55% at 3+ deals, 60% at 5+ deals
     const agentSplit = dealsCount >= 5 ? 0.6 : dealsCount >= 3 ? 0.55 : 0.5
-    const totalAgencyCommission = dealsCount * avgPrice * 0.04
+    const totalAgencyCommission = dealsCount * avgPrice * 0.05
     const agentUsd = Math.round(totalAgencyCommission * agentSplit)
     const agentUah = Math.round(agentUsd * 41.5)
 
@@ -377,7 +327,7 @@ const VacanciesPage = () => {
             {/* Metric counters grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <p className="text-2xl sm:text-3xl font-extrabold text-amber-300 font-cormorant">40-60%</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-amber-300 font-cormorant">50-60%</p>
                 <p className="text-[11px] text-white/70 font-inter mt-1">комісії виплачується агенту</p>
               </div>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
@@ -514,7 +464,7 @@ const VacanciesPage = () => {
             </div>
 
             <div className="mt-8 pt-6 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground font-inter">
-              <span>* Розрахунок орієнтовний на базі середньоринкової ставки 4%</span>
+              <span>* Розрахунок орієнтовний на базі комісії агентства 5%</span>
               <span className="font-semibold text-gold">Курс: 41.5 ₴/$</span>
             </div>
           </div>
@@ -849,38 +799,6 @@ const VacanciesPage = () => {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* 13 Offices in Kharkiv Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20 sm:py-24">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 text-gold text-xs uppercase font-inter font-bold tracking-wider mb-3">
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Локації</span>
-          </div>
-          <h2 className="font-cormorant font-extrabold text-4xl sm:text-5xl text-foreground mb-4">
-            13 офісів у Харкові — працюй поруч із домом
-          </h2>
-          <p className="text-muted-foreground font-inter text-sm sm:text-base">
-            Тобі не треба щоранку їхати через усе місто. Обирай філію у своєму районі та заощаджуй час на важливі справи.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 font-inter">
-          {OFFICES.map((office) => (
-            <div
-              key={office.id}
-              className="p-4 rounded-2xl bg-card border border-border shadow-sm hover:border-gold/50 transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span className="font-bold text-sm text-foreground truncate">{office.name}</span>
-              </div>
-              <p className="text-xs text-muted-foreground truncate mb-1">{office.shortAddress}</p>
-              <span className="text-[10px] text-blue-600 font-semibold">м. {office.metro}</span>
-            </div>
-          ))}
         </div>
       </section>
 

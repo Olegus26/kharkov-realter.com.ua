@@ -1,9 +1,18 @@
-const TELEGRAM_BOT_TOKEN = '8682779916:AAHs83CU6whQibCqugxPf7cWZAcFCeLuv38'
-const TELEGRAM_CHAT_ID = '-1004492752360'
+const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN
+const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID
 
 export const submitLead = async ({ type = 'consult', name, phone, email = '', message = '', propertyId = null, propertyTitle = null }) => {
-  if (!name || !phone) {
+  if (!name || !name.trim() || !phone || !phone.trim()) {
     return { success: false, error: "Будь ласка, заповніть обов'язкові поля: ім'я та телефон" }
+  }
+
+  const phoneDigits = phone.replace(/\D/g, '')
+  if (phoneDigits.length < 10) {
+    return { success: false, error: 'Будь ласка, введіть коректний номер телефону (наприклад: +380 50 123 45 67)' }
+  }
+
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    return { success: false, error: 'Форма тимчасово недоступна. Будь ласка, зателефонуйте нам.' }
   }
 
   const topicLabels = {
@@ -12,7 +21,9 @@ export const submitLead = async ({ type = 'consult', name, phone, email = '', me
     sell: 'Продаж нерухомості',
     consult: 'Загальна консультація',
     viewing: 'Запис на перегляд об\'єкта',
-    vacancy: 'Відгук на вакансію'
+    vacancy: 'Відгук на вакансію',
+    eoselia_consultation: 'Консультація по програмі «єОселя»',
+    evidnovlennya_consultation: 'Консультація по програмі «єВідновлення»'
   }
 
   const topic = topicLabels[type] || type

@@ -16,6 +16,8 @@ const SeoMeta = ({ title, description, url, image, type = 'website' }) => {
       {/* Standard Metadata */}
       <title>{finalTitle}</title>
       <meta name="description" content={finalDescription} />
+      <link rel="canonical" href={finalUrl} />
+      <meta property="og:locale" content="uk_UA" />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />

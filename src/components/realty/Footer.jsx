@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Instagram, Facebook, Send as Telegram, MessageCircle, X, ArrowRight } from 'lucide-react'
+import { Mail, Instagram, Facebook, Send as Telegram, Bot, X, ArrowRight } from 'lucide-react'
 import { OFFICES, GENERAL_EMAIL } from '@/data/offices'
 import AddressRevolver from './AddressRevolver'
 
@@ -56,11 +56,13 @@ const Footer = () => {
                 <Telegram className="w-4 h-4" />
               </a>
               <a
-                href="viber://chat?number=%2B380507136363"
-                aria-label="Viber чат Харків Ріелтер"
+                href="https://t.me/kharkovrealter_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telegram бот Харків Ріелтер"
                 className="w-9 h-9 border border-border flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors rounded-lg"
               >
-                <MessageCircle className="w-4 h-4" />
+                <Bot className="w-4 h-4" />
               </a>
             </div>
           </div>

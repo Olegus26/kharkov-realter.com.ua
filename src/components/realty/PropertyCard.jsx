@@ -1,17 +1,9 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bed, BedDouble, Maximize2, MapPin, Heart, Building, Home, Hammer, Handshake, UtensilsCrossed } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
-
-const TYPE_LABELS = {
-  apartment: 'Квартира',
-  house: 'Будинок',
-  penthouse: 'Пентхаус',
-  villa: 'Вілла',
-  commercial: 'Комерційна',
-}
 
 const PROGRAM_BADGES = [
   { key: 'erecovery', label: 'єВідновлення', icon: Hammer, className: 'bg-emerald-600/90 backdrop-blur text-white' },
@@ -19,11 +11,11 @@ const PROGRAM_BADGES = [
 ]
 
 const STATUS_STAMPS = [
-  { key: 'is_sold', src: '/stamp-sold.png', alt: 'Продано' },
-  { key: 'deposit', src: '/stamp-deposit.png', alt: 'Завдаток' },
+  { key: 'is_sold', src: '/stamp-sold.webp', alt: 'Продано' },
+  { key: 'deposit', src: '/stamp-deposit.webp', alt: 'Завдаток' },
 ]
 
-const FALLBACK_IMAGE = '/hero-bg.jpg'
+const FALLBACK_IMAGE = '/hero-bg.webp'
 
 const formatPrice = (price, deal) => {
   if (!price) return '—'
@@ -42,11 +34,49 @@ const PropertyCard = memo(({ property, className = '' }) => {
     ? Math.round(property.price / property.area)
     : null
 
+  const formattedPricePerM2 = useMemo(() => {
+    if (!pricePerM2) return null
+    if (property.deal === 'rent') {
+      return `${pricePerM2.toLocaleString('uk-UA')} грн/м²`
+    }
+    return `$${pricePerM2.toLocaleString('uk-UA')}/м²`
+  }, [pricePerM2, property.deal])
+
+  const displayAddress = useMemo(() => {
+    const parts = [property.street, property.building].filter(Boolean)
+    if (parts.length > 0) return parts.join(', ')
+    return (
+      property.title
+        ?.replace(/^(\d+-кімн\.\s+)?(квартира|будинок|пентхаус|вілла|комерційне\s+приміщення|приміщення|об'єкт)[,\s]*/i, '')
+        ?.replace(/\s*\([^)]*\)$/, '')
+        ?.trim() || property.title
+    )
+  }, [property.street, property.building, property.title])
+
+  const displayLandmark = useMemo(() => {
+    if (property.mregion) {
+      if (property.metro && !property.mregion.toLowerCase().includes(property.metro.toLowerCase())) {
+        return `${property.mregion} • м. ${property.metro}`
+      }
+      return property.mregion
+    }
+    if (property.metro) return `м. ${property.metro}`
+    if (property.region) return property.region
+    if (property.location) {
+      let loc = property.location
+      if (property.street) loc = loc.replace(new RegExp(`[,\\s]*${property.street}[^,]*`, 'gi'), '')
+      if (property.building) loc = loc.replace(new RegExp(`[,\\s]*${property.building}`, 'gi'), '')
+      loc = loc.replace(/^[,\\s]+|[,\\s]+$/g, '').trim()
+      return loc || property.location
+    }
+    return ''
+  }, [property.mregion, property.metro, property.region, property.location, property.street, property.building])
+
   const handleToggleFavorite = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
-    toggleFavorite(property.id)
-  }, [property.id, toggleFavorite])
+    toggleFavorite(property.id, property)
+  }, [property, toggleFavorite])
 
   const handleImageError = (e) => {
     e.currentTarget.src = FALLBACK_IMAGE
@@ -127,44 +157,50 @@ const PropertyCard = memo(({ property, className = '' }) => {
           </motion.button>
         </div>
 
-        {/* Price and Торг on image */}
+        {/* Price, per m², and Торг on image */}
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2">
           <div>
             <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price, property.deal)}</p>
             {property.deal === 'rent' && <p className="text-[10px] text-white/70 font-inter">/місяць</p>}
           </div>
 
-          {property.tender && (
-            <span
-              className="flex items-center gap-1.5 px-3 py-1 bg-navy/85 backdrop-blur text-white text-[11px] font-inter font-semibold rounded-full shadow-md shrink-0"
-              title="Можливий торг"
-            >
-              <Handshake className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-              <span>Торг</span>
-            </span>
-          )}
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            {property.tender && (
+              <span
+                className="flex items-center gap-1 px-2.5 py-0.5 bg-navy/85 backdrop-blur text-white text-[10px] font-inter font-semibold rounded-full shadow-md"
+                title="Можливий торг"
+              >
+                <Handshake className="w-3 h-3 shrink-0" aria-hidden="true" />
+                <span>Торг</span>
+              </span>
+            )}
+
+            {formattedPricePerM2 && (
+              <span className="px-2 py-0.5 bg-black/45 backdrop-blur-md text-white/95 text-xs font-inter font-semibold rounded-md shadow-md tracking-tight border border-white/10">
+                {formattedPricePerM2}
+              </span>
+            )}
+          </div>
         </div>
       </Link>
 
       {/* Info */}
       <div className="p-5 flex flex-col flex-grow bg-card">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-semibold">{TYPE_LABELS[property.type]}</p>
-          {pricePerM2 && (
-            <span className="text-xs font-inter font-semibold text-gold">
-              {property.deal === 'rent' ? `${pricePerM2.toLocaleString('uk-UA')} грн/м²` : `$${pricePerM2.toLocaleString('uk-UA')}/м²`}
-            </span>
-          )}
-        </div>
-
-        <h3 className="font-inter text-lg font-semibold mb-2 text-foreground group-hover:text-navy transition-colors line-clamp-1 tracking-tight">
-          {property.title}
+        <h3
+          className="font-inter text-lg font-semibold mb-1 text-foreground group-hover:text-navy transition-colors line-clamp-1 tracking-tight"
+          title={displayAddress}
+        >
+          {displayAddress}
         </h3>
 
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-3">
-          <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{property.location}</span>
-        </div>
+        {displayLandmark ? (
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-3">
+            <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="truncate" title={displayLandmark}>{displayLandmark}</span>
+          </div>
+        ) : (
+          <div className="mb-3" />
+        )}
 
 
         {/* Specs row matching reference layout: Rooms, Total Area, Living Area, Kitchen Area, Floor */}

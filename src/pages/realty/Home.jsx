@@ -5,6 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowRight,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  ShieldCheck,
+  Percent,
+  Sparkles,
   Award,
   Users,
   Home as HomeIcon,
@@ -25,11 +31,46 @@ import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
 import { cn } from '@/lib/utils'
 
-const HERO_IMAGES = [
-  '/hero-bg.jpg',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&q=80',
-  'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1600&q=80'
+const HERO_BG = '/hero-bg.webp'
+
+const FEATURED_CATEGORIES = [
+  {
+    id: 'all',
+    label: 'Всі топові',
+    icon: Flame,
+    catalogUrl: '/flats',
+    filter: () => true
+  },
+  {
+    id: 'eoselia',
+    label: 'єОселя 3-7%',
+    icon: ShieldCheck,
+    catalogUrl: '/flats?eoselia=1',
+    filter: (p) => p.eoselia
+  },
+  {
+    id: 'erecovery',
+    label: 'єВідновлення',
+    icon: Hammer,
+    catalogUrl: '/flats?erecovery=1',
+    filter: (p) => p.erecovery
+  },
+  {
+    id: 'tender',
+    label: 'Можливий торг',
+    icon: Percent,
+    catalogUrl: '/flats?tender=1',
+    filter: (p) => p.tender
+  },
+  {
+    id: 'premium',
+    label: 'Преміум ($50k+)',
+    icon: Sparkles,
+    catalogUrl: '/flats?price_from=50000',
+    filter: (p) => p.price >= 50000
+  }
 ]
+
 
 const stats = [
   { icon: Award, value: '30+', label: 'років на ринку' },
@@ -81,13 +122,99 @@ const HomePage = () => {
     })
   }, [queryClient])
 
+  const [activeCategory, setActiveCategory] = useState('all')
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [itemsPerPage, setItemsPerPage] = useState(3)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setItemsPerPage(1)
+        return
+      }
+      if (window.innerWidth < 1024) {
+        setItemsPerPage(2)
+        return
+      }
+      setItemsPerPage(3)
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['novostoy-objects-featured'],
     queryFn: async () => {
-      const res = await getObjects({ parent_id: '2', limit: 12 })
-      return (res.data || []).map(mapObject)
-    }
+      const res = await getObjects({ parent_id: '2', limit: 100 })
+      const items = (res.data || []).map(mapObject)
+      const validItems = items.filter(
+        (item) => item.images && item.images.length >= 3 && !item.is_sold && item.price > 0
+      )
+      const pool = validItems.length >= 12
+        ? validItems
+        : items.filter((item) => item.images && item.images.length > 0 && !item.is_sold)
+
+      return pool.sort((a, b) => {
+        const scoreA =
+          (a.views || 0) +
+          a.images.length * 150 +
+          (a.eoselia ? 1000 : 0) +
+          (a.erecovery ? 600 : 0) +
+          (a.price >= 30000 ? 500 : 0)
+        const scoreB =
+          (b.views || 0) +
+          b.images.length * 150 +
+          (b.eoselia ? 1000 : 0) +
+          (b.erecovery ? 600 : 0) +
+          (b.price >= 30000 ? 500 : 0)
+        return scoreB - scoreA
+      })
+    },
+    staleTime: 5 * 60 * 1000
   })
+
+  const currentCategoryObj = useMemo(() => {
+    return FEATURED_CATEGORIES.find((c) => c.id === activeCategory) || FEATURED_CATEGORIES[0]
+  }, [activeCategory])
+
+  const categoryCounts = useMemo(() => {
+    const counts = {}
+    FEATURED_CATEGORIES.forEach((cat) => {
+      counts[cat.id] = properties.filter(cat.filter).length
+    })
+    return counts
+  }, [properties])
+
+  const filteredProperties = useMemo(() => {
+    return properties.filter(currentCategoryObj.filter)
+  }, [properties, currentCategoryObj])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / itemsPerPage))
+  const safeCurrentSlide = Math.min(currentSlide, totalPages - 1)
+
+  const visibleProperties = useMemo(() => {
+    const start = safeCurrentSlide * itemsPerPage
+    return filteredProperties.slice(start, start + itemsPerPage)
+  }, [filteredProperties, safeCurrentSlide, itemsPerPage])
+
+  const handlePrevSlide = useCallback(() => {
+    setCurrentSlide((prev) => Math.max(0, prev - 1))
+  }, [])
+
+  const handleNextSlide = useCallback(() => {
+    setCurrentSlide((prev) => Math.min(totalPages - 1, prev + 1))
+  }, [totalPages])
+
+  const handleCategoryChange = useCallback((catId) => {
+    setActiveCategory(catId)
+    setCurrentSlide(0)
+  }, [])
+
+  const handleSlideDotClick = useCallback((pageIdx) => {
+    setCurrentSlide(pageIdx)
+  }, [])
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -282,13 +409,18 @@ const HomePage = () => {
       <section className="relative min-h-[92vh] sm:min-h-screen flex items-center">
         {/* Background image & gradient with safe clipping */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <img
-            src={HERO_IMAGES[0]}
-            alt="Харків Ріелтер - елітна нерухомість"
-            fetchPriority="high"
-            decoding="sync"
-            className="w-full h-full object-cover"
-          />
+          <picture className="block w-full h-full">
+            <source media="(max-width: 767px)" srcSet="/hero-bg-mobile.webp" type="image/webp" />
+            <img
+              src={HERO_BG}
+              alt="Харків Ріелтер - елітна нерухомість"
+              width={1920}
+              height={1080}
+              fetchPriority="high"
+              decoding="async"
+              className="w-full h-full object-cover"
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-navy/90" />
         </div>
 
@@ -424,7 +556,6 @@ const HomePage = () => {
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
                                   <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">м. {m.label}</span>
-                                  <span className="text-xs text-muted-foreground truncate hidden sm:inline">({m.line})</span>
                                 </div>
                                 <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                               </button>
@@ -460,7 +591,6 @@ const HomePage = () => {
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                                   <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">р-н {d.label}</span>
-                                  <span className="text-xs text-muted-foreground truncate hidden sm:inline">Харків</span>
                                 </div>
                                 <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                               </button>
@@ -487,7 +617,6 @@ const HomePage = () => {
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
                                   <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{c.label}</span>
-                                  {c.address && <span className="text-xs text-muted-foreground truncate hidden sm:inline">({c.address})</span>}
                                 </div>
                                 <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                               </button>
@@ -508,7 +637,6 @@ const HomePage = () => {
                           dotColor: 'bg-blue-500',
                           items: suggestions.metro,
                           type: 'metro',
-                          renderSub: (m) => (m.line ? `(${m.line})` : null),
                           prefix: 'м. '
                         })
                       }
@@ -521,7 +649,6 @@ const HomePage = () => {
                           dotColor: 'bg-amber-500',
                           items: suggestions.districts,
                           type: 'district',
-                          renderSub: () => 'Харків',
                           prefix: 'р-н '
                         })
                       }
@@ -534,7 +661,6 @@ const HomePage = () => {
                           dotColor: 'bg-purple-500',
                           items: suggestions.complexes,
                           type: 'complex',
-                          renderSub: (c) => (c.address ? `(${c.address})` : null),
                           prefix: ''
                         })
                       }
@@ -547,7 +673,6 @@ const HomePage = () => {
                           dotColor: 'bg-emerald-500',
                           items: suggestions.streets,
                           type: 'street',
-                          renderSub: () => null,
                           prefix: ''
                         })
                       }
@@ -564,7 +689,6 @@ const HomePage = () => {
                               {g.items.map((item) => {
                                 const flatIdx = flattenedSuggestions.findIndex((x) => x.type === g.type && x.value === item.value)
                                 const isHighlighted = highlightedIndex === flatIdx
-                                const subText = g.renderSub(item)
                                 return (
                                   <button
                                     key={item.value}
@@ -584,11 +708,6 @@ const HomePage = () => {
                                       <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">
                                         {g.prefix}{item.label}
                                       </span>
-                                      {subText && (
-                                        <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                                          {subText}
-                                        </span>
-                                      )}
                                     </div>
                                     <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                                   </button>
@@ -703,49 +822,183 @@ const HomePage = () => {
 
       {/* Featured Properties */}
       <section id="featured" className="max-w-7xl mx-auto px-6 py-24">
-        <div className="flex items-end justify-between mb-12">
+        {/* Header with Title and Nav controls */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3 font-inter font-semibold">Гарячі пропозиції</p>
-            <h2 className="font-cormorant font-extrabold tracking-tight text-4xl sm:text-5xl text-foreground">Топові об'єкти</h2>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 mb-3">
+              <Flame className="w-3.5 h-3.5 text-gold animate-pulse" />
+              <span className="text-[11px] font-inter font-semibold tracking-wider uppercase text-gold">
+                Гарячі пропозиції
+              </span>
+            </div>
+            <h2 className="font-cormorant font-extrabold tracking-tight text-4xl sm:text-5xl text-foreground">
+              Топові об'єкти Харкова
+            </h2>
+            <p className="text-sm text-muted-foreground font-inter mt-2 max-w-xl">
+              Відібрані перевірені квартири з якісним ремонтом та можливістю оформлення за державними програмами
+            </p>
           </div>
-          <Link
-            to="/flats"
-            onMouseEnter={handlePrefetchCatalog}
-            className="hidden sm:flex items-center gap-2 text-sm font-semibold text-gold hover:gap-4 transition-all font-inter"
-          >
-            Весь каталог <ArrowRight className="w-4 h-4" />
-          </Link>
+
+          <div className="flex items-center gap-4">
+            {/* Carousel navigation arrows */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                tabIndex={0}
+                aria-label="Попередні об'єкти"
+                disabled={safeCurrentSlide === 0}
+                onClick={handlePrevSlide}
+                className={cn(
+                  'w-11 h-11 rounded-full border flex items-center justify-center transition-all',
+                  safeCurrentSlide === 0
+                    ? 'border-border/50 text-muted-foreground/30 cursor-not-allowed bg-card/40'
+                    : 'border-border bg-card hover:bg-gold hover:text-navy hover:border-gold text-foreground shadow-sm cursor-pointer'
+                )}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              <div className="text-xs font-inter font-medium text-muted-foreground px-2 min-w-[50px] text-center">
+                <span className="text-foreground font-bold">{safeCurrentSlide + 1}</span> / {totalPages}
+              </div>
+
+              <button
+                type="button"
+                tabIndex={0}
+                aria-label="Наступні об'єкти"
+                disabled={safeCurrentSlide >= totalPages - 1}
+                onClick={handleNextSlide}
+                className={cn(
+                  'w-11 h-11 rounded-full border flex items-center justify-center transition-all',
+                  safeCurrentSlide >= totalPages - 1
+                    ? 'border-border/50 text-muted-foreground/30 cursor-not-allowed bg-card/40'
+                    : 'border-border bg-card hover:bg-gold hover:text-navy hover:border-gold text-foreground shadow-sm cursor-pointer'
+                )}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            <Link
+              to={currentCategoryObj.catalogUrl}
+              onMouseEnter={handlePrefetchCatalog}
+              className="hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-gold hover:text-gold/80 transition-all font-inter pl-2"
+            >
+              Весь каталог <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
 
+        {/* Category Filter Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-8 scrollbar-none">
+          {FEATURED_CATEGORIES.map((cat) => {
+            const Icon = cat.icon
+            const isSelected = activeCategory === cat.id
+            const count = categoryCounts[cat.id] || 0
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                tabIndex={0}
+                aria-label={`Фільтр: ${cat.label} (${count})`}
+                onClick={() => handleCategoryChange(cat.id)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-inter font-medium transition-all shrink-0 cursor-pointer',
+                  isSelected
+                    ? 'bg-navy text-white shadow-md shadow-navy/30 border border-navy ring-2 ring-primary/20'
+                    : 'bg-card hover:bg-secondary text-muted-foreground hover:text-foreground border border-border'
+                )}
+              >
+                <Icon className={cn('w-4 h-4', isSelected ? 'text-amber-400' : 'text-muted-foreground')} />
+                <span className={isSelected ? 'text-white font-semibold' : ''}>{cat.label}</span>
+                {count > 0 && (
+                  <span
+                    className={cn(
+                      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold',
+                      isSelected ? 'bg-white/20 text-white' : 'bg-secondary text-muted-foreground'
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Cards Grid / Carousel View */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
+            {[...Array(itemsPerPage)].map((_, i) => (
               <div key={i} className="bg-card border border-border rounded-2xl aspect-[4/5] animate-pulse" />
             ))}
           </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className="text-center py-16 bg-card border border-border rounded-2xl">
+            <Building2 className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-foreground font-medium font-inter">
+              У цій категорії зараз немає об'єктів
+            </p>
+            <button
+              type="button"
+              tabIndex={0}
+              aria-label="Дивитися всі топові"
+              onClick={() => handleCategoryChange('all')}
+              className="mt-4 px-5 py-2.5 bg-gold text-navy font-semibold text-xs rounded-full hover:bg-gold/90 transition-all font-inter shadow-sm cursor-pointer"
+            >
+              Дивитися всі топові
+            </button>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.slice(0, 3).map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <PropertyCard property={p} />
-              </motion.div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${activeCategory}-${safeCurrentSlide}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {visibleProperties.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                >
+                  <PropertyCard property={{ ...p, featured: true }} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
+
+        {/* Pagination Dots */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            {[...Array(totalPages)].map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                tabIndex={0}
+                aria-label={`Сторінка ${idx + 1}`}
+                onClick={() => handleSlideDotClick(idx)}
+                className={cn(
+                  'h-2 rounded-full transition-all cursor-pointer',
+                  idx === safeCurrentSlide ? 'w-8 bg-gold' : 'w-2 bg-border hover:bg-muted-foreground/50'
+                )}
+              />
             ))}
           </div>
         )}
 
-        <div className="text-center mt-10 sm:hidden">
+        <div className="text-center mt-8 sm:hidden">
           <Link
-            to="/flats"
+            to={currentCategoryObj.catalogUrl}
             onMouseEnter={handlePrefetchCatalog}
             className="inline-flex items-center gap-2 text-sm font-semibold text-gold font-inter"
           >
-            Весь каталог <ArrowRight className="w-4 h-4" />
+            Весь каталог {currentCategoryObj.label} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
@@ -761,8 +1014,8 @@ const HomePage = () => {
             {[
               {
                 num: '01',
-                title: 'Досвід та авторитет',
-                desc: 'На ринку Харкова з 1996 року. Багаторазовий переможець та лауреат всеукраїнських конкурсів «Професійне визнання» та «Визнання».'
+                title: 'ТОП-100 України & 30 років',
+                desc: 'Входимо до офіційного рейтингу «ТОП-100 агенцій нерухомості України 2026» за версією ЛУН (платформи ЛУН, Flatfy, Rieltor, Bird). На ринку з 1996 року.'
               },
               {
                 num: '02',
@@ -795,7 +1048,7 @@ const HomePage = () => {
       {/* State Programs: eOselia & eRecovery */}
       <section className="max-w-7xl mx-auto px-6 py-12">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-inter rounded-full uppercase tracking-wider mb-3">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600/10 text-emerald-700 text-xs font-bold font-inter rounded-full uppercase tracking-wider mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Державна підтримка
           </span>
@@ -840,13 +1093,21 @@ const HomePage = () => {
               </ul>
             </div>
 
-            <Link
-              to="/flats?deal=sale&eoselia=true"
-              className="w-full py-3.5 px-6 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full text-center hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2"
-            >
-              <span>Об'єкти під єОселя</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <Link
+                to="/eoselia"
+                className="flex-1 py-3 px-5 border border-gold/40 text-foreground hover:bg-gold/10 text-xs tracking-wider uppercase font-inter font-bold rounded-full text-center transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>Умови програми</span>
+              </Link>
+              <Link
+                to="/flats?deal=sale&eoselia=true"
+                className="flex-1 py-3 px-5 gradient-gold text-white text-xs tracking-wider uppercase font-inter font-bold rounded-full text-center hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <span>Об'єкти єОселя</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
           {/* Card 2: єВідновлення */}
@@ -854,7 +1115,7 @@ const HomePage = () => {
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/10 transition-colors" />
             <div>
               <div className="flex items-center justify-between gap-3 mb-4">
-                <span className="px-3 py-1 bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-inter rounded-full uppercase tracking-wider">
+                <span className="px-3 py-1 bg-emerald-600/10 text-emerald-700 text-xs font-bold font-inter rounded-full uppercase tracking-wider">
                   Сертифікати через «Дія»
                 </span>
                 <span className="text-xs font-bold font-inter text-muted-foreground">Компенсація</span>
@@ -881,13 +1142,21 @@ const HomePage = () => {
               </ul>
             </div>
 
-            <Link
-              to="/flats?deal=sale&erecovery=true"
-              className="w-full py-3.5 px-6 border border-border text-foreground hover:border-gold hover:text-gold text-xs tracking-widest uppercase font-inter font-bold rounded-full text-center hover:bg-muted/60 transition-colors flex items-center justify-center gap-2"
-            >
-              <span>Об'єкти під єВідновлення</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <Link
+                to="/evidnovlennya"
+                className="flex-1 py-3 px-5 border border-emerald-600/40 text-foreground hover:bg-emerald-600/10 text-xs tracking-wider uppercase font-inter font-bold rounded-full text-center transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>Умови програми</span>
+              </Link>
+              <Link
+                to="/flats?deal=sale&erecovery=true"
+                className="flex-1 py-3 px-5 bg-emerald-600 text-white text-xs tracking-wider uppercase font-inter font-bold rounded-full text-center hover:bg-emerald-700 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <span>Об'єкти єВідновлення</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

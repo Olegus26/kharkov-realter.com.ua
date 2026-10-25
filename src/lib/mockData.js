@@ -115,7 +115,7 @@ export const MOCK_AGENTS = [
     experience_years: 15,
     phone: '+380577320000',
     email: 'info@kharkov-realter.com.ua',
-    photo: '/agent1.jpg'
+    photo: '/agent1.webp'
   },
   {
     id: 'agent-2',
@@ -126,7 +126,7 @@ export const MOCK_AGENTS = [
     experience_years: 8,
     phone: '+380675700000',
     email: 'info@kharkov-realter.com.ua',
-    photo: '/agent2.jpg'
+    photo: '/agent2.webp'
   },
   {
     id: 'agent-3',
@@ -137,6 +137,6 @@ export const MOCK_AGENTS = [
     experience_years: 10,
     phone: '+380503230000',
     email: 'info@kharkov-realter.com.ua',
-    photo: '/agent3.jpg'
+    photo: '/agent3.webp'
   }
 ]

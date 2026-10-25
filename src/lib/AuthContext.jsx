@@ -1,44 +1,38 @@
-import React, { createContext, useState, useContext } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
-const AuthContext = createContext();
+const AuthContext = createContext(null)
 
+// Публичный сайт: авторизация не требуется.
+// Контекст оставлен как точка расширения для будущей логики входа.
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // We are no longer using external authentication.
-  // This is a plain React template. Users are instantly authorized
-  // or you can implement your own custom auth logic here.
+  const logout = useCallback(() => {
+    setUser(null)
+    setIsAuthenticated(false)
+  }, [])
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-  };
+  const navigateToLogin = useCallback(() => {}, [])
 
-  const navigateToLogin = () => {
-    console.log("Navigating to logic not implemented in pure template.");
-  };
+  const value = useMemo(() => ({
+    user,
+    isAuthenticated,
+    isLoadingAuth: false,
+    isLoadingPublicSettings: false,
+    authError: null,
+    appPublicSettings: {},
+    logout,
+    navigateToLogin,
+  }), [user, isAuthenticated, logout, navigateToLogin])
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated,
-      isLoadingAuth: false,
-      isLoadingPublicSettings: false,
-      authError: null,
-      appPublicSettings: {},
-      logout,
-      navigateToLogin
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
-};
+  return context
+}

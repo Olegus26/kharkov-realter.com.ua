@@ -19,7 +19,7 @@ const timeline = [
   { year: '2018', event: 'Розширення мережі до 13 філій у ключових районах Харкова поруч зі станціями метро.' },
   { year: '2022', event: "Незламність: безперервна підтримка клієнтів, допомога харків'янам з безпечним житлом та відновленням документації." },
   { year: '2023', event: 'Офіційна сертифікація та активний супровід державних програм «єОселя» (пільгова іпотека) та «єВідновлення».' },
-  { year: '2026', event: '30 років лідерства: найбільша база перевірених об\'єктів, 13 офісів та сучасні цифрові сервіси для клієнтів.' },
+  { year: '2026', event: 'Входження до офіційного рейтингу «ТОП-100 агенцій нерухомості України 2026» за версією ЛУН (платформи ЛУН, Flatfy, Rieltor та Bird). 30 років лідерства.' },
 ]
 
 const AboutPage = () => {
@@ -34,7 +34,7 @@ const AboutPage = () => {
       {/* Hero */}
       <section className="relative h-80 sm:h-[450px] overflow-hidden mb-20 rounded-b-3xl pt-24">
         <img
-          src="/about-bg.jpg"
+          src="/about-bg.webp"
           alt="Агентство нерухомості Харків Ріелтер"
           fetchPriority="high"
           decoding="sync"
@@ -71,7 +71,7 @@ const AboutPage = () => {
           <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
             <div className="relative">
               <img
-                src="/story-image.jpg"
+                src="/story-image.webp"
                 alt="Офіс та команда Харків Ріелтер"
                 loading="lazy"
                 decoding="async"

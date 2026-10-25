@@ -3,16 +3,45 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Харків Ріелтер — агентство нерухомості в Харкові</title>
   <meta name="description" content="Агентство нерухомості Харків Ріелтер. Купити, продати, орендувати квартиру або будинок в Харкові. Надійно та безпечно з 1996 року." />
+  <meta name="theme-color" content="#1b2a4a" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Харків Ріелтер" />
+  <meta property="og:locale" content="uk_UA" />
+  <meta property="og:title" content="Харків Ріелтер — агентство нерухомості в Харкові" />
+  <meta property="og:description" content="Купити, продати, орендувати квартиру або будинок в Харкові. Надійно та безпечно з 1996 року." />
+  <meta property="og:image" content="https://kharkov-realter.com.ua/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <title>Харків Ріелтер</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "name": "Харків Ріелтер",
+      "url": "https://kharkov-realter.com.ua/",
+      "logo": "https://kharkov-realter.com.ua/logo.png",
+      "image": "https://kharkov-realter.com.ua/og-image.jpg",
+      "foundingDate": "1996",
+      "areaServed": "Харків",
+      "address": { "@type": "PostalAddress", "addressLocality": "Харків", "addressCountry": "UA" }
+    }
+  </script>
 </head>
 
 <body>
+  <noscript>Для роботи сайту потрібно увімкнути JavaScript.</noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

@@ -14,7 +14,17 @@ import {
 } from 'lucide-react'
 import SeoMeta from '@/components/seo/SeoMeta'
 import { submitLead } from '@/lib/leadService'
-import { cn } from '@/lib/utils'
+import { cn, formatPhone, isValidPhone } from '@/lib/utils'
+
+const CATEGORY_LABELS = {
+  military: 'Військовослужбовець / Силовик (3%)',
+  medic: 'Медичний працівник (3%)',
+  teacher: 'Педагог / Вчитель (3%)',
+  scientist: 'Науковець (3%)',
+  vpo: 'ВПО (Внутрішньо переміщена особа) (7%)',
+  veteran: 'Ветеран війни / УБД (7%)',
+  other: 'Громадянин без власного житла (7%)'
+}
 
 const RATES = [
   {
@@ -95,20 +105,26 @@ const EOselia = () => {
 
   const handleSubmitLead = async (e) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.phone.trim()) {
-      setErrorMsg('Будь ласка, вкажіть ваше ім\'я та телефон')
+    if (!form.name.trim()) {
+      setErrorMsg('Будь ласка, вкажіть ваше ім\'я')
+      return
+    }
+
+    if (!isValidPhone(form.phone)) {
+      setErrorMsg('Будь ласка, введіть коректний номер телефону (наприклад: +380 50 123 45 67)')
       return
     }
 
     setIsSubmitting(true)
     setErrorMsg('')
 
+    const categoryText = CATEGORY_LABELS[form.category] || form.category
     const payload = {
       name: form.name.trim(),
       phone: form.phone.trim(),
       type: 'eoselia_consultation',
       property_id: null,
-      message: `Заявка на консультацію по програмі єОселя.\nКатегорія: ${form.category}\nБюджет: ${propertyPriceUah.toLocaleString('uk-UA')} грн ($${approxUsd.toLocaleString('uk-UA')})\nСтавка: ${selectedRate}%\nТермін: ${termYears} років\nКоментар: ${form.note.trim() || '—'}`
+      message: `Заявка на консультацію по програмі єОселя.\nКатегорія: ${categoryText}\nБюджет: ${propertyPriceUah.toLocaleString('uk-UA')} грн ($${approxUsd.toLocaleString('uk-UA')})\nСтавка: ${selectedRate}%\nТермін: ${termYears} років\nКоментар: ${form.note.trim() || '—'}`
     }
 
     const res = await submitLead(payload)
@@ -636,9 +652,9 @@ const EOselia = () => {
                   <input
                     type="tel"
                     required
-                    placeholder="+380 95 123 45 67"
+                    placeholder="+380 (50) 000-00-00"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) => setForm((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-navy"
                   />
                 </div>

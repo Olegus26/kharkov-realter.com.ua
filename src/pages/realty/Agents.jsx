@@ -42,7 +42,7 @@ const AgentsPage = () => {
               >
                 <div className="relative aspect-[4/5] overflow-hidden">
                   <img
-                    src={agent.photo || '/hero-bg.jpg'}
+                    src={agent.photo || '/hero-bg.webp'}
                     alt={`Фотографія експерта ${agent.name}`}
                     loading="lazy"
                     decoding="async"

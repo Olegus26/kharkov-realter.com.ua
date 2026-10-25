@@ -1,16 +1,32 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle, AlertCircle, MessageSquare } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle, AlertCircle, MessageSquare, Bot, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatPhone, cn } from '@/lib/utils'
 import { submitLead } from '@/lib/leadService'
-import { getPhoneLink } from '@/lib/phones'
-import { OFFICES, HOTLINE_PHONE, GENERAL_EMAIL } from '@/data/offices'
+import { getPhoneLink, getDutyDirectorToday } from '@/lib/phones'
+import { OFFICES, GENERAL_EMAIL } from '@/data/offices'
 
 const ContactPage = () => {
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', type: 'buy' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [activePhoneIndex, setActivePhoneIndex] = useState(0)
+
+  const dutyDirector = useMemo(() => getDutyDirectorToday(), [])
+  const currentPhone = dutyDirector.phones[activePhoneIndex] || dutyDirector.phones[0]
+
+  const handleNextPhone = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setActivePhoneIndex((prev) => (prev + 1) % dutyDirector.phones.length)
+  }
+
+  const handlePrevPhone = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setActivePhoneIndex((prev) => (prev - 1 + dutyDirector.phones.length) % dutyDirector.phones.length)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -174,16 +190,52 @@ const ContactPage = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-8">
             <div className="space-y-4">
               <div className="flex flex-col gap-3 p-6 border border-border bg-card rounded-3xl shadow-sm">
-                <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Консультація та підбір об'єктів</p>
-                <a href={getPhoneLink(HOTLINE_PHONE)} className="flex items-center gap-3 group">
-                  <div className="w-10 h-10 rounded-full gradient-gold flex items-center justify-center text-white shrink-0">
-                    <Phone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="font-inter font-bold text-xl text-foreground group-hover:text-gold transition-colors">{HOTLINE_PHONE}</p>
-                    <p className="text-xs text-muted-foreground font-inter">Щоденні консультації та запис на огляд</p>
-                  </div>
-                </a>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Консультація та підбір об'єктів</p>
+                  <span className="text-[10px] font-semibold text-muted-foreground bg-muted/80 px-2.5 py-0.5 rounded-full font-inter">
+                    Черговий директор: {dutyDirector.name}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <a href={getPhoneLink(currentPhone)} className="flex items-center gap-3 group min-w-0">
+                    <div className="w-10 h-10 rounded-full gradient-gold flex items-center justify-center text-white shrink-0 shadow-sm">
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-inter font-bold text-xl text-foreground group-hover:text-gold transition-colors tracking-tight">
+                        {currentPhone}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-inter">
+                        Щоденні консультації та запис на огляд
+                      </p>
+                    </div>
+                  </a>
+
+                  {dutyDirector.phones.length > 1 && (
+                    <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/40 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handlePrevPhone}
+                        aria-label="Попередній номер телефону"
+                        className="p-1 rounded-lg hover:bg-background text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-[11px] font-semibold text-foreground px-1 font-inter select-none">
+                        {activePhoneIndex + 1}/{dutyDirector.phones.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleNextPhone}
+                        aria-label="Наступний номер телефону"
+                        className="p-1 rounded-lg hover:bg-background text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <div className="pt-3 border-t border-border flex flex-wrap gap-2">
                   <a
@@ -196,10 +248,13 @@ const ContactPage = () => {
                     Telegram канал
                   </a>
                   <a
-                    href="viber://chat?number=%2B380507136363"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white transition-colors text-xs font-inter font-semibold"
+                    href="https://t.me/kharkovrealter_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088cc]/10 text-[#0088cc] hover:bg-[#0088cc] hover:text-white transition-colors text-xs font-inter font-semibold"
                   >
-                    Viber чат
+                    <Bot className="w-3.5 h-3.5" />
+                    Telegram бот
                   </a>
                 </div>
               </div>

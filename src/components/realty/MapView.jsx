@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Link } from 'react-router-dom'
-import { X, Loader2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { getFallbackCoords } from '@/lib/geocode'
@@ -43,21 +43,6 @@ const formatPrice = (price, deal) => {
   if (!price) return '—'
   if (deal === 'rent') return `${price.toLocaleString('uk-UA')} грн/міс`
   return `$${price.toLocaleString('uk-UA')}`
-}
-
-const FitBounds = ({ coords }) => {
-  const map = useMap()
-  const fitted = useRef(false)
-
-  useEffect(() => {
-    if (!fitted.current && coords.length > 0) {
-      const bounds = L.latLngBounds(coords)
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 })
-      fitted.current = true
-    }
-  }, [coords.length, map])
-
-  return null
 }
 
 const MapView = ({ properties = [] }) => {
@@ -217,17 +202,17 @@ const MapView = ({ properties = [] }) => {
               <div key={p.id} className="p-4 h-full w-full shrink-0 snap-start snap-always flex flex-col justify-between">
                 <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative" style={{ height: '180px' }}>
                   <img
-                    src={p.image_url || '/hero-bg.jpg'}
+                    src={p.image_url || '/hero-bg.webp'}
                     alt={p.title}
                     loading="lazy"
                     decoding="async"
-                    onError={(e) => { e.currentTarget.src = '/hero-bg.jpg' }}
+                    onError={(e) => { e.currentTarget.src = '/hero-bg.webp' }}
                     className="w-full h-full object-cover"
                   />
                   {(p.is_sold || p.deposit) && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
                       <img
-                        src={p.is_sold ? '/stamp-sold.png' : '/stamp-deposit.png'}
+                        src={p.is_sold ? '/stamp-sold.webp' : '/stamp-deposit.webp'}
                         alt={p.is_sold ? 'Продано' : 'Завдаток'}
                         className="w-3/4 h-3/4 object-contain drop-shadow-md"
                         onError={(e) => {

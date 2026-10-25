@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, MessageCircle, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
+import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
 import { getAllObjects, mapObject } from '@/lib/novostoyApi'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
@@ -16,8 +16,8 @@ const DEAL_LABELS = { sale: 'Продаж', rent: 'Оренда' }
 const TYPE_LABELS = { apartment: 'Квартира', house: 'Будинок', penthouse: 'Пентхаус', villa: 'Вілла', commercial: 'Комерційна' }
 
 const STATUS_STAMPS = [
-  { key: 'is_sold', src: '/stamp-sold.png', alt: 'Продано' },
-  { key: 'deposit', src: '/stamp-deposit.png', alt: 'Завдаток' },
+  { key: 'is_sold', src: '/stamp-sold.webp', alt: 'Продано' },
+  { key: 'deposit', src: '/stamp-deposit.webp', alt: 'Завдаток' },
 ]
 
 const sanitizeHtml = (html) => {
@@ -29,11 +29,24 @@ const sanitizeHtml = (html) => {
     .replace(/javascript:/gi, '')
 }
 
+const formatDescription = (raw) => {
+  if (!raw) return ''
+  const sanitized = sanitizeHtml(raw)
+  if (!sanitized.includes('<p>') && !sanitized.includes('<br') && !sanitized.includes('<div>')) {
+    return sanitized
+      .split(/\r?\n\r?\n/)
+      .map((paragraph) => `<p>${paragraph.replace(/\r?\n/g, '<br />')}</p>`)
+      .join('')
+  }
+  return sanitized
+}
+
+
 const PropertyDetail = () => {
   const { id } = useParams()
   const [activeImg, setActiveImg] = useState(0)
   const thumbnailRefs = useRef([])
-  const { isFavorite, toggleFavorite } = useFavorites()
+  const { isFavorite, toggleFavorite, saveFavoriteItem } = useFavorites()
   const { markVisited } = useVisited()
   const queryClient = useQueryClient()
 
@@ -84,8 +97,11 @@ const PropertyDetail = () => {
   useEffect(() => {
     if (property?.id) {
       markVisited(property.id)
+      if (isFavorite(property.id)) {
+        saveFavoriteItem(property)
+      }
     }
-  }, [property?.id, markVisited])
+  }, [property, markVisited, isFavorite, saveFavoriteItem])
 
   const handlePrevImage = useCallback(() => {
     if (!property?.images?.length) return
@@ -149,8 +165,8 @@ const PropertyDetail = () => {
 
   const handleToggleFavorite = useCallback((e) => {
     e.preventDefault()
-    if (property?.id) toggleFavorite(property.id)
-  }, [property?.id, toggleFavorite])
+    if (property?.id) toggleFavorite(property.id, property)
+  }, [property, toggleFavorite])
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault()
@@ -464,7 +480,7 @@ const PropertyDetail = () => {
                   <h3 className="font-cormorant text-2xl mb-4 font-bold">Опис</h3>
                   <div
                     className="text-foreground leading-relaxed text-sm font-inter space-y-3 prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(property.description) }}
+                    dangerouslySetInnerHTML={{ __html: formatDescription(property.description) }}
                   />
                 </div>
               )}
@@ -755,14 +771,6 @@ const PropertyDetail = () => {
         >
           <Phone className="w-3.5 h-3.5" />
           <span>Дзвінок</span>
-        </a>
-
-        <a
-          href={`viber://chat?number=%2B38${property.agent_phones?.[0] || '0507136363'}`}
-          className="flex items-center justify-center p-3 bg-[#7360f2] text-white rounded-xl active:scale-95 transition-transform"
-          aria-label="Написати у Viber"
-        >
-          <MessageCircle className="w-4 h-4" />
         </a>
 
         <a
