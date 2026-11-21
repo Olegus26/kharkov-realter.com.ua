@@ -386,15 +386,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       filterErecovery
   )
 
-  const shouldLoadFull = Boolean(
-    hasFilters ||
-      viewMode === 'map' ||
-      showAdvancedFilters ||
-      sortBy !== 'date_desc' ||
-      currentPage > 1
-  )
-
-  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal, { loadFull: shouldLoadFull })
+  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal)
 
   const filtered = useMemo(() => {
     const list = properties.filter((p) => {

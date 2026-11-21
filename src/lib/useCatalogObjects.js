@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { getAllObjects, getInitialObjects, mapObjects } from '@/lib/novostoyApi'
+import { getAllObjects, mapObjects } from '@/lib/novostoyApi'
 import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
 
 const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const SNAPSHOT_SIZE = 100
 
-const getSnapshotKey = (deal) => `catalog-snapshot-${deal}`
+const getSnapshotKey = (deal) => `catalog-snapshot-v2-${deal}`
 
-// Snapshot of the freshest objects from the previous visit: it lets the catalog and the home page
-// show the right order immediately while the database is loading
+// Snapshot of the freshest objects: shows the sorted catalog immediately while the full feed syncs
 const readSnapshot = (deal) => {
   try {
     const raw = localStorage.getItem(getSnapshotKey(deal))
@@ -17,63 +16,55 @@ const readSnapshot = (deal) => {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed
     }
   } catch {
-    // Storage is unavailable or corrupt: fall back to initial seed
+    // Storage unavailable or corrupt: fall back to bundled newest-sorted seed
   }
   return INITIAL_CATALOG_SEED[deal] || undefined
 }
 
 const writeSnapshot = (deal, items) => {
-  const slimItems = items.slice(0, SNAPSHOT_SIZE).map(({ description, images, agent_phones, ...cardFields }) => cardFields)
+  const slimItems = items
+    .slice(0, SNAPSHOT_SIZE)
+    .map(({ description, images, agent_phones, address_full, source_url, flat, ...cardFields }) => cardFields)
   try {
     localStorage.setItem(getSnapshotKey(deal), JSON.stringify(slimItems))
   } catch {
-    // Storage is unavailable or full: the snapshot is only an optimisation
+    // Storage unavailable or full: snapshot is only an optimisation
   }
 }
 
-export const useCatalogObjects = (deal, { loadFull = false } = {}) => {
+export const fetchFullCatalog = async (deal) => {
   const sellType = SELL_TYPE_BY_DEAL[deal]
 
-  // Fast initial fetch (~400ms across 3 parent types) unblocks first paint and LCP
-  const initialQuery = useQuery({
-    queryKey: ['novostoy-objects-initial', deal],
-    queryFn: async () => {
-      const initialItems = await getInitialObjects(sellType)
-      const mapped = mapObjects(initialItems)
-      writeSnapshot(deal, mapped)
-      return mapped
-    },
-    placeholderData: () => readSnapshot(deal),
-    staleTime: 1000 * 60 * 10,
-    gcTime: 1000 * 60 * 60 * 24,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  })
+  try {
+    const res = await fetch(`/api/catalog?deal=${encodeURIComponent(deal || 'sale')}`)
+    if (res.ok) {
+      const items = await res.json()
+      if (Array.isArray(items) && items.length > 0) {
+        writeSnapshot(deal, items)
+        return items
+      }
+    }
+  } catch {
+    // Fallback to direct API scan if serverless endpoint is unavailable
+  }
 
-  // Full database scan runs only once the user searches, filters, browses map, or paginates
-  const fullQuery = useQuery({
+  const allItems = await getAllObjects(sellType ? { sell_type: sellType } : {})
+  const items = mapObjects(allItems)
+  writeSnapshot(deal, items)
+  return items
+}
+
+export const useCatalogObjects = (deal) =>
+  useQuery({
     queryKey: ['novostoy-objects', deal],
     queryFn: async () => {
-      const allItems = await getAllObjects(sellType ? { sell_type: sellType } : {})
-      const items = mapObjects(allItems)
-      writeSnapshot(deal, items)
-      return items
+      // Yield briefly so the frame-1 LCP card image gets network priority over the full JSON payload
+      await new Promise((resolve) => setTimeout(resolve, 150))
+      return fetchFullCatalog(deal)
     },
-    enabled: loadFull,
-    staleTime: Infinity,
+    placeholderData: () => readSnapshot(deal),
+    staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 60 * 24,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   })
-
-  const data = fullQuery.data && fullQuery.data.length > 0
-    ? fullQuery.data
-    : (initialQuery.data || [])
-
-  return {
-    data,
-    isLoading: initialQuery.isLoading && data.length === 0,
-    isFetching: initialQuery.isFetching || fullQuery.isFetching,
-    error: fullQuery.error || initialQuery.error,
-  }
-}

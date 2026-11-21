@@ -40,8 +40,8 @@ const FavoritesPage = () => {
     })
 
     // 2. Source: localStorage catalog snapshots
-    const saleSnapshot = readLocalSnapshot('catalog-snapshot-sale')
-    const rentSnapshot = readLocalSnapshot('catalog-snapshot-rent')
+    const saleSnapshot = readLocalSnapshot('catalog-snapshot-v2-sale')
+    const rentSnapshot = readLocalSnapshot('catalog-snapshot-v2-rent')
     ;[...saleSnapshot, ...rentSnapshot].forEach((item) => {
       if (item?.id && !map.has(String(item.id))) {
         map.set(String(item.id), item)

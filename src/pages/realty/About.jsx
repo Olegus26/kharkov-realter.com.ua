@@ -33,15 +33,18 @@ const AboutPage = () => {
 
       {/* Hero */}
       <section className="relative h-80 sm:h-[450px] overflow-hidden mb-20 rounded-b-3xl pt-24">
-        <img
-          src="/about-bg.webp"
-          alt="Агентство нерухомості Харків Ріелтер"
-          width={960}
-          height={501}
-          fetchPriority="high"
-          decoding="sync"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <picture className="absolute inset-0 block w-full h-full">
+          <source media="(max-width: 767px)" srcSet="/about-bg-mobile.webp" type="image/webp" />
+          <img
+            src="/about-bg.webp"
+            alt="Агентство нерухомості Харків Ріелтер"
+            width={960}
+            height={501}
+            fetchPriority="high"
+            decoding="async"
+            className="w-full h-full object-cover"
+          />
+        </picture>
         <div className="absolute inset-0 bg-black/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent z-0" aria-hidden="true" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-10 pt-16">

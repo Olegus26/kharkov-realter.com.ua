@@ -25,7 +25,9 @@ import {
   Hammer
 } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
-import { getObjects, getAllObjects, mapObject } from '@/lib/novostoyApi'
+import { getObjects, mapObject } from '@/lib/novostoyApi'
+import { fetchFullCatalog } from '@/lib/useCatalogObjects'
+import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
@@ -117,11 +119,8 @@ const HomePage = () => {
   const handlePrefetchCatalog = useCallback(() => {
     queryClient.prefetchQuery({
       queryKey: ['novostoy-objects', 'sale'],
-      queryFn: async () => {
-        const allItems = await getAllObjects({ sell_type: '2' })
-        return allItems.map(mapObject)
-      },
-      staleTime: 10 * 60 * 1000,
+      queryFn: () => fetchFullCatalog('sale'),
+      staleTime: 5 * 60 * 1000,
     })
   }, [queryClient])
 
@@ -150,6 +149,18 @@ const HomePage = () => {
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['novostoy-objects-featured'],
     queryFn: async () => {
+      try {
+        const catalogItems = await fetchFullCatalog('sale')
+        const validCatalog = catalogItems.filter(
+          (item) => item.image_url && !item.is_sold && item.price > 0 && item.type === 'apartment'
+        )
+        if (validCatalog.length >= 12) {
+          return validCatalog.slice(0, 60)
+        }
+      } catch {
+        // Fallback below
+      }
+
       const res = await getObjects({ parent_id: '2', limit: 100 })
       const items = (res.data || []).map(mapObject)
       const validItems = items.filter(
@@ -175,6 +186,10 @@ const HomePage = () => {
         return scoreB - scoreA
       })
     },
+    placeholderData: () =>
+      (INITIAL_CATALOG_SEED.sale || []).filter(
+        (item) => item.type === 'apartment' && !item.is_sold && item.price > 0
+      ),
     staleTime: 5 * 60 * 1000
   })
 
