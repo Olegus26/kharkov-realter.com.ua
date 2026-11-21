@@ -34,13 +34,15 @@
         href = window.innerWidth <= 767 ? '/hero-bg-mobile.webp' : '/hero-bg.webp';
       } else if (p === '/o-korporatcii') {
         href = window.innerWidth <= 767 ? '/about-bg-mobile.webp' : '/about-bg.webp';
+      } else if (p === '/property/1385715') {
+        href = '/seed-1385715.webp';
       } else if (!s || s === '?deal=sale') {
         if (p === '/flats') {
-          href = 'https://wsrv.nl/?url=https%3A%2F%2Fnovostoy.com.ua%2Ffiles%2Fobekti%2F1376884_41.png&w=480&q=74&output=webp';
+          href = '/seed-flats.webp';
         } else if (p === '/houses') {
-          href = 'https://wsrv.nl/?url=https%3A%2F%2Fnovostoy.com.ua%2Ffiles%2Fobekti%2F1383244_7.jpeg&w=480&q=74&output=webp';
+          href = '/seed-houses.webp';
         } else if (p === '/realtys') {
-          href = 'https://wsrv.nl/?url=https%3A%2F%2Fnovostoy.com.ua%2Ffiles%2Fobekti%2F1384394_1.jpg&w=480&q=74&output=webp';
+          href = '/seed-realtys.webp';
         }
       }
       if (href) {

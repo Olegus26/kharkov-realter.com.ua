@@ -53,6 +53,7 @@ const formatDescription = (raw) => {
 const PropertyDetail = () => {
   const { id } = useParams()
   const [activeImg, setActiveImg] = useState(0)
+  const [mainImgFailed, setMainImgFailed] = useState(false)
   const thumbnailRefs = useRef([])
   const { isFavorite, toggleFavorite, saveFavoriteItem } = useFavorites()
   const { markVisited } = useVisited()
@@ -64,6 +65,11 @@ const PropertyDetail = () => {
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false)
   const [bookingSubmitted, setBookingSubmitted] = useState(false)
   const [bookingError, setBookingError] = useState('')
+
+  useEffect(() => {
+    setActiveImg(0)
+    setMainImgFailed(false)
+  }, [id])
 
   useEffect(() => {
     if (thumbnailRefs.current[activeImg]) {
@@ -106,6 +112,10 @@ const PropertyDetail = () => {
       const cached = findCachedProperty(id)
       if (cached && cached.images && cached.images.length > 0 && cached.agent_phones) {
         return cached
+      }
+
+      if (cached && cached.images?.length > 0 && cached.description) {
+        await waitForInteractiveOrIdle(3500)
       }
 
       const found = await findObjectById(id, cached || null)
@@ -170,7 +180,7 @@ const PropertyDetail = () => {
   const { data: allObjects = [] } = useQuery({
     queryKey: ['novostoy-objects-initial', property?.deal || 'sale'],
     queryFn: async () => {
-      await waitForInteractiveOrIdle(2500)
+      await waitForInteractiveOrIdle(4500)
       const items = await getInitialObjects(property?.deal === 'rent' ? '1' : '2')
       return items.map(mapObject)
     },
@@ -239,6 +249,10 @@ const PropertyDetail = () => {
     return 'Квартири'
   }, [property])
 
+  useEffect(() => {
+    setMainImgFailed(false)
+  }, [activeImg, property?.image_url, property?.images])
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pt-24 pb-20">
@@ -277,7 +291,9 @@ const PropertyDetail = () => {
 
   const images = property.images?.length
     ? property.images
-    : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80']
+    : property.image_url
+      ? [property.image_url]
+      : []
 
   const stamp = STATUS_STAMPS.find(({ key }) => property[key])
   const pricePerM2 = property.area ? Math.round(property.price / property.area) : null
@@ -318,24 +334,32 @@ const PropertyDetail = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Main image */}
             <div className="relative aspect-[16/9] overflow-hidden bg-card border border-border rounded-2xl group shadow-sm">
-              <img
-                src={getOptimizedImageUrl(images[activeImg], 1200, 82)}
-                alt={property.title}
-                width={1200}
-                height={675}
-                fetchPriority="high"
-                decoding="async"
-                className="w-full h-full object-cover select-none"
-                onError={(e) => {
-                  const raw = images[activeImg]
-                  if (raw && !e.currentTarget.dataset.rawTried && e.currentTarget.src !== raw) {
-                    e.currentTarget.dataset.rawTried = '1'
-                    e.currentTarget.src = raw
-                    return
-                  }
-                  e.currentTarget.src = '/hero-bg.webp'
-                }}
-              />
+              {images.length > 0 && !mainImgFailed ? (
+                <img
+                  key={images[activeImg]}
+                  src={getOptimizedImageUrl(images[activeImg], 1200, 82)}
+                  alt={property.title}
+                  width={1200}
+                  height={675}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full h-full object-cover select-none"
+                  onError={(e) => {
+                    const raw = images[activeImg]
+                    if (raw && !e.currentTarget.dataset.rawTried && e.currentTarget.src !== raw) {
+                      e.currentTarget.dataset.rawTried = '1'
+                      e.currentTarget.src = raw
+                      return
+                    }
+                    setMainImgFailed(true)
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-muted/30 flex flex-col items-center justify-center text-muted-foreground">
+                  <Building className="w-12 h-12 mb-2 opacity-40" aria-hidden="true" />
+                  <span className="text-sm font-inter">Фото відсутнє</span>
+                </div>
+              )}
               {stamp && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none z-10">
                   <img
@@ -385,7 +409,8 @@ const PropertyDetail = () => {
                 <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
                   {images.map((img, i) => (
                     <button
-                      key={i}
+                      key={`${img}-${i}`}
+                      type="button"
                       ref={(el) => { thumbnailRefs.current[i] = el }}
                       onClick={() => setActiveImg(i)}
                       aria-label={`Переглянути фото ${i + 1}`}
@@ -404,7 +429,16 @@ const PropertyDetail = () => {
                         loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover pointer-events-none rounded-lg"
-                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        onError={(e) => {
+                          if (img && !e.currentTarget.dataset.rawTried && e.currentTarget.src !== img) {
+                            e.currentTarget.dataset.rawTried = '1'
+                            e.currentTarget.src = img
+                            return
+                          }
+                          if (e.currentTarget.parentElement) {
+                            e.currentTarget.parentElement.style.display = 'none'
+                          }
+                        }}
                       />
                     </button>
                   ))}

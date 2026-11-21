@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Link } from 'react-router-dom'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, Building } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { getFallbackCoords } from '@/lib/geocode'
@@ -220,24 +220,28 @@ const MapView = ({ properties = [] }) => {
           <div className="overflow-y-auto flex-1 custom-scrollbar snap-y snap-mandatory">
             {selectedGroup.properties.map((p) => (
               <div key={p.id} className="p-4 h-full w-full shrink-0 snap-start snap-always flex flex-col justify-between">
-                <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative" style={{ height: '180px' }}>
-                  <img
-                    src={getOptimizedImageUrl(p.image_url, 480) || '/hero-bg.webp'}
-                    alt={p.title}
-                    width={480}
-                    height={360}
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      if (p.image_url && e.currentTarget.src !== p.image_url && !e.currentTarget.dataset.rawTried) {
-                        e.currentTarget.dataset.rawTried = '1'
-                        e.currentTarget.src = p.image_url
-                        return
-                      }
-                      e.currentTarget.src = '/hero-bg.webp'
-                    }}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative bg-muted flex items-center justify-center text-muted-foreground" style={{ height: '180px' }}>
+                  {p.image_url ? (
+                    <img
+                      src={getOptimizedImageUrl(p.image_url, 480)}
+                      alt={p.title}
+                      width={480}
+                      height={360}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        if (p.image_url && e.currentTarget.src !== p.image_url && !e.currentTarget.dataset.rawTried) {
+                          e.currentTarget.dataset.rawTried = '1'
+                          e.currentTarget.src = p.image_url
+                          return
+                        }
+                        e.currentTarget.style.display = 'none'
+                      }}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Building className="w-8 h-8 opacity-30" aria-hidden="true" />
+                  )}
                   {(p.is_sold || p.deposit) && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
                       <img

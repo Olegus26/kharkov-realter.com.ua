@@ -980,27 +980,37 @@ const HomePage = () => {
         )}
 
         {/* Pagination Dots */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-1 mt-10">
-            {[...Array(totalPages)].map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                tabIndex={0}
-                aria-label={`Сторінка ${idx + 1}`}
-                onClick={() => handleSlideDotClick(idx)}
-                className="w-6 h-6 flex items-center justify-center cursor-pointer"
-              >
-                <span
-                  className={cn(
-                    'h-2 rounded-full transition-all block',
-                    idx === safeCurrentSlide ? 'w-6 bg-gold' : 'w-2 bg-border hover:bg-muted-foreground/50'
-                  )}
-                />
-              </button>
-            ))}
-          </div>
-        )}
+        {totalPages > 1 && (() => {
+          const maxDots = 8
+          const visibleCount = Math.min(totalPages, maxDots)
+          const startPage = totalPages <= maxDots
+            ? 0
+            : Math.min(Math.max(0, safeCurrentSlide - Math.floor(maxDots / 2)), totalPages - maxDots)
+          return (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-10">
+              {[...Array(visibleCount)].map((_, offset) => {
+                const pageIndex = startPage + offset
+                return (
+                  <button
+                    key={pageIndex}
+                    type="button"
+                    tabIndex={0}
+                    aria-label={`Сторінка ${pageIndex + 1}`}
+                    onClick={() => handleSlideDotClick(pageIndex)}
+                    className="w-7 h-7 shrink-0 flex items-center justify-center cursor-pointer"
+                  >
+                    <span
+                      className={cn(
+                        'h-2 rounded-full transition-all block',
+                        pageIndex === safeCurrentSlide ? 'w-6 bg-gold' : 'w-2 bg-border hover:bg-muted-foreground/50'
+                      )}
+                    />
+                  </button>
+                )
+              })}
+            </div>
+          )
+        })()}
 
         <div className="text-center mt-8 sm:hidden">
           <Link

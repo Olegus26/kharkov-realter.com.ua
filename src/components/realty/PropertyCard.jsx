@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bed, BedDouble, Maximize2, MapPin, Heart, Building, Home, Hammer, Handshake, UtensilsCrossed } from 'lucide-react'
@@ -15,8 +15,6 @@ const STATUS_STAMPS = [
   { key: 'deposit', src: '/stamp-deposit.webp', alt: 'Завдаток' },
 ]
 
-const FALLBACK_IMAGE = '/hero-bg.webp'
-
 const formatPrice = (price, deal) => {
   if (!price) return '—'
   if (deal === 'rent') return `${price.toLocaleString('uk-UA')} грн`
@@ -27,6 +25,7 @@ const formatPrice = (price, deal) => {
 const PropertyCard = memo(({ property, className = '', priority = false }) => {
   const { isFavorite, toggleFavorite } = useFavorites()
   const liked = isFavorite(property.id)
+  const [failedImageSrc, setFailedImageSrc] = useState(null)
 
   const stamp = STATUS_STAMPS.find(({ key }) => property[key])
 
@@ -79,7 +78,7 @@ const PropertyCard = memo(({ property, className = '', priority = false }) => {
   }, [property, toggleFavorite])
 
   const optimizedImageUrl = useMemo(
-    () => getOptimizedImageUrl(property.image_url, 480, 74) || FALLBACK_IMAGE,
+    () => getOptimizedImageUrl(property.image_url, 480, 74),
     [property.image_url]
   )
 
@@ -89,8 +88,10 @@ const PropertyCard = memo(({ property, className = '', priority = false }) => {
       e.currentTarget.src = property.image_url
       return
     }
-    e.currentTarget.src = FALLBACK_IMAGE
+    setFailedImageSrc(property.image_url || 'missing')
   }
+
+  const isImageMissing = !property.image_url || failedImageSrc === property.image_url
 
   const handleStampError = (e) => {
     e.currentTarget.style.display = 'none'
@@ -100,22 +101,28 @@ const PropertyCard = memo(({ property, className = '', priority = false }) => {
     <div
       className={cn('group bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-xl transition-all hover:-translate-y-1 duration-300', className)}
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted/20">
         <Link to={`/property/${property.id}`} className="block w-full h-full">
-          <img
-            src={optimizedImageUrl}
-            alt={property.title}
-            width={640}
-            height={480}
-            loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'auto'}
-            decoding="async"
-            onError={handleImageError}
-            className={cn(
-              'w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 will-change-transform',
-              property.is_sold && 'grayscale-[35%]'
-            )}
-          />
+          {isImageMissing ? (
+            <div className="w-full h-full bg-muted/40 flex flex-col items-center justify-center text-muted-foreground">
+              <Building className="w-10 h-10 opacity-30" aria-hidden="true" />
+            </div>
+          ) : (
+            <img
+              src={optimizedImageUrl}
+              alt={property.title}
+              width={640}
+              height={480}
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'auto'}
+              decoding="async"
+              onError={handleImageError}
+              className={cn(
+                'w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 will-change-transform',
+                property.is_sold && 'grayscale-[35%]'
+              )}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent opacity-90" />
 
           {stamp && (
