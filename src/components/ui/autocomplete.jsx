@@ -71,10 +71,12 @@ export function Autocomplete({
                 />
                 {value && (
                     <button 
+                        type="button"
                         onClick={clearSelection}
+                        aria-label="Очистити вибране значення"
                         className="absolute right-3 p-1 rounded-full hover:bg-black/5 text-muted-foreground transition-colors"
                     >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
                 )}
             </div>

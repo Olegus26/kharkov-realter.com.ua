@@ -32,3 +32,12 @@ export const isValidPhone = (value) => {
   const digits = value.replace(/\D/g, '')
   return digits.length >= 10 && digits.length <= 13
 }
+
+export const getOptimizedImageUrl = (url, width = 640, quality = 78) => {
+  if (!url) return ''
+  if (url.startsWith('/') || url.startsWith('data:') || url.includes('wsrv.nl')) return url
+  if (url.includes('novostoy.com.ua')) {
+    return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${width}&q=${quality}&output=webp`
+  }
+  return url
+}

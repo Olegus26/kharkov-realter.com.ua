@@ -64,7 +64,6 @@ const MascotTelegramEmptyState = ({ deal = 'sale', onClearFilters }) => {
           target="_blank"
           rel="noopener noreferrer"
           tabIndex={0}
-          aria-label="Зберегти параметри пошуку в Telegram-боті Харків Ріелтер"
           className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-inter font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 hover:shadow-amber-400/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
         >
           <Send className="w-4 h-4 fill-slate-950 text-slate-950 shrink-0" />
@@ -77,7 +76,6 @@ const MascotTelegramEmptyState = ({ deal = 'sale', onClearFilters }) => {
             tabIndex={0}
             onClick={handleClear}
             onKeyDown={handleKeyDownClear}
-            aria-label="Скинути всі вибрані фільтри та показати всі об'єкти"
             className="w-full sm:w-auto px-5 py-3.5 bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-inter font-medium text-sm rounded-xl border border-border flex items-center justify-center gap-2 transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />

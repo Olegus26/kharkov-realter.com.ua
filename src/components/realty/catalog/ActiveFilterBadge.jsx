@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 const TONES = {
   navy: 'bg-navy/10 text-navy',
-  emerald: 'bg-emerald-600/10 text-emerald-700',
+  emerald: 'bg-emerald-600/10 text-emerald-800',
 }
 
 const ActiveFilterBadge = ({ children, onRemove, removeLabel, tone = 'navy', isBold = false }) => (

@@ -2,12 +2,12 @@ import { memo, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bed, BedDouble, Maximize2, MapPin, Heart, Building, Home, Hammer, Handshake, UtensilsCrossed } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getOptimizedImageUrl } from '@/lib/utils'
 import { useFavorites } from '@/lib/FavoritesContext'
 
 const PROGRAM_BADGES = [
-  { key: 'erecovery', label: 'єВідновлення', icon: Hammer, className: 'bg-emerald-600/90 backdrop-blur text-white' },
-  { key: 'eoselia', label: 'єОселя', icon: Home, className: 'bg-[#1a365d]/90 backdrop-blur text-white' },
+  { key: 'erecovery', label: 'єВідновлення', icon: Hammer, className: 'bg-emerald-700/95 backdrop-blur text-white' },
+  { key: 'eoselia', label: 'єОселя', icon: Home, className: 'bg-[#1a365d]/95 backdrop-blur text-white' },
 ]
 
 const STATUS_STAMPS = [
@@ -24,7 +24,7 @@ const formatPrice = (price, deal) => {
   return `$${price.toLocaleString('uk-UA')}`
 }
 
-const PropertyCard = memo(({ property, className = '' }) => {
+const PropertyCard = memo(({ property, className = '', priority = false }) => {
   const { isFavorite, toggleFavorite } = useFavorites()
   const liked = isFavorite(property.id)
 
@@ -78,7 +78,17 @@ const PropertyCard = memo(({ property, className = '' }) => {
     toggleFavorite(property.id, property)
   }, [property, toggleFavorite])
 
+  const optimizedImageUrl = useMemo(
+    () => getOptimizedImageUrl(property.image_url, 640, 78) || FALLBACK_IMAGE,
+    [property.image_url]
+  )
+
   const handleImageError = (e) => {
+    if (property.image_url && !e.currentTarget.dataset.rawTried && e.currentTarget.src !== property.image_url) {
+      e.currentTarget.dataset.rawTried = '1'
+      e.currentTarget.src = property.image_url
+      return
+    }
     e.currentTarget.src = FALLBACK_IMAGE
   }
 
@@ -90,99 +100,107 @@ const PropertyCard = memo(({ property, className = '' }) => {
     <div
       className={cn('group bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-xl transition-all hover:-translate-y-1 duration-300', className)}
     >
-      <Link to={`/property/${property.id}`} className="relative aspect-[4/3] overflow-hidden block">
-        <img
-          src={property.image_url || FALLBACK_IMAGE}
-          alt={property.title}
-          loading="lazy"
-          decoding="async"
-          onError={handleImageError}
-          className={cn(
-            'w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 will-change-transform',
-            property.is_sold && 'grayscale-[35%]'
-          )}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent opacity-90" />
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <Link to={`/property/${property.id}`} className="block w-full h-full">
+          <img
+            src={optimizedImageUrl}
+            alt={property.title}
+            width={640}
+            height={480}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            decoding="async"
+            onError={handleImageError}
+            className={cn(
+              'w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 will-change-transform',
+              property.is_sold && 'grayscale-[35%]'
+            )}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent opacity-90" />
 
-        {stamp && (
-          <div className="absolute inset-0 bg-black/35 backdrop-blur-[0.5px] flex items-center justify-center pointer-events-none">
-            <img
-              src={stamp.src}
-              alt={stamp.alt}
-              loading="lazy"
-              decoding="async"
-              className="w-3/4 h-3/4 object-contain scale-110 drop-shadow-xl"
-              onError={handleStampError}
-            />
+          {stamp && (
+            <div className="absolute inset-0 bg-black/35 backdrop-blur-[0.5px] flex items-center justify-center pointer-events-none">
+              <img
+                src={stamp.src}
+                alt={stamp.alt}
+                width={400}
+                height={400}
+                loading="lazy"
+                decoding="async"
+                className="w-3/4 h-3/4 object-contain scale-110 drop-shadow-xl"
+                onError={handleStampError}
+              />
+            </div>
+          )}
+
+          {/* Badges: Top, Новобудова, єВідновлення (first), єОселя (second) */}
+          <div className="absolute top-4 left-4 right-16 flex flex-wrap gap-2">
+            {property.featured && (
+              <span className="px-3 py-1 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full">
+                Топ
+              </span>
+            )}
+            {property.new_building && (
+              <span className="px-3 py-1 bg-white/20 backdrop-blur text-white text-[10px] tracking-widest uppercase font-inter rounded-full">
+                Новобудова
+              </span>
+            )}
+            {PROGRAM_BADGES.filter(({ key }) => property[key]).map(({ key, label, icon: Icon, className: badgeClass }) => (
+              <span
+                key={key}
+                className={cn('flex items-center gap-1.5 px-3 py-1 text-[11px] tracking-wide font-inter font-semibold rounded-full shadow-md', badgeClass)}
+              >
+                <Icon className="w-3 h-3 shrink-0" aria-hidden="true" />
+                {label}
+              </span>
+            ))}
           </div>
-        )}
 
-        {/* Badges: Top, Новобудова, єВідновлення (first), єОселя (second) */}
-        <div className="absolute top-4 left-4 right-16 flex flex-wrap gap-2">
-          {property.featured && (
-            <span className="px-3 py-1 bg-navy text-white text-[10px] tracking-widest uppercase font-inter font-medium rounded-full">
-              Топ
-            </span>
-          )}
-          {property.new_building && (
-            <span className="px-3 py-1 bg-white/20 backdrop-blur text-white text-[10px] tracking-widest uppercase font-inter rounded-full">
-              Новобудова
-            </span>
-          )}
-          {PROGRAM_BADGES.filter(({ key }) => property[key]).map(({ key, label, icon: Icon, className: badgeClass }) => (
-            <span
-              key={key}
-              className={cn('flex items-center gap-1.5 px-3 py-1 text-[11px] tracking-wide font-inter font-semibold rounded-full shadow-md', badgeClass)}
-            >
-              <Icon className="w-3 h-3 shrink-0" aria-hidden="true" />
-              {label}
-            </span>
-          ))}
-        </div>
+          {/* Price, per m², and Торг on image */}
+          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2">
+            <div>
+              <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price, property.deal)}</p>
+              {property.deal === 'rent' && <p className="text-[10px] text-white/70 font-inter">/місяць</p>}
+            </div>
 
-        <div className="absolute top-4 right-4">
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              {property.tender && (
+                <span
+                  className="flex items-center gap-1 px-2.5 py-0.5 bg-navy/85 backdrop-blur text-white text-[10px] font-inter font-semibold rounded-full shadow-md"
+                  title="Можливий торг"
+                >
+                  <Handshake className="w-3 h-3 shrink-0" aria-hidden="true" />
+                  <span>Торг</span>
+                </span>
+              )}
+
+              {formattedPricePerM2 && (
+                <span className="px-2 py-0.5 bg-black/55 backdrop-blur-md text-white text-xs font-inter font-semibold rounded-md shadow-md tracking-tight border border-white/10">
+                  {formattedPricePerM2}
+                </span>
+              )}
+            </div>
+          </div>
+        </Link>
+
+        <div className="absolute top-4 right-4 z-10">
           <motion.button
+            type="button"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleToggleFavorite}
-            className="p-2 bg-black/20 backdrop-blur hover:bg-black/40 rounded-full transition-colors group/btn flex items-center justify-center"
+            className="p-2 bg-black/30 backdrop-blur hover:bg-black/50 rounded-full transition-colors group/btn flex items-center justify-center"
             aria-label={liked ? 'Видалити з обраного' : 'Додати в обране'}
           >
             <motion.div animate={{ scale: liked ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
               <Heart className={cn('w-4 h-4 transition-colors', {
                 'text-red-500 fill-red-500': liked,
-                'text-white/70 group-hover/btn:text-white': !liked,
+                'text-white/80 group-hover/btn:text-white': !liked,
               })} />
             </motion.div>
           </motion.button>
         </div>
-
-        {/* Price, per m², and Торг on image */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2">
-          <div>
-            <p className="font-inter text-2xl font-bold text-white tracking-tight">{formatPrice(property.price, property.deal)}</p>
-            {property.deal === 'rent' && <p className="text-[10px] text-white/70 font-inter">/місяць</p>}
-          </div>
-
-          <div className="flex flex-col items-end gap-1.5 shrink-0">
-            {property.tender && (
-              <span
-                className="flex items-center gap-1 px-2.5 py-0.5 bg-navy/85 backdrop-blur text-white text-[10px] font-inter font-semibold rounded-full shadow-md"
-                title="Можливий торг"
-              >
-                <Handshake className="w-3 h-3 shrink-0" aria-hidden="true" />
-                <span>Торг</span>
-              </span>
-            )}
-
-            {formattedPricePerM2 && (
-              <span className="px-2 py-0.5 bg-black/45 backdrop-blur-md text-white/95 text-xs font-inter font-semibold rounded-md shadow-md tracking-tight border border-white/10">
-                {formattedPricePerM2}
-              </span>
-            )}
-          </div>
-        </div>
-      </Link>
+      </div>
 
       {/* Info */}
       <div className="p-5 flex flex-col flex-grow bg-card">
@@ -249,5 +267,7 @@ const PropertyCard = memo(({ property, className = '' }) => {
   )
 
 })
+
+PropertyCard.displayName = 'PropertyCard'
 
 export default PropertyCard

@@ -16,8 +16,10 @@ const Footer = () => {
             <Link to="/" className="flex items-center gap-4 mb-6 group">
               <img
                 src="/logo.png"
-                alt="Харків Ріелтер Корпорація"
-                className="h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                alt=""
+                width={160}
+                height={160}
+                className="h-16 w-16 object-contain transition-transform duration-500 group-hover:scale-105"
               />
               <div>
                 <p className="font-cormorant font-bold text-xl leading-none tracking-widest text-foreground">ХАРКІВ</p>
@@ -159,17 +161,17 @@ const Footer = () => {
           {/* Partner logos */}
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 lg:gap-4">
             {[
-              { src: '/rieltor_logo.png', alt: 'РІЕЛТОР.ua Партнер', h: 'h-6' },
-              { src: '/lun_logo_386.svg', alt: 'ЛУН Партнер', h: 'h-5' },
-              { src: '/flatfy.svg', alt: 'Flatfy Партнер', h: 'h-5' },
-              { src: '/olx_logo.svg', alt: 'OLX Партнер', h: 'h-5' },
-              { src: '/dimria-partner.svg', alt: 'dim RIA Партнер', h: 'h-6' },
+              { src: '/rieltor_logo.png', alt: 'РІЕЛТОР.ua Партнер', h: 'h-6', width: 80, height: 24 },
+              { src: '/lun_logo_386.svg', alt: 'ЛУН Партнер', h: 'h-5', width: 51, height: 20 },
+              { src: '/flatfy.svg', alt: 'Flatfy Партнер', h: 'h-5', width: 49, height: 20 },
+              { src: '/olx_logo.svg', alt: 'OLX Партнер', h: 'h-5', width: 35, height: 20 },
+              { src: '/dimria-partner.svg', alt: 'dim RIA Партнер', h: 'h-6', width: 79, height: 24 },
             ].map((logo, i) => (
               <div
                 key={i}
                 className="bg-navy rounded-xl px-5 py-2.5 flex items-center justify-center opacity-90 hover:opacity-100 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
               >
-                <img src={logo.src} alt={logo.alt} className={`${logo.h} w-auto object-contain`} />
+                <img src={logo.src} alt={logo.alt} width={logo.width} height={logo.height} className={`${logo.h} w-auto object-contain`} />
               </div>
             ))}
           </div>

@@ -95,7 +95,7 @@ const EVidnovlennya = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="py-8 sm:py-14 border-b border-border">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-inter font-semibold mb-6 shadow-sm">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-700 text-white text-xs font-inter font-semibold mb-6 shadow-sm">
             <Hammer className="w-3.5 h-3.5 text-white" />
             <span>Державна компенсація за знищене житло</span>
           </div>
@@ -186,7 +186,7 @@ const EVidnovlennya = () => {
             ].map((st) => (
               <div key={st.step} className="p-6 rounded-2xl bg-card border border-border flex flex-col justify-between">
                 <div>
-                  <span className="font-cormorant text-4xl font-bold text-emerald-600/70 block mb-3">{st.step}</span>
+                  <span className="font-cormorant text-4xl font-bold text-emerald-700 block mb-3">{st.step}</span>
                   <h3 className="font-inter font-bold text-base text-foreground mb-2">{st.title}</h3>
                   <p className="text-xs text-muted-foreground font-inter leading-relaxed">{st.desc}</p>
                 </div>
@@ -388,7 +388,7 @@ const EVidnovlennya = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 bg-emerald-600 text-white text-xs tracking-widest uppercase font-bold hover:bg-emerald-700 rounded-full transition-colors flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+                  className="w-full py-3.5 bg-emerald-700 text-white text-xs tracking-widest uppercase font-bold hover:bg-emerald-800 rounded-full transition-colors flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                   <span>{isSubmitting ? 'Надсилання...' : 'Отримати консультацію щодо сертифіката'}</span>

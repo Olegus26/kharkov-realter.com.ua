@@ -10,8 +10,9 @@ import { FavoritesProvider } from '@/lib/FavoritesContext'
 import SiteLayout from '@/components/realty/SiteLayout'
 import ScrollToTop from '@/components/realty/ScrollToTop'
 
-// Lazy load all page components for code splitting: only the visited route gets downloaded
-const HomePage = lazy(() => import('@/pages/realty/Home'))
+import HomePage from '@/pages/realty/Home'
+
+// Lazy load secondary route components for code splitting: Home loads eagerly on frame 1
 const CatalogPage = lazy(() => import('@/pages/realty/Catalog'))
 const PropertyDetail = lazy(() => import('@/pages/realty/PropertyDetail'))
 const AgentsPage = lazy(() => import('@/pages/realty/Agents'))
@@ -29,9 +30,9 @@ const CATALOG_CATEGORY_BY_PATH = {
   '/realtys': 'commercial',
 }
 
-// Minimal loading fallback — just a subtle pulse, no layout shift
+// Minimal loading fallback — full viewport height keeps Footer below the fold to avoid CLS
 const PageLoader = () => (
-  <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="Завантаження">
+  <div className="min-h-screen flex items-center justify-center" role="status" aria-label="Завантаження">
     <div className="flex gap-1.5">
       {[0, 150, 300].map((delay) => (
         <div
@@ -60,7 +61,7 @@ const lazyElement = (Component) => (
 )
 
 const PAGE_ROUTES = [
-  { path: '/', component: HomePage },
+  { path: '/', component: HomePage, eager: true },
   { path: '/eoselia', component: EOseliaPage },
   { path: '/evidnovlennya', component: EVidnovlennyaPage },
   // Single dynamic route guarantees zero unmounts between flats/houses/realtys
@@ -77,8 +78,8 @@ const PAGE_ROUTES = [
 const AppRoutes = () => (
   <Routes>
     <Route element={<SiteLayout />}>
-      {PAGE_ROUTES.map(({ path, component }) => (
-        <Route key={path} path={path} element={lazyElement(component)} />
+      {PAGE_ROUTES.map(({ path, component: Component, eager }) => (
+        <Route key={path} path={path} element={eager ? <Component /> : lazyElement(Component)} />
       ))}
     </Route>
     <Route path="*" element={<PageNotFound />} />

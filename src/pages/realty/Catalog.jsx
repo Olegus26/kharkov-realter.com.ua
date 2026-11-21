@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect, useRef, startTransition } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, startTransition, lazy, Suspense } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { LayoutGrid, Map, AlertCircle, ChevronDown, Filter, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
-import MapView from '@/components/realty/MapView'
 import { useCatalogObjects } from '@/lib/useCatalogObjects'
+
+const MapView = lazy(() => import('@/components/realty/MapView'))
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateItemListSchema } from '@/components/seo/JsonLd'
@@ -90,7 +91,10 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
   }
 
-  useEffect(() => {
+  const geoLoadedRef = useRef(false)
+  const ensureGeoData = useCallback(() => {
+    if (geoLoadedRef.current) return
+    geoLoadedRef.current = true
     Promise.all([
       import('@/data/streets.json').then((m) => m.default),
       import('@/data/houses.json').then((m) => m.default),
@@ -101,6 +105,12 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       })
       .catch((e) => console.error('Error loading geo data', e))
   }, [])
+
+  useEffect(() => {
+    if (viewMode === 'map' || searchComplex || searchStreet) {
+      ensureGeoData()
+    }
+  }, [viewMode, searchComplex, searchStreet, ensureGeoData])
 
   const streetOptions = useMemo(
     () => geoData.streets.map((s) => ({ label: s.current_name, value: s.current_name })),
@@ -355,7 +365,36 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setFilterErecovery(false)
   }
 
-  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal)
+  const hasFilters = Boolean(
+    searchQuery ||
+      subTypes.length > 0 ||
+      minPrice ||
+      maxPrice ||
+      minArea ||
+      maxArea ||
+      searchComplex ||
+      searchStreet ||
+      searchHouse ||
+      metroStations.length > 0 ||
+      districts.length > 0 ||
+      states.length > 0 ||
+      minFloor ||
+      maxFloor ||
+      minFloorsTotal ||
+      maxFloorsTotal ||
+      filterEoselia ||
+      filterErecovery
+  )
+
+  const shouldLoadFull = Boolean(
+    hasFilters ||
+      viewMode === 'map' ||
+      showAdvancedFilters ||
+      sortBy !== 'date_desc' ||
+      currentPage > 1
+  )
+
+  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal, { loadFull: shouldLoadFull })
 
   const filtered = useMemo(() => {
     const list = properties.filter((p) => {
@@ -505,27 +544,6 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     return items
   }, [viewMode, currentItems, shouldShowPromo, promoInsertIndex, currentPage])
 
-  const hasFilters = Boolean(
-    searchQuery ||
-      subTypes.length > 0 ||
-      minPrice ||
-      maxPrice ||
-      minArea ||
-      maxArea ||
-      searchComplex ||
-      searchStreet ||
-      searchHouse ||
-      metroStations.length > 0 ||
-      districts.length > 0 ||
-      states.length > 0 ||
-      minFloor ||
-      maxFloor ||
-      minFloorsTotal ||
-      maxFloorsTotal ||
-      filterEoselia ||
-      filterErecovery
-  )
-
   const advancedFiltersActiveCount =
     (metroStations.length > 0 ? 1 : 0) +
     (districts.length > 0 ? 1 : 0) +
@@ -579,6 +597,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     >
       <SeoMeta title={getSeoTitle()} description={getSeoDescription()} url={`${location.pathname}${location.search}`} />
       <JsonLd data={generateItemListSchema(filtered, schemaUrl)} />
+      <h1 className="sr-only">{getSeoTitle()}</h1>
+      <h2 className="sr-only">Фільтри та список нерухомості</h2>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40">
         {viewMode === 'map' && (
@@ -668,7 +688,6 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                           <PopoverTrigger asChild>
                             <button
                               type="button"
-                              aria-label="Сортування каталогу"
                               className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full px-4 py-2.5 outline-none transition-colors border border-transparent hover:border-border"
                             >
                               <span>{SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Новіші спочатку'}</span>
@@ -720,6 +739,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                           <button
                             key={v.id}
                             type="button"
+                            aria-label={v.label}
                             onClick={() => startTransition(() => handleViewModeChange(v.id))}
                             className={cn(
                               'relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full',
@@ -743,7 +763,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
                   <div className="flex flex-col w-full">
                     <div className="flex flex-wrap items-center gap-3 w-full font-inter">
-                      <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                      <div onFocus={ensureGeoData} className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
                         <Autocomplete
                           placeholder="Оберіть ЖК..."
                           options={complexOptions}
@@ -753,7 +773,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         />
                       </div>
 
-                      <div className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                      <div onFocus={ensureGeoData} className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
                         <Autocomplete
                           placeholder="Вулиця..."
                           options={streetOptions}
@@ -770,7 +790,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         />
                       </div>
 
-                      <div className="relative flex-1 min-w-[100px] lg:max-w-[120px] z-50">
+                      <div onFocus={ensureGeoData} className="relative flex-1 min-w-[100px] lg:max-w-[120px] z-50">
                         <Autocomplete
                           placeholder="Дім..."
                           disabled={!searchStreet}
@@ -893,7 +913,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                               className={cn(
                                 'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
                                 filterErecovery
-                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
                                   : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
                               )}
                             >
@@ -1109,7 +1129,15 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
               <p className="text-muted-foreground font-inter text-sm">Завантаження карти...</p>
             </div>
           ) : (
-            <MapView properties={filtered} />
+            <Suspense
+              fallback={
+                <div className="w-full h-full animate-pulse bg-muted flex items-center justify-center">
+                  <p className="text-muted-foreground font-inter text-sm">Завантаження карти...</p>
+                </div>
+              }
+            >
+              <MapView properties={filtered} />
+            </Suspense>
           )}
         </div>
       )}
@@ -1153,12 +1181,12 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   return (
                     <motion.div
                       key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={i === 0 ? false : { opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: (i % 18) * 0.03 }}
+                      transition={{ duration: 0.25, delay: i === 0 ? 0 : (i % 18) * 0.025 }}
                       className="h-full"
                     >
-                      <PropertyCard property={item.data} />
+                      <PropertyCard property={item.data} priority={i === 0} />
                     </motion.div>
                   )
                 })}

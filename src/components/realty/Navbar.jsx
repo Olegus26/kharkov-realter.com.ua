@@ -137,13 +137,14 @@ const Navbar = () => {
         <Link
           to="/"
           onClick={handleCloseAll}
-          aria-label="На головну Харків Ріелтер"
           className="flex items-center gap-2.5 sm:gap-3 shrink-0 group focus:outline-none"
         >
           <img
             src="/logo.png"
-            alt="Харків Ріелтер логотип"
-            className="h-8 sm:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            alt=""
+            width={160}
+            height={160}
+            className="h-8 w-8 sm:h-9 sm:w-9 object-contain transition-transform duration-300 group-hover:scale-105"
           />
           <div>
             <p className="font-cormorant font-bold text-base sm:text-lg leading-none tracking-widest text-foreground">ХАРКІВ</p>
@@ -180,7 +181,6 @@ const Navbar = () => {
               onClick={handleToggleServices}
               aria-expanded={isServicesOpen}
               aria-haspopup="true"
-              aria-label="Меню послуг та державних програм"
               className={cn(
                 'flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200 outline-none',
                 isServicesOpen || isServicesActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'
@@ -276,7 +276,6 @@ const Navbar = () => {
               onClick={handleToggleReviews}
               aria-expanded={isReviewsOpen}
               aria-haspopup="true"
-              aria-label="Відгуки за філіями Google Maps"
               className={cn(
                 'flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-full text-xs xl:text-sm font-medium whitespace-nowrap transition-colors duration-200 outline-none',
                 isReviewsOpen ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/75 hover:text-foreground hover:bg-black/5'

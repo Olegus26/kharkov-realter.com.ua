@@ -3,11 +3,11 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
-import { getAllObjects, mapObject } from '@/lib/novostoyApi'
+import { getInitialObjects, findObjectById, mapObject } from '@/lib/novostoyApi'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
 import { submitLead } from '@/lib/leadService'
-import { formatPhone, cn } from '@/lib/utils'
+import { formatPhone, cn, getOptimizedImageUrl } from '@/lib/utils'
 import PropertyCard from '@/components/realty/PropertyCard'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
@@ -31,7 +31,13 @@ const sanitizeHtml = (html) => {
 
 const formatDescription = (raw) => {
   if (!raw) return ''
-  const sanitized = sanitizeHtml(raw)
+  let sanitized = sanitizeHtml(raw)
+  // Normalize CMS heading tags inside <h2>Опис</h2> section so heading hierarchy never skips levels
+  sanitized = sanitized
+    .replace(/<h1(\b[^>]*)>/gi, '<h3$1>')
+    .replace(/<\/h1>/gi, '</h3>')
+    .replace(/<h2(\b[^>]*)>/gi, '<h3$1>')
+    .replace(/<\/h2>/gi, '</h3>')
   if (!sanitized.includes('<p>') && !sanitized.includes('<br') && !sanitized.includes('<div>')) {
     return sanitized
       .split(/\r?\n\r?\n/)
@@ -67,29 +73,27 @@ const PropertyDetail = () => {
     }
   }, [activeImg])
 
-  // Try to find property in existing cache first, then fetch if needed
+  // Try to find property in existing cache first, then search API with early abort
   const { data: property, isLoading } = useQuery({
     queryKey: ['novostoy-property', id],
     queryFn: async () => {
-      const saleCache = queryClient.getQueryData(['novostoy-objects', 'sale'])
-      const rentCache = queryClient.getQueryData(['novostoy-objects', 'rent'])
-      const allCache = queryClient.getQueryData(['novostoy-objects', ''])
+      const caches = [
+        queryClient.getQueryData(['novostoy-objects', 'sale']),
+        queryClient.getQueryData(['novostoy-objects', 'rent']),
+        queryClient.getQueryData(['novostoy-objects-initial', 'sale']),
+        queryClient.getQueryData(['novostoy-objects-initial', 'rent']),
+        queryClient.getQueryData(['novostoy-objects', '']),
+      ]
 
-      for (const cache of [saleCache, rentCache, allCache]) {
+      for (const cache of caches) {
         if (cache) {
           const found = cache.find((o) => String(o.id) === String(id))
           if (found && found.images && found.images.length > 0) return found
         }
       }
 
-      const allItems = await getAllObjects({ sell_type: '2' })
-      const mapped = allItems.map(mapObject)
-      const found = mapped.find((o) => String(o.id) === String(id))
-      if (found) return found
-
-      const rentItems = await getAllObjects({ sell_type: '1' })
-      const mappedRent = rentItems.map(mapObject)
-      return mappedRent.find((o) => String(o.id) === String(id)) || null
+      const raw = await findObjectById(id)
+      return raw ? mapObject(raw) : null
     },
     staleTime: 10 * 60 * 1000,
   })
@@ -147,9 +151,9 @@ const PropertyDetail = () => {
   }
 
   const { data: allObjects = [] } = useQuery({
-    queryKey: ['novostoy-objects', property?.deal || 'sale'],
+    queryKey: ['novostoy-objects-initial', property?.deal || 'sale'],
     queryFn: async () => {
-      const items = await getAllObjects({ sell_type: property?.deal === 'rent' ? '1' : '2' })
+      const items = await getInitialObjects(property?.deal === 'rent' ? '1' : '2')
       return items.map(mapObject)
     },
     enabled: Boolean(property?.id),
@@ -285,10 +289,22 @@ const PropertyDetail = () => {
             {/* Main image */}
             <div className="relative aspect-[16/9] overflow-hidden bg-card border border-border rounded-2xl group shadow-sm">
               <img
-                src={images[activeImg]}
+                src={getOptimizedImageUrl(images[activeImg], 1200, 82)}
                 alt={property.title}
+                width={1200}
+                height={675}
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover select-none"
-                onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80' }}
+                onError={(e) => {
+                  const raw = images[activeImg]
+                  if (raw && !e.currentTarget.dataset.rawTried && e.currentTarget.src !== raw) {
+                    e.currentTarget.dataset.rawTried = '1'
+                    e.currentTarget.src = raw
+                    return
+                  }
+                  e.currentTarget.src = '/hero-bg.webp'
+                }}
               />
               {stamp && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none z-10">
@@ -351,8 +367,10 @@ const PropertyDetail = () => {
                       )}
                     >
                       <img
-                        src={img}
+                        src={getOptimizedImageUrl(img, 200, 72)}
                         alt=""
+                        width={96}
+                        height={64}
                         loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover pointer-events-none rounded-lg"
@@ -380,7 +398,7 @@ const PropertyDetail = () => {
               {/* State programs & bargain badges */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {property.erecovery && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded-full text-xs font-inter font-bold shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-700 text-white rounded-full text-xs font-inter font-bold shadow-sm">
                     <Hammer className="w-3.5 h-3.5" />
                     єВідновлення
                   </span>
@@ -477,7 +495,7 @@ const PropertyDetail = () => {
               {/* Description sanitized */}
               {property.description && (
                 <div className="mb-8">
-                  <h3 className="font-cormorant text-2xl mb-4 font-bold">Опис</h3>
+                  <h2 className="font-cormorant text-2xl mb-4 font-bold">Опис</h2>
                   <div
                     className="text-foreground leading-relaxed text-sm font-inter space-y-3 prose max-w-none"
                     dangerouslySetInnerHTML={{ __html: formatDescription(property.description) }}
@@ -493,7 +511,7 @@ const PropertyDetail = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-gold font-inter transition-colors"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" /> Оригінальна сторінка об'єкта
+                  <ExternalLink className="w-3.5 h-3.5" /> Оригінальна сторінка об&apos;єкта
                 </a>
               )}
 
@@ -503,9 +521,9 @@ const PropertyDetail = () => {
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <div>
                       <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold">Державна іпотека</p>
-                      <h3 className="font-cormorant text-2xl font-bold">Калькулятор «єОселя»</h3>
+                      <h2 className="font-cormorant text-2xl font-bold">Калькулятор «єОселя»</h2>
                     </div>
-                    <span className="px-3 py-1 bg-emerald-600/10 text-emerald-600 text-xs font-bold font-inter rounded-full">
+                    <span className="px-3 py-1 bg-emerald-600/10 text-emerald-800 text-xs font-bold font-inter rounded-full">
                       від 3% річних
                     </span>
                   </div>

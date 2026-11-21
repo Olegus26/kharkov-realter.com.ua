@@ -1,11 +1,12 @@
 const API_BASE = 'https://novostoy.com.ua/api/json'
 const API_KEY = '4j6yrnNZnAtsZdNfsFCcBPSqsxBO38AP'
 
-const post = async (method, data) => {
+const post = async (method, data, signal) => {
   const res = await fetch(`${API_BASE}/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ key: API_KEY, data }),
+    signal,
   })
   if (!res.ok) throw new Error(`API error: ${res.status}`)
   const json = await res.json()
@@ -17,6 +18,24 @@ export const getConfig = () => post('getConfig', ['all'])
 
 export const getObjects = (filters = {}) =>
   post('getObjects', { start_id: 0, limit: 100, ...filters })
+
+export const getInitialObjects = async (sellType) => {
+  const base = sellType ? { sell_type: sellType } : {}
+  const responses = await Promise.allSettled([
+    post('getObjects', { limit: 100, parent_id: '2', ...base }),
+    post('getObjects', { limit: 100, parent_id: '6', ...base }),
+    post('getObjects', { limit: 100, parent_id: '4', ...base }),
+  ])
+
+  const unique = new Map()
+  responses.forEach((res) => {
+    if (res.status !== 'fulfilled') return
+    ;(res.value?.data || []).forEach((item) => {
+      unique.set(item.id, item)
+    })
+  })
+  return Array.from(unique.values())
+}
 
 // Helper to delay execution
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -203,3 +222,95 @@ export const mapObject = (obj) => ({
 // Maps raw API objects and puts the most recently edited ones first (id as a stable tie-breaker)
 export const mapObjects = (items = []) =>
   items.map(mapObject).sort((a, b) => b.date_edit - a.date_edit || Number(b.id) - Number(a.id))
+
+export const findObjectById = async (targetId) => {
+  const normalizedTarget = String(targetId)
+
+  // Fast check in the initial batch first (takes ~450ms for sale & rent apartments/houses/commercial)
+  const [saleInitial, rentInitial] = await Promise.allSettled([
+    getInitialObjects('2'),
+    getInitialObjects('1'),
+  ])
+
+  for (const res of [saleInitial, rentInitial]) {
+    if (res.status !== 'fulfilled') continue
+    const hit = res.value.find((item) => String(item.id) === normalizedTarget)
+    if (hit) return hit
+  }
+
+  // Parallel bounded scan with early abort as soon as the target ID is found
+  const queue = buildPriceRanges(SALE_PRICE_EDGES)
+  const controller = new AbortController()
+  let activeRequests = 0
+  const MAX_CONCURRENT = 10
+  let foundItem = null
+  let isFinished = false
+
+  return new Promise((resolve) => {
+    const finish = (item) => {
+      if (isFinished) return
+      isFinished = true
+      controller.abort()
+      resolve(item)
+    }
+
+    const processQueue = () => {
+      if (isFinished) return
+      if (queue.length === 0 && activeRequests === 0) {
+        finish(foundItem)
+        return
+      }
+
+      while (!isFinished && queue.length > 0 && activeRequests < MAX_CONCURRENT) {
+        const range = queue.shift()
+        activeRequests++
+
+        ;(async () => {
+          try {
+            const payload = {
+              limit: PAGE_LIMIT,
+              price_from: range.min,
+              price_to: range.max,
+              ...(range.extra || {}),
+            }
+            const res = await post('getObjects', payload, controller.signal)
+            if (isFinished) return
+
+            const items = res.data || []
+            const match = items.find((item) => String(item.id) === normalizedTarget)
+            if (match) {
+              foundItem = match
+              finish(match)
+              return
+            }
+
+            if (items.length >= PAGE_LIMIT) {
+              if (range.min < range.max) {
+                queue.push(...splitRange(range, items))
+              } else if (!range.hasSubdivided) {
+                queue.push(...ROOM_SUBFILTERS.map((subFilter) => ({
+                  min: range.min,
+                  max: range.max,
+                  extra: subFilter,
+                  hasSubdivided: true,
+                })))
+              }
+            }
+          } catch (e) {
+            if (e?.name === 'AbortError' || isFinished) return
+            const retries = (range.retries || 0) + 1
+            if (retries <= 2) {
+              range.retries = retries
+              queue.push(range)
+            }
+          } finally {
+            activeRequests--
+            processQueue()
+          }
+        })()
+      }
+    }
+
+    processQueue()
+  })
+}

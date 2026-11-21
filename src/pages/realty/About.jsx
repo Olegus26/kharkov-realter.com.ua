@@ -36,6 +36,8 @@ const AboutPage = () => {
         <img
           src="/about-bg.webp"
           alt="Агентство нерухомості Харків Ріелтер"
+          width={1037}
+          height={541}
           fetchPriority="high"
           decoding="sync"
           className="absolute inset-0 w-full h-full object-cover"
@@ -73,6 +75,8 @@ const AboutPage = () => {
               <img
                 src="/story-image.webp"
                 alt="Офіс та команда Харків Ріелтер"
+                width={1200}
+                height={800}
                 loading="lazy"
                 decoding="async"
                 className="w-full aspect-[4/3] object-cover rounded-2xl shadow-lg border border-border"

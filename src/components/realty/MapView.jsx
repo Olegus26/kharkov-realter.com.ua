@@ -1,14 +1,33 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { Link } from 'react-router-dom'
-import { X } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { getFallbackCoords } from '@/lib/geocode'
 import { useVisited } from '@/lib/useVisited'
 import { getGeoIndex } from '@/lib/geoIndex'
+import { getOptimizedImageUrl } from '@/lib/utils'
+
+const MapResizeControl = () => {
+  const map = useMap()
+
+  useEffect(() => {
+    const handleInvalidate = () => {
+      map.invalidateSize()
+    }
+    const timer = setTimeout(handleInvalidate, 120)
+    window.addEventListener('resize', handleInvalidate)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', handleInvalidate)
+    }
+  }, [map])
+
+  return null
+}
 
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl
@@ -135,6 +154,7 @@ const MapView = ({ properties = [] }) => {
         zoomControl={false}
         className="z-0"
       >
+        <MapResizeControl />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -202,11 +222,20 @@ const MapView = ({ properties = [] }) => {
               <div key={p.id} className="p-4 h-full w-full shrink-0 snap-start snap-always flex flex-col justify-between">
                 <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative" style={{ height: '180px' }}>
                   <img
-                    src={p.image_url || '/hero-bg.webp'}
+                    src={getOptimizedImageUrl(p.image_url, 480) || '/hero-bg.webp'}
                     alt={p.title}
+                    width={480}
+                    height={360}
                     loading="lazy"
                     decoding="async"
-                    onError={(e) => { e.currentTarget.src = '/hero-bg.webp' }}
+                    onError={(e) => {
+                      if (p.image_url && e.currentTarget.src !== p.image_url && !e.currentTarget.dataset.rawTried) {
+                        e.currentTarget.dataset.rawTried = '1'
+                        e.currentTarget.src = p.image_url
+                        return
+                      }
+                      e.currentTarget.src = '/hero-bg.webp'
+                    }}
                     className="w-full h-full object-cover"
                   />
                   {(p.is_sold || p.deposit) && (

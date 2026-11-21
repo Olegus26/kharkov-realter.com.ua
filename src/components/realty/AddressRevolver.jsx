@@ -105,7 +105,6 @@ const AddressRevolver = ({ addresses = [], onChange }) => {
               key={idx}
               href={getPhoneLink(phone)}
               tabIndex={0}
-              aria-label={`Зателефонувати до філії ${officeName}: ${phone}`}
               className="flex items-center justify-between text-xs font-semibold text-foreground hover:text-gold transition-colors py-1 px-2 rounded-lg hover:bg-muted/60 group"
             >
               <div className="flex items-center gap-2">
@@ -128,7 +127,6 @@ const AddressRevolver = ({ addresses = [], onChange }) => {
             target="_blank"
             rel="noopener noreferrer"
             tabIndex={0}
-            aria-label={`Відгуки про відділення ${officeName} в Google`}
             className="flex items-center gap-1.5 text-gold hover:text-gold/80 font-medium transition-colors"
           >
             <span>★ 4.9 · Відгуки в Google</span>

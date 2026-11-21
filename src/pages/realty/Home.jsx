@@ -87,10 +87,13 @@ const HomePage = () => {
 
   const searchContainerRef = useRef(null)
   const inputRef = useRef(null)
+  const geoLoadedRef = useRef(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  useEffect(() => {
+  const loadGeoData = useCallback(() => {
+    if (geoLoadedRef.current) return
+    geoLoadedRef.current = true
     Promise.all([
       import('@/data/streets.json').then((m) => m.default || m),
       import('@/data/complexes.json').then((m) => m.default || m)
@@ -352,12 +355,14 @@ const HomePage = () => {
   }
 
   const handleInputChange = (e) => {
+    loadGeoData()
     setQuery(e.target.value)
     setIsSuggestionsOpen(true)
     setHighlightedIndex(-1)
   }
 
   const handleInputFocus = () => {
+    loadGeoData()
     setIsSuggestionsOpen(true)
   }
 
@@ -403,7 +408,7 @@ const HomePage = () => {
         title="Агентство нерухомості Харків Ріелтер | Купити, продати, орендувати житло"
         description="Купівля, продаж та оренда нерухомості в Харкові. Квартири, будинки, комерційна нерухомість. 30 років на ринку, 13 філій, сертифіковані експерти."
       />
-      <JsonLd schema={generateRealEstateAgentSchema()} />
+      <JsonLd data={generateRealEstateAgentSchema()} />
 
       {/* Hero — cinematic, left-aligned with safe clipping for dropdown */}
       <section className="relative min-h-[92vh] sm:min-h-screen flex items-center">
@@ -425,41 +430,23 @@ const HomePage = () => {
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-28 pb-16 sm:pt-36 sm:pb-24 text-left">
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex px-4 py-2 rounded-full border border-white/15 bg-white/10 backdrop-blur-xl text-cream/80 text-xs tracking-[0.25em] uppercase font-inter mb-8"
-          >
+          <p className="inline-flex px-4 py-2 rounded-full border border-white/15 bg-white/10 backdrop-blur-xl text-cream/80 text-xs tracking-[0.25em] uppercase font-inter mb-8">
             Корпорація нерухомості · з 1996 року
-          </motion.p>
+          </p>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-7xl lg:text-8xl text-white mb-6 max-w-4xl drop-shadow-xl"
-          >
+          <h1 className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-7xl lg:text-8xl text-white mb-6 max-w-4xl drop-shadow-xl">
             Харків
             <br />
             <span className="text-sky-300 drop-shadow-lg">Ріелтер</span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="text-white/95 text-lg font-normal mb-10 max-w-xl font-inter drop-shadow-md"
-          >
+          <p className="text-white/95 text-lg font-normal mb-10 max-w-xl font-inter drop-shadow-md">
             Чесність, порядок та безпека угод з будь-якою нерухомістю. З Агентством нерухомості «Харків-Ріелтер» вирішити житлове питання легко та надійно!
-          </motion.p>
+          </p>
 
           {/* Search pill with live popup autocomplete */}
           <div className="relative max-w-2xl z-30" ref={searchContainerRef}>
-            <motion.form
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.65 }}
+            <form
               onSubmit={handleSearch}
               className="flex flex-col sm:flex-row gap-0 w-full border border-white/20 bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-full p-2 shadow-2xl"
             >
@@ -484,6 +471,7 @@ const HomePage = () => {
                 <input
                   ref={inputRef}
                   type="text"
+                  role="combobox"
                   value={query}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}
@@ -494,6 +482,7 @@ const HomePage = () => {
                   spellCheck="false"
                   aria-expanded={isSuggestionsOpen}
                   aria-autocomplete="list"
+                  aria-controls={isSuggestionsOpen ? 'hero-search-suggestions' : undefined}
                   className="w-full px-5 py-3 bg-transparent text-sm text-cream placeholder:text-cream/50 outline-none font-inter"
                 />
                 {query && (
@@ -514,12 +503,13 @@ const HomePage = () => {
               >
                 Знайти
               </button>
-            </motion.form>
+            </form>
 
             {/* Live Autocomplete Dropdown Popup */}
             <AnimatePresence>
               {isSuggestionsOpen && (
                 <motion.div
+                  id="hero-search-suggestions"
                   initial={{ opacity: 0, y: -6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
@@ -792,11 +782,12 @@ const HomePage = () => {
 
         <a
           href="#featured"
-          aria-label="Перейти до топових об'єктів"
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50 hover:text-white transition-colors"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/75 hover:text-white transition-colors"
         >
-          <span className="text-[10px] tracking-widest uppercase font-inter">Дивитись</span>
-          <ChevronDown className="w-4 h-4 animate-bounce" />
+          <span className="text-[10px] tracking-widest uppercase font-inter">
+            Дивитись<span className="sr-only"> топові об&apos;єкти</span>
+          </span>
+          <ChevronDown className="w-4 h-4 animate-bounce" aria-hidden="true" />
         </a>
       </section>
 
@@ -900,7 +891,6 @@ const HomePage = () => {
                 key={cat.id}
                 type="button"
                 tabIndex={0}
-                aria-label={`Фільтр: ${cat.label} (${count})`}
                 onClick={() => handleCategoryChange(cat.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-inter font-medium transition-all shrink-0 cursor-pointer',
@@ -966,7 +956,7 @@ const HomePage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08 }}
                 >
-                  <PropertyCard property={{ ...p, featured: true }} />
+                  <PropertyCard property={{ ...p, featured: true }} priority={i === 0} />
                 </motion.div>
               ))}
             </motion.div>
@@ -1048,8 +1038,8 @@ const HomePage = () => {
       {/* State Programs: eOselia & eRecovery */}
       <section className="max-w-7xl mx-auto px-6 py-12">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600/10 text-emerald-700 text-xs font-bold font-inter rounded-full uppercase tracking-wider mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600/10 text-emerald-800 text-xs font-bold font-inter rounded-full uppercase tracking-wider mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
             Державна підтримка
           </span>
           <h2 className="font-cormorant font-extrabold tracking-tight text-3xl sm:text-5xl text-foreground">
@@ -1115,7 +1105,7 @@ const HomePage = () => {
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/10 transition-colors" />
             <div>
               <div className="flex items-center justify-between gap-3 mb-4">
-                <span className="px-3 py-1 bg-emerald-600/10 text-emerald-700 text-xs font-bold font-inter rounded-full uppercase tracking-wider">
+                <span className="px-3 py-1 bg-emerald-600/10 text-emerald-800 text-xs font-bold font-inter rounded-full uppercase tracking-wider">
                   Сертифікати через «Дія»
                 </span>
                 <span className="text-xs font-bold font-inter text-muted-foreground">Компенсація</span>
@@ -1151,7 +1141,7 @@ const HomePage = () => {
               </Link>
               <Link
                 to="/flats?deal=sale&erecovery=true"
-                className="flex-1 py-3 px-5 bg-emerald-600 text-white text-xs tracking-wider uppercase font-inter font-bold rounded-full text-center hover:bg-emerald-700 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 px-5 bg-emerald-700 text-white text-xs tracking-wider uppercase font-inter font-bold rounded-full text-center hover:bg-emerald-800 transition-colors shadow-sm flex items-center justify-center gap-1.5"
               >
                 <span>Об'єкти єВідновлення</span>
                 <ArrowRight className="w-3.5 h-3.5" />

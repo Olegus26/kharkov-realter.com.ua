@@ -44,6 +44,8 @@ const AgentsPage = () => {
                   <img
                     src={agent.photo || '/hero-bg.webp'}
                     alt={`Фотографія експерта ${agent.name}`}
+                    width={640}
+                    height={960}
                     loading="lazy"
                     decoding="async"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -51,7 +53,7 @@ const AgentsPage = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent opacity-90" aria-hidden="true" />
 
                   <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <h3 className="font-inter text-2xl font-bold text-white tracking-tight">{agent.name}</h3>
+                    <h2 className="font-inter text-2xl font-bold text-white tracking-tight">{agent.name}</h2>
                     <p className="text-white/80 text-[11px] tracking-widest uppercase font-inter mt-1 font-semibold">{agent.role}</p>
                   </div>
                 </div>
@@ -65,15 +67,15 @@ const AgentsPage = () => {
 
                   <div className="flex gap-8 mb-8 mt-auto">
                     {agent.deals_count && (
-                      <div aria-label={`${agent.deals_count} угод`}>
-                        <p className="font-cormorant font-bold text-3xl text-foreground" aria-hidden="true">{agent.deals_count}</p>
-                        <p className="text-[10px] text-muted-foreground tracking-widest uppercase font-inter mt-1" aria-hidden="true">угод</p>
+                      <div>
+                        <p className="font-cormorant font-bold text-3xl text-foreground">{agent.deals_count}</p>
+                        <p className="text-[10px] text-muted-foreground tracking-widest uppercase font-inter mt-1">угод</p>
                       </div>
                     )}
                     {agent.experience_years && (
-                      <div aria-label={`${agent.experience_years} років досвіду`}>
-                        <p className="font-cormorant font-bold text-3xl text-foreground" aria-hidden="true">{agent.experience_years}</p>
-                        <p className="text-[10px] text-muted-foreground tracking-widest uppercase font-inter mt-1" aria-hidden="true">років досвіду</p>
+                      <div>
+                        <p className="font-cormorant font-bold text-3xl text-foreground">{agent.experience_years}</p>
+                        <p className="text-[10px] text-muted-foreground tracking-widest uppercase font-inter mt-1">років досвіду</p>
                       </div>
                     )}
                   </div>

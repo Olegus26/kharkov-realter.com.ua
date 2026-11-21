@@ -279,7 +279,7 @@ const VacanciesPage = () => {
           </a>
           <a
             href="#quiz"
-            className="px-4 py-2 rounded-full bg-amber-500/15 text-amber-700 text-xs font-semibold hover:bg-amber-500/25 transition-colors flex items-center gap-2"
+            className="px-4 py-2 rounded-full bg-amber-500/15 text-amber-900 text-xs font-semibold hover:bg-amber-500/25 transition-colors flex items-center gap-2"
           >
             <span>⚡ Тест на рієлтора (60 сек)</span>
           </a>
@@ -522,7 +522,7 @@ const VacanciesPage = () => {
       <section id="quiz" className="bg-secondary/30 py-20 sm:py-24 scroll-mt-24 border-y border-border">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 text-xs uppercase font-inter font-bold tracking-wider mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 text-xs uppercase font-inter font-bold tracking-wider mb-3">
               <Zap className="w-3.5 h-3.5" />
               <span>Експрес-тест за 60 секунд</span>
             </div>
@@ -845,7 +845,7 @@ const VacanciesPage = () => {
                     href="https://t.me/hrkharkivrealter"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] text-xs font-semibold transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#005f8f] text-xs font-semibold transition-colors"
                   >
                     <Send className="w-4 h-4 shrink-0" />
                     <span>Telegram: @hrkharkivrealter</span>

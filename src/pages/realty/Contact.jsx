@@ -242,7 +242,7 @@ const ContactPage = () => {
                     href="https://t.me/kharkov_realter"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088cc]/10 text-[#0088cc] hover:bg-[#0088cc] hover:text-white transition-colors text-xs font-inter font-semibold"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088cc]/10 text-[#005f8f] hover:bg-[#006da3] hover:text-white transition-colors text-xs font-inter font-semibold"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     Telegram канал
@@ -251,7 +251,7 @@ const ContactPage = () => {
                     href="https://t.me/kharkovrealter_bot"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088cc]/10 text-[#0088cc] hover:bg-[#0088cc] hover:text-white transition-colors text-xs font-inter font-semibold"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088cc]/10 text-[#005f8f] hover:bg-[#006da3] hover:text-white transition-colors text-xs font-inter font-semibold"
                   >
                     <Bot className="w-3.5 h-3.5" />
                     Telegram бот

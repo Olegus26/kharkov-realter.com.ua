@@ -524,7 +524,7 @@ const EOselia = () => {
             ].map((st) => (
               <div key={st.step} className="p-6 rounded-2xl bg-card border border-border flex flex-col justify-between">
                 <div>
-                  <span className="font-cormorant text-4xl font-bold text-navy/30 block mb-3">{st.step}</span>
+                  <span className="font-cormorant text-4xl font-bold text-navy/70 block mb-3">{st.step}</span>
                   <h3 className="font-inter font-bold text-base text-foreground mb-2">{st.title}</h3>
                   <p className="text-xs text-muted-foreground font-inter leading-relaxed">{st.desc}</p>
                 </div>
@@ -548,26 +548,26 @@ const EOselia = () => {
 
             <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-5 rounded-2xl bg-card border border-border">
-                <ShieldCheck className="w-6 h-6 text-emerald-600 mb-3" />
-                <h4 className="font-inter font-bold text-sm text-foreground mb-1">Безкоштовний юридичний аудит</h4>
+                <ShieldCheck className="w-6 h-6 text-emerald-600 mb-3" aria-hidden="true" />
+                <h3 className="font-inter font-bold text-sm text-foreground mb-1">Безкоштовний юридичний аудит</h3>
                 <p className="text-xs text-muted-foreground font-inter">Перевіряємо право власності, відсутність обтяжень та відповідність вимогам Укрфінжитло.</p>
               </div>
 
               <div className="p-5 rounded-2xl bg-card border border-border">
-                <Building2 className="w-6 h-6 text-navy mb-3" />
-                <h4 className="font-inter font-bold text-sm text-foreground mb-1">Готові об'єкти з документами</h4>
+                <Building2 className="w-6 h-6 text-navy mb-3" aria-hidden="true" />
+                <h3 className="font-inter font-bold text-sm text-foreground mb-1">Готові об&apos;єкти з документами</h3>
                 <p className="text-xs text-muted-foreground font-inter">Власники в нашій базі поінформовані про умови безготівкових розрахунків та готові до угоди.</p>
               </div>
 
               <div className="p-5 rounded-2xl bg-card border border-border">
-                <FileCheck className="w-6 h-6 text-emerald-600 mb-3" />
-                <h4 className="font-inter font-bold text-sm text-foreground mb-1">Швидка оцінка для банку</h4>
+                <FileCheck className="w-6 h-6 text-emerald-600 mb-3" aria-hidden="true" />
+                <h3 className="font-inter font-bold text-sm text-foreground mb-1">Швидка оцінка для банку</h3>
                 <p className="text-xs text-muted-foreground font-inter">Партнерські експертні оцінювачі, сертифіковані банками, роблять висновок за 24–48 годин.</p>
               </div>
 
               <div className="p-5 rounded-2xl bg-card border border-border">
-                <Phone className="w-6 h-6 text-navy mb-3" />
-                <h4 className="font-inter font-bold text-sm text-foreground mb-1">Персональний іпотечний брокер</h4>
+                <Phone className="w-6 h-6 text-navy mb-3" aria-hidden="true" />
+                <h3 className="font-inter font-bold text-sm text-foreground mb-1">Персональний іпотечний брокер</h3>
                 <p className="text-xs text-muted-foreground font-inter">Супроводжуємо кожен крок: від першого дзвінка до нотаріального посвідчення угоди.</p>
               </div>
             </div>
@@ -660,10 +660,12 @@ const EOselia = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  <label htmlFor="eoselia-category" className="text-xs font-semibold text-foreground block mb-1.5">
                     Ваша категорія
                   </label>
                   <select
+                    id="eoselia-category"
+                    aria-label="Ваша категорія"
                     value={form.category}
                     onChange={(e) => setForm({ ...form, category: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-navy"

@@ -43,6 +43,8 @@ export default [
             "unused-imports": pluginUnusedImports,
         },
         rules: {
+            ...pluginJs.configs.recommended.rules,
+            ...pluginReact.configs.flat.recommended.rules,
             "semi": ["error", "never"],
             "no-unused-vars": "off",
             "react/jsx-uses-vars": "error",
@@ -59,6 +61,7 @@ export default [
             ],
             "react/prop-types": "off",
             "react/react-in-jsx-scope": "off",
+            "react/no-unescaped-entities": "off",
             "react/no-unknown-property": [
                 "error",
                 { ignore: ["cmdk-input-wrapper", "toast-close"] },
