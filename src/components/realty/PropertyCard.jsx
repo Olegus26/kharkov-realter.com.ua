@@ -79,7 +79,7 @@ const PropertyCard = memo(({ property, className = '', priority = false }) => {
   }, [property, toggleFavorite])
 
   const optimizedImageUrl = useMemo(
-    () => getOptimizedImageUrl(property.image_url, 640, 78) || FALLBACK_IMAGE,
+    () => getOptimizedImageUrl(property.image_url, 480, 74) || FALLBACK_IMAGE,
     [property.image_url]
   )
 

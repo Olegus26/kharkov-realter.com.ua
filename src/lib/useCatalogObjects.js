@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAllObjects, getInitialObjects, mapObjects } from '@/lib/novostoyApi'
+import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
 
 const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const SNAPSHOT_SIZE = 100
@@ -10,10 +11,15 @@ const getSnapshotKey = (deal) => `catalog-snapshot-${deal}`
 // show the right order immediately while the database is loading
 const readSnapshot = (deal) => {
   try {
-    return JSON.parse(localStorage.getItem(getSnapshotKey(deal))) || undefined
+    const raw = localStorage.getItem(getSnapshotKey(deal))
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
   } catch {
-    return undefined
+    // Storage is unavailable or corrupt: fall back to initial seed
   }
+  return INITIAL_CATALOG_SEED[deal] || undefined
 }
 
 const writeSnapshot = (deal, items) => {

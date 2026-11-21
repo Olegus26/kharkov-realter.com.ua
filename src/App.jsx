@@ -10,9 +10,8 @@ import { FavoritesProvider } from '@/lib/FavoritesContext'
 import SiteLayout from '@/components/realty/SiteLayout'
 import ScrollToTop from '@/components/realty/ScrollToTop'
 
-import HomePage from '@/pages/realty/Home'
-
-// Lazy load secondary route components for code splitting: Home loads eagerly on frame 1
+// Lazy load all route components for optimal per-route bundle size
+const HomePage = lazy(() => import('@/pages/realty/Home'))
 const CatalogPage = lazy(() => import('@/pages/realty/Catalog'))
 const PropertyDetail = lazy(() => import('@/pages/realty/PropertyDetail'))
 const AgentsPage = lazy(() => import('@/pages/realty/Agents'))
@@ -61,7 +60,7 @@ const lazyElement = (Component) => (
 )
 
 const PAGE_ROUTES = [
-  { path: '/', component: HomePage, eager: true },
+  { path: '/', component: HomePage },
   { path: '/eoselia', component: EOseliaPage },
   { path: '/evidnovlennya', component: EVidnovlennyaPage },
   // Single dynamic route guarantees zero unmounts between flats/houses/realtys
@@ -78,8 +77,8 @@ const PAGE_ROUTES = [
 const AppRoutes = () => (
   <Routes>
     <Route element={<SiteLayout />}>
-      {PAGE_ROUTES.map(({ path, component: Component, eager }) => (
-        <Route key={path} path={path} element={eager ? <Component /> : lazyElement(Component)} />
+      {PAGE_ROUTES.map(({ path, component }) => (
+        <Route key={path} path={path} element={lazyElement(component)} />
       ))}
     </Route>
     <Route path="*" element={<PageNotFound />} />
