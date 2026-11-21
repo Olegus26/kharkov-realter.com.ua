@@ -64,10 +64,35 @@ const buildPriceRanges = (edges) => {
 
 // Splits an overfull range at the median price of the returned sample
 const splitRange = ({ min, max }, items) => {
-  const prices = items.map((item) => Number(item.price)).sort((a, b) => a - b)
-  const median = Math.min(Math.max(prices[Math.floor(prices.length / 2)], min), max)
-  if (median >= max) return [{ min, max: max - PRICE_STEP }, { min: max, max }]
-  return [{ min, max: median }, { min: median + PRICE_STEP, max }]
+  const prices = items
+    .map((item) => Number(item.price))
+    .filter((p) => p >= min && p <= max)
+    .sort((a, b) => a - b)
+
+  const minP = prices[0] ?? min
+  const maxP = prices[prices.length - 1] ?? max
+
+  if (minP >= maxP) {
+    return [{ min: minP, max: maxP }]
+  }
+
+  const median = prices[Math.floor(prices.length / 2)]
+  if (median <= minP) {
+    return [
+      { min: minP, max: minP },
+      { min: minP + PRICE_STEP, max: maxP },
+    ]
+  }
+  if (median >= maxP) {
+    return [
+      { min: minP, max: maxP - PRICE_STEP },
+      { min: maxP, max: maxP },
+    ]
+  }
+  return [
+    { min: minP, max: median },
+    { min: median + PRICE_STEP, max: maxP },
+  ]
 }
 
 const ROOM_SUBFILTERS = [
@@ -223,23 +248,9 @@ export const mapObject = (obj) => ({
 export const mapObjects = (items = []) =>
   items.map(mapObject).sort((a, b) => b.date_edit - a.date_edit || Number(b.id) - Number(a.id))
 
-export const findObjectById = async (targetId) => {
+const scanBySellType = (targetId, sellType) => {
   const normalizedTarget = String(targetId)
-
-  // Fast check in the initial batch first (takes ~450ms for sale & rent apartments/houses/commercial)
-  const [saleInitial, rentInitial] = await Promise.allSettled([
-    getInitialObjects('2'),
-    getInitialObjects('1'),
-  ])
-
-  for (const res of [saleInitial, rentInitial]) {
-    if (res.status !== 'fulfilled') continue
-    const hit = res.value.find((item) => String(item.id) === normalizedTarget)
-    if (hit) return hit
-  }
-
-  // Parallel bounded scan with early abort as soon as the target ID is found
-  const queue = buildPriceRanges(SALE_PRICE_EDGES)
+  const queue = buildPriceRanges(PRICE_EDGES_BY_SELL_TYPE[sellType] || SALE_PRICE_EDGES)
   const controller = new AbortController()
   let activeRequests = 0
   const MAX_CONCURRENT = 10
@@ -269,6 +280,7 @@ export const findObjectById = async (targetId) => {
           try {
             const payload = {
               limit: PAGE_LIMIT,
+              sell_type: sellType,
               price_from: range.min,
               price_to: range.max,
               ...(range.extra || {}),
@@ -286,7 +298,23 @@ export const findObjectById = async (targetId) => {
 
             if (items.length >= PAGE_LIMIT) {
               if (range.min < range.max) {
-                queue.push(...splitRange(range, items))
+                const splits = splitRange(range, items)
+                if (splits.length === 1 && splits[0].min === range.min && splits[0].max === range.max) {
+                  if (!range.hasSubdivided) {
+                    queue.push(...ROOM_SUBFILTERS.map((subFilter) => ({
+                      min: range.min,
+                      max: range.max,
+                      extra: subFilter,
+                      hasSubdivided: true,
+                    })))
+                  }
+                } else {
+                  splits.forEach((sub) => {
+                    if (sub.min <= sub.max && !(sub.min === range.min && sub.max === range.max)) {
+                      queue.push(sub)
+                    }
+                  })
+                }
               } else if (!range.hasSubdivided) {
                 queue.push(...ROOM_SUBFILTERS.map((subFilter) => ({
                   min: range.min,
@@ -313,4 +341,49 @@ export const findObjectById = async (targetId) => {
 
     processQueue()
   })
+}
+
+export const findObjectById = async (targetId, hint = null) => {
+  const normalizedTarget = String(targetId)
+
+  // 1. Targeted exact-price lookup when card metadata is already known (~200ms single request)
+  if (hint && hint.price > 0) {
+    try {
+      const sellType = hint.deal === 'rent' ? '1' : '2'
+      const payload = {
+        limit: PAGE_LIMIT,
+        sell_type: sellType,
+        price_from: hint.price,
+        price_to: hint.price,
+        ...(hint.rooms ? { rooms: String(hint.rooms) } : {}),
+      }
+      const res = await post('getObjects', payload)
+      const hit = (res.data || []).find((item) => String(item.id) === normalizedTarget)
+      if (hit) return mapObject(hit)
+    } catch {
+      // Fall through to next lookup tier
+    }
+  }
+
+  // 2. Fast serverless /api/catalog?id=... lookup when running in the browser (~40ms from edge cache)
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(`/api/catalog?id=${encodeURIComponent(normalizedTarget)}`)
+      if (res.ok) {
+        const obj = await res.json()
+        if (obj && obj.id) {
+          return obj.sell_type !== undefined ? mapObject(obj) : obj
+        }
+      }
+    } catch {
+      // Fall through to direct scan
+    }
+  }
+
+  // 3. Direct parallel scan by sell_type with fixed splitRange & early AbortController
+  const saleHit = await scanBySellType(normalizedTarget, '2')
+  if (saleHit) return mapObject(saleHit)
+
+  const rentHit = await scanBySellType(normalizedTarget, '1')
+  return rentHit ? mapObject(rentHit) : null
 }

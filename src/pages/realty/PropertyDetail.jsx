@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
 import { getInitialObjects, findObjectById, mapObject } from '@/lib/novostoyApi'
 import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
-import { waitForInteractiveOrIdle } from '@/lib/useCatalogObjects'
+import { waitForInteractiveOrIdle, readSnapshot } from '@/lib/useCatalogObjects'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
 import { submitLead } from '@/lib/leadService'
@@ -75,29 +75,43 @@ const PropertyDetail = () => {
     }
   }, [activeImg])
 
-  // Try to find property in existing cache first, then search API with early abort
-  const { data: property, isLoading } = useQuery({
-    queryKey: ['novostoy-property', id],
-    queryFn: async () => {
+  const findCachedProperty = useCallback(
+    (targetId) => {
+      const strId = String(targetId)
       const caches = [
         queryClient.getQueryData(['novostoy-objects', 'sale']),
         queryClient.getQueryData(['novostoy-objects', 'rent']),
+        queryClient.getQueryData(['novostoy-objects-featured']),
         queryClient.getQueryData(['novostoy-objects-initial', 'sale']),
         queryClient.getQueryData(['novostoy-objects-initial', 'rent']),
-        queryClient.getQueryData(['novostoy-objects', '']),
+        readSnapshot('sale'),
+        readSnapshot('rent'),
       ]
 
       for (const cache of caches) {
-        if (cache) {
-          const found = cache.find((o) => String(o.id) === String(id))
-          if (found && found.images && found.images.length > 0) return found
-        }
+        if (!Array.isArray(cache)) continue
+        const hit = cache.find((o) => String(o.id) === strId)
+        if (hit) return hit
       }
 
-      const raw = await findObjectById(id)
-      return raw ? mapObject(raw) : null
+      return INITIAL_CATALOG_SEED.byId?.[strId] || undefined
     },
-    placeholderData: () => INITIAL_CATALOG_SEED.byId?.[String(id)] || undefined,
+    [queryClient]
+  )
+
+  // Render from cache/snapshot immediately on frame 1; fetch full details if gallery or phones are missing
+  const { data: property, isLoading } = useQuery({
+    queryKey: ['novostoy-property', id],
+    queryFn: async () => {
+      const cached = findCachedProperty(id)
+      if (cached && cached.images && cached.images.length > 0 && cached.agent_phones) {
+        return cached
+      }
+
+      const found = await findObjectById(id, cached || null)
+      return found || cached || null
+    },
+    placeholderData: () => findCachedProperty(id),
     staleTime: 10 * 60 * 1000,
   })
 
@@ -200,11 +214,22 @@ const PropertyDetail = () => {
     setBookingSubmitted(true)
   }
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('catalogReturnScroll', '1')
+    }
+  }, [id])
+
   const catalogBackLink = useMemo(() => {
-    if (!property) return '/flats'
-    if (property.type === 'house') return '/houses'
-    if (property.type === 'commercial') return '/realtys'
-    return '/flats'
+    const base = !property
+      ? '/flats'
+      : property.type === 'house'
+      ? '/houses'
+      : property.type === 'commercial'
+      ? '/realtys'
+      : '/flats'
+    const savedParams = typeof window !== 'undefined' ? (sessionStorage.getItem('catalogParams') || '') : ''
+    return `${base}${savedParams}`
   }, [property])
 
   const catalogBackTitle = useMemo(() => {

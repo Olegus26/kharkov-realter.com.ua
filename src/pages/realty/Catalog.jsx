@@ -33,52 +33,61 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const isFirstRender = useRef(true)
 
-  const [deal, setDeal] = useState(searchParams.get('deal') || 'sale')
+  const initialSearchParams = useMemo(() => {
+    if (location.search) return new URLSearchParams(location.search)
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('catalogParams')
+      if (saved) return new URLSearchParams(saved)
+    }
+    return searchParams
+  }, [])
+
+  const [deal, setDeal] = useState(initialSearchParams.get('deal') || 'sale')
   const [category, setCategory] = useState(defaultCategory)
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'date_desc')
+  const [searchQuery, setSearchQuery] = useState(initialSearchParams.get('q') || '')
+  const [sortBy, setSortBy] = useState(initialSearchParams.get('sort') || 'date_desc')
   const [isSortOpen, setIsSortOpen] = useState(false)
   const [subTypes, setSubTypes] = useState(
-    searchParams.get('subTypes') ? searchParams.get('subTypes').split(',') : []
+    initialSearchParams.get('subTypes') ? initialSearchParams.get('subTypes').split(',') : []
   )
-  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '')
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
-  const [minArea, setMinArea] = useState(searchParams.get('minArea') || '')
-  const [maxArea, setMaxArea] = useState(searchParams.get('maxArea') || '')
+  const [minPrice, setMinPrice] = useState(initialSearchParams.get('minPrice') || '')
+  const [maxPrice, setMaxPrice] = useState(initialSearchParams.get('maxPrice') || '')
+  const [minArea, setMinArea] = useState(initialSearchParams.get('minArea') || '')
+  const [maxArea, setMaxArea] = useState(initialSearchParams.get('maxArea') || '')
 
-  const [searchComplex, setSearchComplex] = useState(searchParams.get('searchComplex') || '')
-  const [searchStreet, setSearchStreet] = useState(searchParams.get('searchStreet') || '')
-  const [searchHouse, setSearchHouse] = useState(searchParams.get('searchHouse') || '')
+  const [searchComplex, setSearchComplex] = useState(initialSearchParams.get('searchComplex') || '')
+  const [searchStreet, setSearchStreet] = useState(initialSearchParams.get('searchStreet') || '')
+  const [searchHouse, setSearchHouse] = useState(initialSearchParams.get('searchHouse') || '')
   const [geoData, setGeoData] = useState({ streets: [], houses: {}, complexes: [] })
 
   const [metroStations, setMetroStations] = useState(
-    searchParams.get('metroStations') ? searchParams.get('metroStations').split(',') : []
+    initialSearchParams.get('metroStations') ? initialSearchParams.get('metroStations').split(',') : []
   )
   const [districts, setDistricts] = useState(
-    searchParams.get('districts') ? searchParams.get('districts').split(',') : []
+    initialSearchParams.get('districts') ? initialSearchParams.get('districts').split(',') : []
   )
   const [states, setStates] = useState(
-    searchParams.get('states') ? searchParams.get('states').split(',') : []
+    initialSearchParams.get('states') ? initialSearchParams.get('states').split(',') : []
   )
-  const [minFloor, setMinFloor] = useState(searchParams.get('minFloor') || '')
-  const [maxFloor, setMaxFloor] = useState(searchParams.get('maxFloor') || '')
-  const [minFloorsTotal, setMinFloorsTotal] = useState(searchParams.get('minFloorsTotal') || '')
-  const [maxFloorsTotal, setMaxFloorsTotal] = useState(searchParams.get('maxFloorsTotal') || '')
+  const [minFloor, setMinFloor] = useState(initialSearchParams.get('minFloor') || '')
+  const [maxFloor, setMaxFloor] = useState(initialSearchParams.get('maxFloor') || '')
+  const [minFloorsTotal, setMinFloorsTotal] = useState(initialSearchParams.get('minFloorsTotal') || '')
+  const [maxFloorsTotal, setMaxFloorsTotal] = useState(initialSearchParams.get('maxFloorsTotal') || '')
   const [filterEoselia, setFilterEoselia] = useState(
-    searchParams.get('eoselia') === 'true' || searchParams.get('program') === 'eoselia'
+    initialSearchParams.get('eoselia') === 'true' || initialSearchParams.get('program') === 'eoselia'
   )
   const [filterErecovery, setFilterErecovery] = useState(
-    searchParams.get('erecovery') === 'true' || searchParams.get('program') === 'erecovery'
+    initialSearchParams.get('erecovery') === 'true' || initialSearchParams.get('program') === 'erecovery'
   )
 
-  const [viewMode, setViewMode] = useState(searchParams.get('viewMode') || 'list')
+  const [viewMode, setViewMode] = useState(initialSearchParams.get('viewMode') || 'list')
   const [showMapFilters, setShowMapFilters] = useState(
     typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
   )
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1)
+  const [currentPage, setCurrentPage] = useState(Number(initialSearchParams.get('page')) || 1)
+  const prevDefaultCategoryRef = useRef(defaultCategory)
   const [isPromoDismissed, setIsPromoDismissed] = useState(() => {
     if (typeof window === 'undefined') return false
     return sessionStorage.getItem('kh_catalog_tg_promo_dismissed') === 'true'
@@ -164,6 +173,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   }
 
   useEffect(() => {
+    if (prevDefaultCategoryRef.current === defaultCategory) return
+    prevDefaultCategoryRef.current = defaultCategory
     setCategory(defaultCategory)
     setSubTypes([])
   }, [defaultCategory])
@@ -176,19 +187,12 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
         setCategory(found.value)
         setSubTypes([])
       }
+      const p = new URLSearchParams(window.location.search)
+      setCurrentPage(Number(p.get('page')) || 1)
     }
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [category])
-
-  useEffect(() => {
-    if (!location.search) {
-      const saved = sessionStorage.getItem('catalogParams')
-      if (saved) {
-        navigate(location.pathname + saved, { replace: true })
-      }
-    }
-  }, [location.search, navigate])
 
   useEffect(() => {
     if (!location.search) return
@@ -214,6 +218,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
     if (p.has('minPrice')) setMinPrice(p.get('minPrice') || '')
     if (p.has('maxPrice')) setMaxPrice(p.get('maxPrice') || '')
+    if (p.has('page')) setCurrentPage(Number(p.get('page')) || 1)
   }, [location.search])
 
   useEffect(() => {
@@ -276,13 +281,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setSearchParams,
   ])
 
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
-    setCurrentPage(1)
-  }, [
+  const filterSignature = JSON.stringify([
     deal,
     category,
     searchQuery,
@@ -306,6 +305,42 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     filterErecovery,
     viewMode,
   ])
+  const prevFilterSignatureRef = useRef(filterSignature)
+
+  useEffect(() => {
+    if (prevFilterSignatureRef.current === filterSignature) return
+    prevFilterSignatureRef.current = filterSignature
+    setCurrentPage(1)
+  }, [filterSignature])
+
+  // Restore scroll position when returning from a property detail page and track scroll offset
+  useEffect(() => {
+    if (typeof window === 'undefined' || viewMode !== 'list') return
+
+    let isRestoring = sessionStorage.getItem('catalogReturnScroll') === '1'
+    if (isRestoring) {
+      const savedY = Number(sessionStorage.getItem('catalogScrollY') || 0)
+      sessionStorage.removeItem('catalogReturnScroll')
+      if (savedY > 0) {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: savedY, behavior: 'instant' })
+          setTimeout(() => {
+            isRestoring = false
+          }, 80)
+        })
+      } else {
+        isRestoring = false
+      }
+    }
+
+    const handleScrollSave = () => {
+      if (isRestoring) return
+      sessionStorage.setItem('catalogScrollY', String(window.scrollY))
+    }
+
+    window.addEventListener('scroll', handleScrollSave, { passive: true })
+    return () => window.removeEventListener('scroll', handleScrollSave)
+  }, [viewMode])
 
   useEffect(() => {
     if (viewMode === 'map') {

@@ -8,8 +8,15 @@ const ScrollToTop = () => {
   const prevPathnameRef = useRef(pathname)
 
   useEffect(() => {
-    const isCatalogSwitch = CATALOG_PATHS.includes(prevPathnameRef.current) && CATALOG_PATHS.includes(pathname)
+    const prevPath = prevPathnameRef.current
+    const isCatalogSwitch = CATALOG_PATHS.includes(prevPath) && CATALOG_PATHS.includes(pathname)
+    const isReturningFromProperty = prevPath.startsWith('/property/') && CATALOG_PATHS.includes(pathname)
     prevPathnameRef.current = pathname
+
+    if (isReturningFromProperty && typeof window !== 'undefined') {
+      sessionStorage.setItem('catalogReturnScroll', '1')
+      return
+    }
 
     if (isCatalogSwitch) return
 
