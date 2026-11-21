@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import { getObjects, mapObject } from '@/lib/novostoyApi'
-import { fetchFullCatalog } from '@/lib/useCatalogObjects'
+import { fetchFullCatalog, waitForInteractiveOrIdle } from '@/lib/useCatalogObjects'
 import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 import SeoMeta from '@/components/seo/SeoMeta'
@@ -149,6 +149,7 @@ const HomePage = () => {
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['novostoy-objects-featured'],
     queryFn: async () => {
+      await waitForInteractiveOrIdle(3500)
       try {
         const catalogItems = await fetchFullCatalog('sale')
         const validCatalog = catalogItems.filter(
@@ -980,7 +981,7 @@ const HomePage = () => {
 
         {/* Pagination Dots */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-10">
+          <div className="flex items-center justify-center gap-1 mt-10">
             {[...Array(totalPages)].map((_, idx) => (
               <button
                 key={idx}
@@ -988,11 +989,15 @@ const HomePage = () => {
                 tabIndex={0}
                 aria-label={`Сторінка ${idx + 1}`}
                 onClick={() => handleSlideDotClick(idx)}
-                className={cn(
-                  'h-2 rounded-full transition-all cursor-pointer',
-                  idx === safeCurrentSlide ? 'w-8 bg-gold' : 'w-2 bg-border hover:bg-muted-foreground/50'
-                )}
-              />
+                className="w-6 h-6 flex items-center justify-center cursor-pointer"
+              >
+                <span
+                  className={cn(
+                    'h-2 rounded-full transition-all block',
+                    idx === safeCurrentSlide ? 'w-6 bg-gold' : 'w-2 bg-border hover:bg-muted-foreground/50'
+                  )}
+                />
+              </button>
             ))}
           </div>
         )}

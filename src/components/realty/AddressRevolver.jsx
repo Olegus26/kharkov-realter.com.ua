@@ -59,7 +59,7 @@ const AddressRevolver = ({ addresses = [], onChange }) => {
         </div>
 
         {/* Counter & Steppers */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-[11px] font-semibold text-muted-foreground font-inter mr-0.5">
             {activeIndex + 1}/{count}
           </span>
@@ -68,18 +68,18 @@ const AddressRevolver = ({ addresses = [], onChange }) => {
             onClick={handlePrev}
             aria-label="Попередня філія"
             tabIndex={0}
-            className="w-6 h-6 rounded-md border border-border/80 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="w-7 h-7 rounded-md border border-border/80 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            <ChevronLeft className="w-3 h-3" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={handleNext}
             aria-label="Наступна філія"
             tabIndex={0}
-            className="w-6 h-6 rounded-md border border-border/80 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="w-7 h-7 rounded-md border border-border/80 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

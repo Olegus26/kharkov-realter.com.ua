@@ -4,11 +4,42 @@ import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
 
 const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const SNAPSHOT_SIZE = 100
+const INTERACTION_EVENTS = ['pointerdown', 'pointermove', 'touchstart', 'wheel', 'scroll', 'keydown']
 
 const getSnapshotKey = (deal) => `catalog-snapshot-v2-${deal}`
 
+// Resolves immediately on first user interaction or after `timeoutMs`, preventing heavy JSON parsing from blocking mobile LCP/TBT
+export const waitForInteractiveOrIdle = (timeoutMs = 3500) => {
+  if (typeof window === 'undefined') return Promise.resolve()
+
+  return new Promise((resolve) => {
+    let settled = false
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      INTERACTION_EVENTS.forEach((evt) => {
+        window.removeEventListener(evt, handleInteract, { capture: true })
+      })
+    }
+
+    const done = () => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve()
+    }
+
+    const handleInteract = () => done()
+
+    const timer = setTimeout(done, timeoutMs)
+    INTERACTION_EVENTS.forEach((evt) => {
+      window.addEventListener(evt, handleInteract, { passive: true, capture: true })
+    })
+  })
+}
+
 // Snapshot of the freshest objects: shows the sorted catalog immediately while the full feed syncs
-const readSnapshot = (deal) => {
+export const readSnapshot = (deal) => {
   try {
     const raw = localStorage.getItem(getSnapshotKey(deal))
     if (raw) {
@@ -58,8 +89,10 @@ export const useCatalogObjects = (deal) =>
   useQuery({
     queryKey: ['novostoy-objects', deal],
     queryFn: async () => {
-      // Yield briefly so the frame-1 LCP card image gets network priority over the full JSON payload
-      await new Promise((resolve) => setTimeout(resolve, 150))
+      const cachedSeed = readSnapshot(deal)
+      if (cachedSeed && cachedSeed.length > 0) {
+        await waitForInteractiveOrIdle(3500)
+      }
       return fetchFullCatalog(deal)
     },
     placeholderData: () => readSnapshot(deal),

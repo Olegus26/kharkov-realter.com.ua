@@ -2,7 +2,7 @@ import { ChevronDown } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 
 const TRIGGER_CLASS =
-  'relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180'
+  'relative w-full sm:w-auto px-4 sm:px-6 py-3 sm:py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-2 sm:gap-3 hover:bg-muted/80 transition-colors text-foreground [&[data-state=open]>svg]:rotate-180'
 
 // Popover with a pill trigger. `count` shows a numeric badge, `isActive` shows a dot (for range filters)
 const FilterPopover = ({ label, count = 0, isActive = false, contentClassName = 'w-64 p-5', children }) => (

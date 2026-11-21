@@ -615,14 +615,14 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className={cn(
                 'bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 mt-2',
-                viewMode === 'map' ? 'rounded-3xl' : 'rounded-3xl mb-10 sticky top-24'
+                viewMode === 'map' ? 'rounded-3xl' : 'rounded-3xl mb-6 sm:mb-10'
               )}
             >
               <LayoutGroup id={viewMode}>
-                <div className="p-4 sm:p-6 flex flex-col gap-5">
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex p-1 bg-muted rounded-full shrink-0 relative">
+                <div className="p-3.5 sm:p-6 flex flex-col gap-3.5 sm:gap-5">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 border-b border-border/50 pb-4 sm:pb-5">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
+                      <div className="grid grid-cols-2 sm:flex p-1 bg-muted rounded-full w-full sm:w-auto shrink-0 relative">
                         {[
                           ['sale', 'Продаж'],
                           ['rent', 'Оренда'],
@@ -631,9 +631,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                             key={v}
                             type="button"
                             onClick={() => setDeal(v)}
-                            aria-label={`Обрати тип угоди: ${l}`}
                             className={cn(
-                              'relative z-10 px-5 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full',
+                              'relative z-10 px-4 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full text-center justify-center',
                               deal === v ? 'text-white' : 'text-muted-foreground hover:text-foreground'
                             )}
                           >
@@ -649,15 +648,14 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         ))}
                       </div>
 
-                      <div className="flex p-1 bg-muted rounded-full w-fit shrink-0 relative">
+                      <div className="grid grid-cols-3 sm:flex p-1 bg-muted rounded-full w-full sm:w-auto shrink-0 relative">
                         {CATEGORIES.map((c) => (
                           <button
                             key={c.value}
                             type="button"
                             onClick={() => handleCategoryChange(c.value)}
-                            aria-label={`Обрати категорію: ${c.label}`}
                             className={cn(
-                              'relative z-10 px-4 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap',
+                              'relative z-10 px-2 sm:px-6 py-2 sm:py-2.5 text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap text-center justify-center',
                               category === c.value ? 'text-white' : 'text-muted-foreground hover:text-foreground'
                             )}
                           >
@@ -674,7 +672,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 lg:gap-4 flex-wrap ml-auto">
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-wrap w-full lg:w-auto lg:ml-auto">
                       {viewMode === 'list' && (
                         <Popover open={isSortOpen} onOpenChange={setIsSortOpen}>
                           <PopoverTrigger asChild>
@@ -754,8 +752,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                   </div>
 
                   <div className="flex flex-col w-full">
-                    <div className="flex flex-wrap items-center gap-3 w-full font-inter">
-                      <div onFocus={ensureGeoData} className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 w-full font-inter">
+                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px] z-50">
                         <Autocomplete
                           placeholder="Оберіть ЖК..."
                           options={complexOptions}
@@ -765,7 +763,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         />
                       </div>
 
-                      <div onFocus={ensureGeoData} className="relative flex-1 min-w-[150px] lg:max-w-[200px] z-50">
+                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px] z-50">
                         <Autocomplete
                           placeholder="Вулиця..."
                           options={streetOptions}
@@ -782,7 +780,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         />
                       </div>
 
-                      <div onFocus={ensureGeoData} className="relative flex-1 min-w-[100px] lg:max-w-[120px] z-50">
+                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[100px] lg:max-w-[120px] z-50">
                         <Autocomplete
                           placeholder="Дім..."
                           disabled={!searchStreet}
@@ -817,7 +815,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                           options={SUBTYPES_BY_CATEGORY[category]}
                           selected={subTypes}
                           onChange={setSubTypes}
-                          contentClassName="w-[420px]"
+                          contentClassName="w-[min(420px,calc(100vw-2rem))]"
                         />
                       )}
 
@@ -825,10 +823,9 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         type="button"
                         onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                         aria-expanded={showAdvancedFilters}
-                        aria-label="Більше фільтрів"
-                        className="relative px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
+                        className="relative col-span-2 sm:col-span-1 w-full sm:w-auto px-4 sm:px-6 py-3 sm:py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-2 sm:gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
                       >
-                        <span>Більше фільтрів</span>
+                        <span className="truncate">Більше фільтрів</span>
                         <ChevronDown
                           className={cn(
                             'w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200',
@@ -852,14 +849,14 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                           transition={{ duration: 0.22, ease: [0.04, 0.62, 0.23, 0.98] }}
                           className="overflow-hidden w-full"
                         >
-                          <div className="flex flex-wrap items-center gap-3 w-full font-inter border-t border-border/50 pt-4 mt-3">
+                          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 w-full font-inter border-t border-border/50 pt-4 mt-3">
                             <CheckboxFilter
                               label="Станція метро"
                               title="Оберіть станції"
                               groups={METRO_LINES}
                               selected={metroStations}
                               onChange={setMetroStations}
-                              contentClassName="w-[500px]"
+                              contentClassName="w-[min(500px,calc(100vw-2rem))]"
                             />
 
                             <CheckboxFilter
@@ -868,7 +865,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                               options={DISTRICTS}
                               selected={districts}
                               onChange={setDistricts}
-                              contentClassName="w-[450px]"
+                              contentClassName="w-[min(450px,calc(100vw-2rem))]"
                             />
 
                             <RangeFilter
@@ -893,41 +890,39 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                               options={STATES}
                               selected={states}
                               onChange={setStates}
-                              contentClassName="w-[450px]"
+                              contentClassName="w-[min(450px,calc(100vw-2rem))]"
                             />
 
                             <button
                               type="button"
                               onClick={handleToggleErecovery}
                               aria-pressed={filterErecovery}
-                              aria-label="Фільтр об'єктів за програмою єВідновлення"
                               tabIndex={0}
                               className={cn(
-                                'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                                'w-full sm:w-auto px-4 sm:px-5 py-3 sm:py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center justify-center gap-2 border select-none',
                                 filterErecovery
                                   ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
                                   : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
                               )}
                             >
-                              <Hammer className={cn('w-4 h-4', filterErecovery ? 'text-white' : 'text-emerald-600')} />
-                              <span>єВідновлення</span>
+                              <Hammer className={cn('w-4 h-4 shrink-0', filterErecovery ? 'text-white' : 'text-emerald-600')} />
+                              <span className="truncate">єВідновлення</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={handleToggleEoselia}
                               aria-pressed={filterEoselia}
-                              aria-label="Фільтр об'єктів за програмою єОселя"
                               tabIndex={0}
                               className={cn(
-                                'px-4 sm:px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center gap-2 border select-none',
+                                'w-full sm:w-auto px-4 sm:px-5 py-3 sm:py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center justify-center gap-2 border select-none',
                                 filterEoselia
                                   ? 'bg-navy text-white border-navy shadow-sm'
                                   : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
                               )}
                             >
-                              <HomeIcon className={cn('w-4 h-4', filterEoselia ? 'text-white' : 'text-navy')} />
-                              <span>єОселя</span>
+                              <HomeIcon className={cn('w-4 h-4 shrink-0', filterEoselia ? 'text-white' : 'text-navy')} />
+                              <span className="truncate">єОселя</span>
                             </button>
                           </div>
                         </motion.div>
@@ -1078,7 +1073,6 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                       <button
                         type="button"
                         onClick={handleClearFilters}
-                        aria-label="Скинути всі вибрані фільтри"
                         className="text-xs text-destructive hover:underline font-semibold ml-auto transition-colors"
                       >
                         Скинути все

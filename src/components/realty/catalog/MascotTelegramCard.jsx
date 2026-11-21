@@ -34,8 +34,6 @@ const MascotTelegramCard = ({ deal = 'sale', variant = 'keys', onDismiss }) => {
 
   return (
     <div
-      tabIndex={0}
-      aria-label="Підключення офіційного Telegram-бота Харків Ріелтер"
       className="group relative bg-[#0d1627] border border-amber-400/40 rounded-2xl overflow-hidden flex flex-col justify-between h-full p-5 sm:p-6 shadow-2xl hover:border-amber-400/70 transition-all duration-300"
     >
       {/* Decorative ambient background glows */}
@@ -116,7 +114,6 @@ const MascotTelegramCard = ({ deal = 'sale', variant = 'keys', onDismiss }) => {
           target="_blank"
           rel="noopener noreferrer"
           tabIndex={0}
-          aria-label="Підключити сповіщення від бота Харків Ріелтер"
           className="w-full py-3 px-4 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-inter font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-400/25 hover:shadow-amber-400/40 transition-all hover:-translate-y-0.5 active:translate-y-0"
         >
           <Send className="w-4 h-4 fill-slate-950 text-slate-950 shrink-0" />

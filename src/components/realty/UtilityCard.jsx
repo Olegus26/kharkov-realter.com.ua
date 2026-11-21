@@ -35,7 +35,7 @@ const UtilityCard = ({ utility }) => {
       <div className="p-6 flex-1">
         {/* Number + icon */}
         <div className="flex items-start justify-between mb-5">
-          <span className="font-cormorant text-4xl text-gold/25">{utility.num}</span>
+          <span className="font-cormorant text-4xl font-bold text-navy/65">{utility.num}</span>
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${style.bg}`}>
             <Icon className={`w-5 h-5 ${style.icon}`} />
           </div>
@@ -107,11 +107,11 @@ const UtilityCard = ({ utility }) => {
         {/* Services list */}
         {utility.services?.length > 0 && (
           <div className="mt-4 mb-2">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-gold/60 mb-2 font-inter font-semibold">Звертатися з питань:</p>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-gold mb-2 font-inter font-semibold">Звертатися з питань:</p>
             <ul className="space-y-1">
               {utility.services.map((s, i) => (
                 <li key={i} className="text-xs text-muted-foreground font-inter flex items-start gap-1.5">
-                  <span className="text-gold/40 mt-0.5">·</span>
+                  <span className="text-gold mt-0.5">·</span>
                   {s}
                 </li>
               ))}

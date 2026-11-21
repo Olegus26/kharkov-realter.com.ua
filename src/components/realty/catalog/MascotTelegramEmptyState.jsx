@@ -21,8 +21,6 @@ const MascotTelegramEmptyState = ({ deal = 'sale', onClearFilters }) => {
 
   return (
     <div
-      tabIndex={0}
-      aria-label="Підказка від бота-помічника Харків Ріелтер"
       className="max-w-xl mx-auto my-12 p-8 sm:p-10 bg-gradient-to-b from-card via-card to-muted/30 border border-amber-500/25 rounded-3xl text-center shadow-xl relative overflow-hidden"
     >
       {/* Ambient background decoration */}

@@ -67,7 +67,7 @@ export function Autocomplete({
                     onFocus={() => setIsOpen(true)}
                     placeholder={placeholder}
                     disabled={disabled}
-                    className="w-full bg-muted text-foreground text-sm px-4 lg:px-6 py-3.5 rounded-full outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-muted-foreground disabled:opacity-50"
+                    className="w-full bg-muted text-foreground text-sm px-4 lg:px-6 py-3 sm:py-3.5 rounded-full outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-muted-foreground disabled:opacity-50"
                 />
                 {value && (
                     <button 
