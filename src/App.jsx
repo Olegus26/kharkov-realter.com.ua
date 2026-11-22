@@ -2,10 +2,8 @@ import { lazy, Suspense } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
-import { Toaster } from '@/components/ui/toaster'
 import { queryClientInstance } from '@/lib/query-client'
 import PageNotFound from '@/lib/PageNotFound'
-import { AuthProvider } from '@/lib/AuthContext'
 import { FavoritesProvider } from '@/lib/FavoritesContext'
 import SiteLayout from '@/components/realty/SiteLayout'
 import ScrollToTop from '@/components/realty/ScrollToTop'
@@ -87,17 +85,14 @@ const AppRoutes = () => (
 
 const App = () => (
   <HelmetProvider>
-    <AuthProvider>
-      <FavoritesProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <ScrollToTop />
-            <AppRoutes />
-          </Router>
-          <Toaster />
-        </QueryClientProvider>
-      </FavoritesProvider>
-    </AuthProvider>
+    <FavoritesProvider>
+      <QueryClientProvider client={queryClientInstance}>
+        <Router>
+          <ScrollToTop />
+          <AppRoutes />
+        </Router>
+      </QueryClientProvider>
+    </FavoritesProvider>
   </HelmetProvider>
 )
 

@@ -80,6 +80,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [filterErecovery, setFilterErecovery] = useState(
     initialSearchParams.get('erecovery') === 'true' || initialSearchParams.get('program') === 'erecovery'
   )
+  const [filterTender, setFilterTender] = useState(initialSearchParams.get('tender') === 'true')
 
   const [viewMode, setViewMode] = useState(initialSearchParams.get('viewMode') || 'list')
   const [showMapFilters, setShowMapFilters] = useState(
@@ -212,6 +213,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     }
     if (p.has('eoselia')) setFilterEoselia(p.get('eoselia') === 'true')
     if (p.has('erecovery')) setFilterErecovery(p.get('erecovery') === 'true')
+    if (p.has('tender')) setFilterTender(p.get('tender') === 'true')
     if (p.has('subTypes')) {
       const val = p.get('subTypes')
       setSubTypes(val ? val.split(',') : [])
@@ -243,6 +245,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     if (maxFloorsTotal) params.set('maxFloorsTotal', maxFloorsTotal)
     if (filterEoselia) params.set('eoselia', 'true')
     if (filterErecovery) params.set('erecovery', 'true')
+    if (filterTender) params.set('tender', 'true')
     if (viewMode !== 'list') params.set('viewMode', viewMode)
     if (currentPage > 1) params.set('page', String(currentPage))
 
@@ -276,6 +279,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     maxFloorsTotal,
     filterEoselia,
     filterErecovery,
+    filterTender,
     viewMode,
     currentPage,
     setSearchParams,
@@ -303,6 +307,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     maxFloorsTotal,
     filterEoselia,
     filterErecovery,
+    filterTender,
     viewMode,
   ])
   const prevFilterSignatureRef = useRef(filterSignature)
@@ -398,6 +403,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setMaxFloorsTotal('')
     setFilterEoselia(false)
     setFilterErecovery(false)
+    setFilterTender(false)
   }
 
   const hasFilters = Boolean(
@@ -418,7 +424,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       minFloorsTotal ||
       maxFloorsTotal ||
       filterEoselia ||
-      filterErecovery
+      filterErecovery ||
+      filterTender
   )
 
   const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal)
@@ -494,6 +501,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
       if (filterEoselia && !p.eoselia) return false
       if (filterErecovery && !p.erecovery) return false
+      if (filterTender && !p.tender) return false
 
       return true
     })
@@ -532,6 +540,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     maxFloorsTotal,
     filterEoselia,
     filterErecovery,
+    filterTender,
     sortBy,
   ])
 
@@ -1037,6 +1046,15 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                           isBold
                         >
                           Програма: єОселя
+                        </ActiveFilterBadge>
+                      )}
+                      {filterTender && (
+                        <ActiveFilterBadge
+                          onRemove={() => setFilterTender(false)}
+                          removeLabel="Скинути фільтр Можливий торг"
+                          isBold
+                        >
+                          Можливий торг
                         </ActiveFilterBadge>
                       )}
                       {subTypes.map((st) => {

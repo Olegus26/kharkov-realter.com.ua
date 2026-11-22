@@ -2,6 +2,9 @@ import zlib from 'zlib'
 import { getAllObjects, mapObjects, findObjectById } from '../src/lib/novostoyApi.js'
 
 const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
+const CACHE_TTL_MS = 5 * 60 * 1000
+const catalogCache = new Map()
+const objectByIdCache = new Map()
 
 const trimForCatalog = (item) => ({
   id: item.id,
@@ -39,25 +42,69 @@ const trimForCatalog = (item) => ({
   metro: item.metro,
 })
 
-const sendCompressedJson = (req, res, payloadObj) => {
-  const jsonBuffer = Buffer.from(JSON.stringify(payloadObj), 'utf8')
+const createCompressedEntry = (payloadObj) => {
+  const raw = Buffer.from(JSON.stringify(payloadObj), 'utf8')
+  return {
+    updatedAt: Date.now(),
+    raw,
+    gzip: zlib.gzipSync(raw),
+    br: zlib.brotliCompressSync(raw),
+  }
+}
+
+const sendCompressedEntry = (req, res, entry) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8')
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600')
 
   const acceptEncoding = String(req.headers['accept-encoding'] || '')
   if (acceptEncoding.includes('br')) {
     res.setHeader('Content-Encoding', 'br')
-    res.status(200).send(zlib.brotliCompressSync(jsonBuffer))
+    res.status(200).send(entry.br)
     return
   }
 
   if (acceptEncoding.includes('gzip')) {
     res.setHeader('Content-Encoding', 'gzip')
-    res.status(200).send(zlib.gzipSync(jsonBuffer))
+    res.status(200).send(entry.gzip)
     return
   }
 
-  res.status(200).send(jsonBuffer)
+  res.status(200).send(entry.raw)
+}
+
+const getCachedCatalog = async (deal) => {
+  const existing = catalogCache.get(deal)
+  if (existing && Date.now() - existing.updatedAt < CACHE_TTL_MS) {
+    return existing
+  }
+
+  const sellType = SELL_TYPE_BY_DEAL[deal]
+  const raw = await getAllObjects(sellType ? { sell_type: sellType } : {})
+  const mapped = mapObjects(raw).map(trimForCatalog)
+  const now = Date.now()
+
+  mapped.forEach((item) => {
+    objectByIdCache.set(String(item.id), { entry: createCompressedEntry(item), updatedAt: now })
+  })
+
+  const entry = createCompressedEntry(mapped)
+  catalogCache.set(deal, entry)
+  return entry
+}
+
+const getCachedObjectById = async (id) => {
+  const key = String(id)
+  const existing = objectByIdCache.get(key)
+  if (existing && Date.now() - existing.updatedAt < CACHE_TTL_MS) {
+    return existing.entry
+  }
+
+  const found = await findObjectById(key)
+  if (!found) return null
+
+  const entry = createCompressedEntry(trimForCatalog(found))
+  objectByIdCache.set(key, { entry, updatedAt: Date.now() })
+  return entry
 }
 
 const handler = async (req, res) => {
@@ -66,22 +113,19 @@ const handler = async (req, res) => {
 
   try {
     if (idParam) {
-      const found = await findObjectById(idParam)
-      if (!found) {
+      const entry = await getCachedObjectById(idParam)
+      if (!entry) {
         res.status(404).json({ error: 'Not found' })
         return
       }
-      sendCompressedJson(req, res, trimForCatalog(found))
+      sendCompressedEntry(req, res, entry)
       return
     }
 
     const dealParam = url.searchParams.get('deal')
     const deal = dealParam === 'rent' ? 'rent' : dealParam === 'all' ? 'all' : 'sale'
-    const sellType = SELL_TYPE_BY_DEAL[deal]
-
-    const raw = await getAllObjects(sellType ? { sell_type: sellType } : {})
-    const mapped = mapObjects(raw).map(trimForCatalog)
-    sendCompressedJson(req, res, mapped)
+    const entry = await getCachedCatalog(deal)
+    sendCompressedEntry(req, res, entry)
   } catch (error) {
     res.status(500).json({ error: error?.message || 'Failed to load catalog' })
   }

@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAllObjects, mapObjects } from '@/lib/novostoyApi'
-import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
 
 const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const SNAPSHOT_SIZE = 100
@@ -47,9 +46,9 @@ export const readSnapshot = (deal) => {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed
     }
   } catch {
-    // Storage unavailable or corrupt: fall back to bundled newest-sorted seed
+    // Storage unavailable or corrupt: skip cached snapshot
   }
-  return INITIAL_CATALOG_SEED[deal] || undefined
+  return undefined
 }
 
 const writeSnapshot = (deal, items) => {
@@ -91,7 +90,7 @@ export const useCatalogObjects = (deal) =>
     queryFn: async () => {
       const cachedSeed = readSnapshot(deal)
       if (cachedSeed && cachedSeed.length > 0) {
-        await waitForInteractiveOrIdle(3500)
+        await waitForInteractiveOrIdle(1500)
       }
       return fetchFullCatalog(deal)
     },

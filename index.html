@@ -28,22 +28,11 @@
   <script>
     (function() {
       var p = location.pathname.replace(/\/+$/, '') || '/';
-      var s = location.search;
       var href = '';
       if (p === '/') {
         href = window.innerWidth <= 767 ? '/hero-bg-mobile.webp' : '/hero-bg.webp';
       } else if (p === '/o-korporatcii') {
         href = window.innerWidth <= 767 ? '/about-bg-mobile.webp' : '/about-bg.webp';
-      } else if (p === '/property/1385715') {
-        href = '/seed-1385715.webp';
-      } else if (!s || s === '?deal=sale') {
-        if (p === '/flats') {
-          href = '/seed-flats.webp';
-        } else if (p === '/houses') {
-          href = '/seed-houses.webp';
-        } else if (p === '/realtys') {
-          href = '/seed-realtys.webp';
-        }
       }
       if (href) {
         var l = document.createElement('link');

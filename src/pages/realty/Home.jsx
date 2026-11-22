@@ -26,8 +26,7 @@ import {
 } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import { getObjects, mapObject } from '@/lib/novostoyApi'
-import { fetchFullCatalog, waitForInteractiveOrIdle } from '@/lib/useCatalogObjects'
-import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
+import { fetchFullCatalog, readSnapshot, waitForInteractiveOrIdle } from '@/lib/useCatalogObjects'
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
@@ -47,28 +46,28 @@ const FEATURED_CATEGORIES = [
     id: 'eoselia',
     label: 'єОселя 3-7%',
     icon: ShieldCheck,
-    catalogUrl: '/flats?eoselia=1',
+    catalogUrl: '/flats?deal=sale&eoselia=true',
     filter: (p) => p.eoselia
   },
   {
     id: 'erecovery',
     label: 'єВідновлення',
     icon: Hammer,
-    catalogUrl: '/flats?erecovery=1',
+    catalogUrl: '/flats?deal=sale&erecovery=true',
     filter: (p) => p.erecovery
   },
   {
     id: 'tender',
     label: 'Можливий торг',
     icon: Percent,
-    catalogUrl: '/flats?tender=1',
+    catalogUrl: '/flats?deal=sale&tender=true',
     filter: (p) => p.tender
   },
   {
     id: 'premium',
     label: 'Преміум ($50k+)',
     icon: Sparkles,
-    catalogUrl: '/flats?price_from=50000',
+    catalogUrl: '/flats?deal=sale&minPrice=50000',
     filter: (p) => p.price >= 50000
   }
 ]
@@ -149,7 +148,9 @@ const HomePage = () => {
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['novostoy-objects-featured'],
     queryFn: async () => {
-      await waitForInteractiveOrIdle(3500)
+      if (readSnapshot('sale')?.length > 0) {
+        await waitForInteractiveOrIdle(1500)
+      }
       try {
         const catalogItems = await fetchFullCatalog('sale')
         const validCatalog = catalogItems.filter(
@@ -187,10 +188,12 @@ const HomePage = () => {
         return scoreB - scoreA
       })
     },
-    placeholderData: () =>
-      (INITIAL_CATALOG_SEED.sale || []).filter(
-        (item) => item.type === 'apartment' && !item.is_sold && item.price > 0
-      ),
+    placeholderData: () => {
+      const snap = readSnapshot('sale')
+      return Array.isArray(snap)
+        ? snap.filter((item) => item.type === 'apartment' && !item.is_sold && item.price > 0)
+        : undefined
+    },
     staleTime: 5 * 60 * 1000
   })
 

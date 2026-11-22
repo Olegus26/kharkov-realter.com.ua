@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
 import { getInitialObjects, findObjectById, mapObject } from '@/lib/novostoyApi'
-import { INITIAL_CATALOG_SEED } from '@/data/initialCatalogSeed'
 import { waitForInteractiveOrIdle, readSnapshot } from '@/lib/useCatalogObjects'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
@@ -100,7 +99,7 @@ const PropertyDetail = () => {
         if (hit) return hit
       }
 
-      return INITIAL_CATALOG_SEED.byId?.[strId] || undefined
+      return undefined
     },
     [queryClient]
   )
@@ -184,7 +183,7 @@ const PropertyDetail = () => {
       const items = await getInitialObjects(property?.deal === 'rent' ? '1' : '2')
       return items.map(mapObject)
     },
-    placeholderData: () => INITIAL_CATALOG_SEED[property?.deal || 'sale'] || [],
+    placeholderData: () => readSnapshot(property?.deal || 'sale') || [],
     enabled: Boolean(property?.id),
     staleTime: 10 * 60 * 1000,
   })
