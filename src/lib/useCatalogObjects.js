@@ -5,7 +5,7 @@ const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const SNAPSHOT_SIZE = 100
 const INTERACTION_EVENTS = ['pointerdown', 'pointermove', 'touchstart', 'wheel', 'scroll', 'keydown']
 
-const getSnapshotKey = (deal) => `catalog-snapshot-v2-${deal}`
+const getSnapshotKey = (deal) => `catalog-snapshot-v3-${deal}`
 
 // Resolves immediately on first user interaction or after `timeoutMs`, preventing heavy JSON parsing from blocking mobile LCP/TBT
 export const waitForInteractiveOrIdle = (timeoutMs = 3500) => {
@@ -40,6 +40,7 @@ export const waitForInteractiveOrIdle = (timeoutMs = 3500) => {
 // Snapshot of the freshest objects: shows the sorted catalog immediately while the full feed syncs
 export const readSnapshot = (deal) => {
   try {
+    localStorage.removeItem(`catalog-snapshot-v2-${deal}`)
     const raw = localStorage.getItem(getSnapshotKey(deal))
     if (raw) {
       const parsed = JSON.parse(raw)

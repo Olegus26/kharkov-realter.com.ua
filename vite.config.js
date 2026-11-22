@@ -131,24 +131,6 @@ const createCatalogMiddleware = () => async (req, res, next) => {
 
 const catalogApiPlugin = () => ({
   name: 'catalog-api-middleware',
-  transformIndexHtml: {
-    order: 'post',
-    handler(html, ctx) {
-      if (!ctx?.bundle) return html
-      const keys = Object.keys(ctx.bundle)
-      const findChunk = (prefix) => keys.find((k) => k.startsWith(`assets/${prefix}-`) && k.endsWith('.js'))
-      const routeMap = {
-        home: [findChunk('Home'), findChunk('novostoyApi'), findChunk('JsonLd')].filter(Boolean),
-        catalog: [findChunk('Catalog'), findChunk('novostoyApi'), findChunk('JsonLd')].filter(Boolean),
-        detail: [findChunk('PropertyDetail'), findChunk('novostoyApi'), findChunk('JsonLd')].filter(Boolean),
-      }
-      const script = `<script>(function(){var p=location.pathname.replace(/\\/+$/,'')||'/';var m=${JSON.stringify(routeMap)};var list=p==='/'?m.home:(p==='/flats'||p==='/houses'||p==='/realtys')?m.catalog:p.indexOf('/property/')===0?m.detail:[];for(var i=0;i<list.length;i++){var l=document.createElement('link');l.rel='modulepreload';l.crossOrigin='';l.href='/'+list[i];document.head.appendChild(l)}})()</script>`
-      if (html.includes('<script type="module"')) {
-        return html.replace('<script type="module"', `${script}\n  <script type="module"`)
-      }
-      return html.replace('</head>', `  ${script}\n</head>`)
-    },
-  },
   configureServer(server) {
     server.middlewares.use(createCatalogMiddleware())
   },
