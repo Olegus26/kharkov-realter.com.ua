@@ -22,7 +22,8 @@ const ScrollToTop = () => {
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      left: 0,
+      behavior: 'instant',
     })
   }, [pathname])
 

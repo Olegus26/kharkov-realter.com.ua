@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
-import { getInitialObjects, findObjectById, mapObject } from '@/lib/novostoyApi'
-import { waitForInteractiveOrIdle, readSnapshot } from '@/lib/useCatalogObjects'
+import { findObjectById } from '@/lib/novostoyApi'
+import { waitForInteractiveOrIdle, readSnapshot, useCatalogObjects } from '@/lib/useCatalogObjects'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
 import { submitLead } from '@/lib/leadService'
@@ -54,6 +54,9 @@ const PropertyDetail = () => {
   const [activeImg, setActiveImg] = useState(0)
   const [mainImgFailed, setMainImgFailed] = useState(false)
   const thumbnailRefs = useRef([])
+  const thumbnailContainerRef = useRef(null)
+  const mainImgRef = useRef(null)
+  const preloadedUrlsRef = useRef(new Set())
   const { isFavorite, toggleFavorite, saveFavoriteItem } = useFavorites()
   const { markVisited } = useVisited()
   const queryClient = useQueryClient()
@@ -68,16 +71,15 @@ const PropertyDetail = () => {
   useEffect(() => {
     setActiveImg(0)
     setMainImgFailed(false)
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [id])
 
   useEffect(() => {
-    if (thumbnailRefs.current[activeImg]) {
-      thumbnailRefs.current[activeImg].scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      })
-    }
+    const container = thumbnailContainerRef.current
+    const thumb = thumbnailRefs.current[activeImg]
+    if (!container || !thumb) return
+    const targetLeft = thumb.offsetLeft - container.clientWidth / 2 + thumb.clientWidth / 2
+    container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' })
   }, [activeImg])
 
   const findCachedProperty = useCallback(
@@ -176,23 +178,49 @@ const PropertyDetail = () => {
     }
   }
 
-  const { data: allObjects = [] } = useQuery({
-    queryKey: ['novostoy-objects-initial', property?.deal || 'sale'],
-    queryFn: async () => {
-      await waitForInteractiveOrIdle(4500)
-      const items = await getInitialObjects(property?.deal === 'rent' ? '1' : '2')
-      return items.map(mapObject)
-    },
-    placeholderData: () => readSnapshot(property?.deal || 'sale') || [],
-    enabled: Boolean(property?.id),
-    staleTime: 10 * 60 * 1000,
-  })
+  const { data: allObjects = [] } = useCatalogObjects(property?.deal || 'sale')
 
   const similarProperties = useMemo(() => {
     if (!property || !allObjects.length) return []
-    return allObjects
-      .filter((p) => p.id !== property.id && !p.is_sold && (p.region === property.region || p.type === property.type))
-      .slice(0, 3)
+
+    const propertyIdNum = Number(property.id) || 0
+    const scored = []
+
+    for (const p of allObjects) {
+      if (p.type !== property.type || String(p.id) === String(property.id) || p.is_sold || p.deposit) {
+        continue
+      }
+
+      let score = 0
+      if (property.street && p.street === property.street) score += 60
+      if (property.mregion && p.mregion === property.mregion) score += 40
+      if (property.region && p.region === property.region) score += 25
+      if (property.metro && p.metro === property.metro) score += 20
+
+      if (property.rooms && p.rooms) {
+        const roomDiff = Math.abs(p.rooms - property.rooms)
+        if (roomDiff === 0) score += 25
+        else if (roomDiff === 1) score += 10
+      }
+
+      if (property.price > 0 && p.price > 0) {
+        const priceRatio = Math.abs(p.price - property.price) / property.price
+        if (priceRatio <= 0.15) score += 35
+        else if (priceRatio <= 0.3) score += 20
+        else if (priceRatio <= 0.5) score += 10
+      }
+
+      if (property.area > 0 && p.area > 0) {
+        const areaRatio = Math.abs(p.area - property.area) / property.area
+        if (areaRatio <= 0.2) score += 15
+      }
+
+      const tieBreaker = ((Number(p.id) * 2654435761) ^ propertyIdNum) >>> 0
+      scored.push({ item: p, score, tieBreaker })
+    }
+
+    scored.sort((a, b) => b.score - a.score || a.tieBreaker - b.tieBreaker)
+    return scored.slice(0, 3).map((entry) => entry.item)
   }, [property, allObjects])
 
   const handleToggleFavorite = useCallback((e) => {
@@ -250,7 +278,43 @@ const PropertyDetail = () => {
 
   useEffect(() => {
     setMainImgFailed(false)
+    if (mainImgRef.current) {
+      delete mainImgRef.current.dataset.rawTried
+    }
   }, [activeImg, property?.image_url, property?.images])
+
+  useEffect(() => {
+    const list = property?.images?.length
+      ? property.images
+      : property?.image_url
+        ? [property.image_url]
+        : []
+    if (list.length <= 1 || typeof window === 'undefined') return
+
+    const warmUrl = (rawUrl) => {
+      if (!rawUrl) return
+      const optUrl = getOptimizedImageUrl(rawUrl, 960, 78)
+      if (!optUrl || preloadedUrlsRef.current.has(optUrl)) return
+      preloadedUrlsRef.current.add(optUrl)
+      const img = new window.Image()
+      img.decoding = 'async'
+      img.src = optUrl
+    }
+
+    const len = list.length
+    const nearIndices = [
+      (activeImg + 1) % len,
+      (activeImg - 1 + len) % len,
+      (activeImg + 2) % len,
+    ]
+    nearIndices.forEach((idx) => warmUrl(list[idx]))
+
+    const timer = setTimeout(() => {
+      list.forEach((url) => warmUrl(url))
+    }, 250)
+
+    return () => clearTimeout(timer)
+  }, [activeImg, property?.images, property?.image_url])
 
   if (isLoading) {
     return (
@@ -334,25 +398,33 @@ const PropertyDetail = () => {
             {/* Main image */}
             <div className="relative aspect-[16/9] overflow-hidden bg-card border border-border rounded-2xl group shadow-sm">
               {images.length > 0 && !mainImgFailed ? (
-                <img
-                  key={images[activeImg]}
-                  src={getOptimizedImageUrl(images[activeImg], 1200, 82)}
-                  alt={property.title}
-                  width={1200}
-                  height={675}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="w-full h-full object-cover select-none"
-                  onError={(e) => {
-                    const raw = images[activeImg]
-                    if (raw && !e.currentTarget.dataset.rawTried && e.currentTarget.src !== raw) {
-                      e.currentTarget.dataset.rawTried = '1'
-                      e.currentTarget.src = raw
-                      return
-                    }
-                    setMainImgFailed(true)
-                  }}
-                />
+                <>
+                  <img
+                    src={getOptimizedImageUrl(images[activeImg], 200, 72)}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover blur-md scale-105 opacity-60 pointer-events-none select-none"
+                  />
+                  <img
+                    ref={mainImgRef}
+                    src={getOptimizedImageUrl(images[activeImg], 960, 78)}
+                    alt={property.title}
+                    width={960}
+                    height={540}
+                    fetchPriority="high"
+                    decoding="async"
+                    className="relative z-[1] w-full h-full object-cover select-none"
+                    onError={(e) => {
+                      const raw = images[activeImg]
+                      if (raw && !e.currentTarget.dataset.rawTried && e.currentTarget.src !== raw) {
+                        e.currentTarget.dataset.rawTried = '1'
+                        e.currentTarget.src = raw
+                        return
+                      }
+                      setMainImgFailed(true)
+                    }}
+                  />
+                </>
               ) : (
                 <div className="w-full h-full bg-muted/30 flex flex-col items-center justify-center text-muted-foreground">
                   <Building className="w-12 h-12 mb-2 opacity-40" aria-hidden="true" />
@@ -405,7 +477,10 @@ const PropertyDetail = () => {
             {/* Thumbnails */}
             {images.length > 1 && (
               <div className="relative">
-                <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+                <div
+                  ref={thumbnailContainerRef}
+                  className="flex gap-3 overflow-x-auto pb-2 no-scrollbar scroll-smooth"
+                >
                   {images.map((img, i) => (
                     <button
                       key={`${img}-${i}`}
@@ -425,7 +500,6 @@ const PropertyDetail = () => {
                         alt=""
                         width={96}
                         height={64}
-                        loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover pointer-events-none rounded-lg"
                         onError={(e) => {

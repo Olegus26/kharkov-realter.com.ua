@@ -19,24 +19,6 @@ export const getConfig = () => post('getConfig', ['all'])
 export const getObjects = (filters = {}) =>
   post('getObjects', { start_id: 0, limit: 100, ...filters })
 
-export const getInitialObjects = async (sellType) => {
-  const base = sellType ? { sell_type: sellType } : {}
-  const responses = await Promise.allSettled([
-    post('getObjects', { limit: 100, parent_id: '2', ...base }),
-    post('getObjects', { limit: 100, parent_id: '6', ...base }),
-    post('getObjects', { limit: 100, parent_id: '4', ...base }),
-  ])
-
-  const unique = new Map()
-  responses.forEach((res) => {
-    if (res.status !== 'fulfilled') return
-    ;(res.value?.data || []).forEach((item) => {
-      unique.set(item.id, item)
-    })
-  })
-  return Array.from(unique.values())
-}
-
 // Helper to delay execution
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
