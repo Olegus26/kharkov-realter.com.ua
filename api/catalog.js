@@ -3,7 +3,9 @@ import { getAllObjects, mapObjects, findObjectById } from '../src/lib/novostoyAp
 
 const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const CACHE_TTL_MS = 5 * 60 * 1000
+const BROTLI_OPTIONS = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }
 const catalogCache = new Map()
+const inFlightCatalog = new Map()
 const objectByIdCache = new Map()
 
 const trimForCatalog = (item) => ({
@@ -48,7 +50,7 @@ const createCompressedEntry = (payloadObj) => {
     updatedAt: Date.now(),
     raw,
     gzip: zlib.gzipSync(raw),
-    br: zlib.brotliCompressSync(raw),
+    br: zlib.brotliCompressSync(raw, BROTLI_OPTIONS),
   }
 }
 
@@ -78,32 +80,46 @@ const getCachedCatalog = async (deal) => {
     return existing
   }
 
-  const sellType = SELL_TYPE_BY_DEAL[deal]
-  const raw = await getAllObjects(sellType ? { sell_type: sellType } : {})
-  const mapped = mapObjects(raw).map(trimForCatalog)
-  const now = Date.now()
+  const inflight = inFlightCatalog.get(deal)
+  if (inflight) return inflight
 
-  mapped.forEach((item) => {
-    objectByIdCache.set(String(item.id), { entry: createCompressedEntry(item), updatedAt: now })
+  const promise = (async () => {
+    const sellType = SELL_TYPE_BY_DEAL[deal]
+    const raw = await getAllObjects(sellType ? { sell_type: sellType } : {})
+    const mapped = mapObjects(raw).map(trimForCatalog)
+    const now = Date.now()
+
+    mapped.forEach((item) => {
+      objectByIdCache.set(String(item.id), { item, entry: null, updatedAt: now })
+    })
+
+    const entry = createCompressedEntry(mapped)
+    catalogCache.set(deal, entry)
+    return entry
+  })().finally(() => {
+    inFlightCatalog.delete(deal)
   })
 
-  const entry = createCompressedEntry(mapped)
-  catalogCache.set(deal, entry)
-  return entry
+  inFlightCatalog.set(deal, promise)
+  return promise
 }
 
 const getCachedObjectById = async (id) => {
   const key = String(id)
   const existing = objectByIdCache.get(key)
   if (existing && Date.now() - existing.updatedAt < CACHE_TTL_MS) {
+    if (!existing.entry) {
+      existing.entry = createCompressedEntry(existing.item)
+    }
     return existing.entry
   }
 
   const found = await findObjectById(key)
   if (!found) return null
 
-  const entry = createCompressedEntry(trimForCatalog(found))
-  objectByIdCache.set(key, { entry, updatedAt: Date.now() })
+  const trimmed = trimForCatalog(found)
+  const entry = createCompressedEntry(trimmed)
+  objectByIdCache.set(key, { item: trimmed, entry, updatedAt: Date.now() })
   return entry
 }
 

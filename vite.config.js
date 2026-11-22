@@ -6,7 +6,9 @@ import { getAllObjects, mapObjects, findObjectById } from './src/lib/novostoyApi
 
 const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const CACHE_TTL_MS = 5 * 60 * 1000
+const BROTLI_OPTIONS = { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }
 const localCatalogCache = new Map()
+const inFlightCatalog = new Map()
 const localObjectByIdCache = new Map()
 
 const trimForCatalog = (item) => ({
@@ -50,21 +52,33 @@ const getCachedCatalogBuffers = async (deal) => {
   if (existing && Date.now() - existing.updatedAt < CACHE_TTL_MS) {
     return existing
   }
-  const sellType = SELL_TYPE_BY_DEAL[deal]
-  const raw = await getAllObjects(sellType ? { sell_type: sellType } : {})
-  const mapped = mapObjects(raw).map(trimForCatalog)
-  mapped.forEach((item) => {
-    localObjectByIdCache.set(String(item.id), { item, updatedAt: Date.now() })
+
+  const inflight = inFlightCatalog.get(deal)
+  if (inflight) return inflight
+
+  const promise = (async () => {
+    const sellType = SELL_TYPE_BY_DEAL[deal]
+    const raw = await getAllObjects(sellType ? { sell_type: sellType } : {})
+    const mapped = mapObjects(raw).map(trimForCatalog)
+    const now = Date.now()
+    mapped.forEach((item) => {
+      localObjectByIdCache.set(String(item.id), { item, updatedAt: now })
+    })
+    const rawBuf = Buffer.from(JSON.stringify(mapped), 'utf8')
+    const entry = {
+      updatedAt: now,
+      raw: rawBuf,
+      gzip: zlib.gzipSync(rawBuf),
+      br: zlib.brotliCompressSync(rawBuf, BROTLI_OPTIONS),
+    }
+    localCatalogCache.set(deal, entry)
+    return entry
+  })().finally(() => {
+    inFlightCatalog.delete(deal)
   })
-  const rawBuf = Buffer.from(JSON.stringify(mapped), 'utf8')
-  const entry = {
-    updatedAt: Date.now(),
-    raw: rawBuf,
-    gzip: zlib.gzipSync(rawBuf),
-    br: zlib.brotliCompressSync(rawBuf),
-  }
-  localCatalogCache.set(deal, entry)
-  return entry
+
+  inFlightCatalog.set(deal, promise)
+  return promise
 }
 
 const getCachedObjectById = async (id) => {
