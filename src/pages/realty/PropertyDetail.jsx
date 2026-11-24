@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BedDouble, Maximize2, MapPin, Phone, Building, Calendar, UtensilsCrossed, ExternalLink, ChevronLeft, ChevronRight, Heart, CalendarCheck, X, CheckCircle, Send, Share2, Eye, Hammer, Home as HomeIcon, Handshake } from 'lucide-react'
 import { findObjectById } from '@/lib/novostoyApi'
 import { waitForInteractiveOrIdle, readSnapshot, useCatalogObjects } from '@/lib/useCatalogObjects'
+import { useSwipe } from '@/lib/useSwipe'
 import { useFavorites } from '@/lib/FavoritesContext'
 import { useVisited } from '@/lib/useVisited'
 import { submitLead } from '@/lib/leadService'
@@ -51,6 +52,8 @@ const formatDescription = (raw) => {
 
 const PropertyDetail = () => {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const hasInAppHistory = typeof window !== 'undefined' && (window.history.state?.idx ?? 0) > 0
   const [activeImg, setActiveImg] = useState(0)
   const [mainImgFailed, setMainImgFailed] = useState(false)
   const thumbnailRefs = useRef([])
@@ -144,6 +147,17 @@ const PropertyDetail = () => {
     if (!property?.images?.length) return
     setActiveImg((prev) => (prev === property.images.length - 1 ? 0 : prev + 1))
   }, [property?.images])
+
+  const gallerySwipe = useSwipe({
+    onSwipeLeft: handleNextImage,
+    onSwipeRight: handlePrevImage,
+  })
+
+  const handleBackClick = useCallback((e) => {
+    if (!hasInAppHistory) return
+    e.preventDefault()
+    navigate(-1)
+  }, [hasInAppHistory, navigate])
 
   const handleKeyDownGallery = useCallback((e) => {
     if (e.key === 'ArrowLeft') handlePrevImage()
@@ -385,8 +399,12 @@ const PropertyDetail = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Breadcrumb */}
         <div className="py-6 flex items-center gap-3 text-xs sm:text-sm font-inter">
-          <Link to={catalogBackLink} className="flex items-center gap-1.5 text-muted-foreground hover:text-gold transition-colors font-medium">
-            <ArrowLeft className="w-4 h-4" /> {catalogBackTitle}
+          <Link
+            to={catalogBackLink}
+            onClick={handleBackClick}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-gold transition-colors font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" /> {hasInAppHistory ? 'Назад' : catalogBackTitle}
           </Link>
           <span className="text-border">/</span>
           <span className="text-muted-foreground truncate max-w-[200px] sm:max-w-sm">{property.title}</span>
@@ -396,7 +414,10 @@ const PropertyDetail = () => {
           {/* Left: Gallery + Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Main image */}
-            <div className="relative aspect-[16/9] overflow-hidden bg-card border border-border rounded-2xl group shadow-sm">
+            <div
+              {...gallerySwipe}
+              className="relative aspect-[16/9] overflow-hidden bg-card border border-border rounded-2xl group shadow-sm touch-pan-y select-none"
+            >
               {images.length > 0 && !mainImgFailed ? (
                 <>
                   <img

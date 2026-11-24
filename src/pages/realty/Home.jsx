@@ -30,9 +30,11 @@ import { fetchFullCatalog, readSnapshot, waitForInteractiveOrIdle } from '@/lib/
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
+import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
 
-const HERO_BG = '/hero-bg.webp'
+const HERO_BG = '/hero-kharkiv.webp'
+const HOME_FEATURED_KEY = 'home_featured_state'
 
 const FEATURED_CATEGORIES = [
   {
@@ -123,9 +125,37 @@ const HomePage = () => {
     })
   }, [queryClient])
 
-  const [activeCategory, setActiveCategory] = useState('all')
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [activeCategory, setActiveCategory] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const raw = sessionStorage.getItem(HOME_FEATURED_KEY)
+      if (!raw) return 'all'
+      const parsed = JSON.parse(raw)
+      return FEATURED_CATEGORIES.some((c) => c.id === parsed?.category) ? parsed.category : 'all'
+    } catch {
+      return 'all'
+    }
+  })
+  const [currentSlide, setCurrentSlide] = useState(() => {
+    if (typeof window === 'undefined') return 0
+    try {
+      const raw = sessionStorage.getItem(HOME_FEATURED_KEY)
+      if (!raw) return 0
+      const parsed = JSON.parse(raw)
+      return Number.isInteger(parsed?.slide) && parsed.slide >= 0 ? parsed.slide : 0
+    } catch {
+      return 0
+    }
+  })
   const [itemsPerPage, setItemsPerPage] = useState(3)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(HOME_FEATURED_KEY, JSON.stringify({ category: activeCategory, slide: currentSlide }))
+    } catch {
+      // Storage unavailable
+    }
+  }, [activeCategory, currentSlide])
 
   useEffect(() => {
     const handleResize = () => {
@@ -228,6 +258,11 @@ const HomePage = () => {
   const handleNextSlide = useCallback(() => {
     setCurrentSlide((prev) => Math.min(totalPages - 1, prev + 1))
   }, [totalPages])
+
+  const carouselSwipe = useSwipe({
+    onSwipeLeft: handleNextSlide,
+    onSwipeRight: handlePrevSlide,
+  })
 
   const handleCategoryChange = useCallback((catId) => {
     setActiveCategory(catId)
@@ -434,32 +469,34 @@ const HomePage = () => {
         {/* Background image & gradient with safe clipping */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <picture className="block w-full h-full">
-            <source media="(max-width: 767px)" srcSet="/hero-bg-mobile.webp" type="image/webp" />
+            <source media="(max-width: 767px)" srcSet="/hero-kharkiv-mobile.webp" type="image/webp" />
             <img
               src={HERO_BG}
               alt="Харків Ріелтер - елітна нерухомість"
-              width={1920}
-              height={1080}
+              width={1024}
+              height={572}
               fetchPriority="high"
               decoding="async"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-[60%_center] sm:object-center brightness-110 saturate-[1.15]"
             />
           </picture>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-navy/90" />
+          <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-navy/70 via-navy/30 to-transparent" />
+          <div className="hidden sm:block absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-navy/70" />
+          <div className="sm:hidden absolute inset-0 bg-gradient-to-b from-navy/35 via-navy/60 to-navy/90" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-28 pb-16 sm:pt-36 sm:pb-24 text-left">
-          <p className="inline-flex px-4 py-2 rounded-full border border-white/15 bg-white/10 backdrop-blur-xl text-cream/80 text-xs tracking-[0.25em] uppercase font-inter mb-8">
+          <p className="inline-flex px-4 py-2 rounded-full border border-white/15 bg-navy/40 backdrop-blur-xl text-white text-xs tracking-[0.25em] uppercase font-inter mb-8">
             Корпорація нерухомості · з 1996 року
           </p>
 
-          <h1 className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-7xl lg:text-8xl text-white mb-6 max-w-4xl drop-shadow-xl">
+          <h1 className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-7xl lg:text-8xl text-white mb-6 max-w-4xl drop-shadow-xl [text-shadow:0_4px_24px_rgba(10,20,40,0.55)]">
             Харків
             <br />
             <span className="text-sky-300 drop-shadow-lg">Ріелтер</span>
           </h1>
 
-          <p className="text-white/95 text-lg font-normal mb-10 max-w-xl font-inter drop-shadow-md">
+          <p className="text-white text-lg font-normal mb-10 max-w-xl font-inter drop-shadow-md [text-shadow:0_2px_10px_rgba(10,20,40,0.75)]">
             Чесність, порядок та безпека угод з будь-якою нерухомістю. З Агентством нерухомості «Харків-Ріелтер» вирішити житлове питання легко та надійно!
           </p>
 
@@ -936,51 +973,53 @@ const HomePage = () => {
         </div>
 
         {/* Cards Grid / Carousel View */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(itemsPerPage)].map((_, i) => (
-              <div key={i} className="bg-card border border-border rounded-2xl aspect-[4/5] animate-pulse" />
-            ))}
-          </div>
-        ) : filteredProperties.length === 0 ? (
-          <div className="text-center py-16 bg-card border border-border rounded-2xl">
-            <Building2 className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-foreground font-medium font-inter">
-              У цій категорії зараз немає об'єктів
-            </p>
-            <button
-              type="button"
-              tabIndex={0}
-              aria-label="Дивитися всі топові"
-              onClick={() => handleCategoryChange('all')}
-              className="mt-4 px-5 py-2.5 bg-gold text-navy font-semibold text-xs rounded-full hover:bg-gold/90 transition-all font-inter shadow-sm cursor-pointer"
-            >
-              Дивитися всі топові
-            </button>
-          </div>
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeCategory}-${safeCurrentSlide}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {visibleProperties.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                >
-                  <PropertyCard property={{ ...p, featured: true }} priority={i === 0} />
-                </motion.div>
+        <div {...carouselSwipe} className="touch-pan-y">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(itemsPerPage)].map((_, i) => (
+                <div key={i} className="bg-card border border-border rounded-2xl aspect-[4/5] animate-pulse" />
               ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
+            </div>
+          ) : filteredProperties.length === 0 ? (
+            <div className="text-center py-16 bg-card border border-border rounded-2xl">
+              <Building2 className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-foreground font-medium font-inter">
+                У цій категорії зараз немає об'єктів
+              </p>
+              <button
+                type="button"
+                tabIndex={0}
+                aria-label="Дивитися всі топові"
+                onClick={() => handleCategoryChange('all')}
+                className="mt-4 px-5 py-2.5 bg-gold text-navy font-semibold text-xs rounded-full hover:bg-gold/90 transition-all font-inter shadow-sm cursor-pointer"
+              >
+                Дивитися всі топові
+              </button>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${activeCategory}-${safeCurrentSlide}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {visibleProperties.map((p, i) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                  >
+                    <PropertyCard property={{ ...p, featured: true }} priority={i === 0} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
 
         {/* Pagination Dots */}
         {totalPages > 1 && (() => {
