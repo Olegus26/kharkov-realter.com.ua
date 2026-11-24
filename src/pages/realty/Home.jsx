@@ -33,7 +33,7 @@ import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
 import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
 
-const HERO_BG = '/hero-kharkiv.webp'
+const HERO_BG = '/images/backgrounds/hero-kharkiv.webp'
 const HOME_FEATURED_KEY = 'home_featured_state'
 
 const FEATURED_CATEGORIES = [
@@ -276,6 +276,19 @@ const HomePage = () => {
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) {
+      const defaultComplexes =
+        geoData.complexes?.length >= 3
+          ? geoData.complexes.slice(0, 3).map((c) => ({
+              label: c.jk_name,
+              value: c.jk_name,
+              address: c.address
+            }))
+          : [
+              { label: 'ЖК вул. Велозаводська', value: 'ЖК вул. Велозаводська' },
+              { label: 'ЖК Адмірал', value: 'ЖК Адмірал' },
+              { label: 'ЖК Казка', value: 'ЖК Казка' }
+            ]
+
       return {
         hasResults: true,
         isPopular: true,
@@ -289,55 +302,53 @@ const HomePage = () => {
           { label: 'Олексіївка', value: 'Алексеевка' },
           { label: 'Центр', value: 'Центр' }
         ],
-        complexes: (geoData.complexes || []).slice(0, 3).map((c) => ({
-          label: c.jk_name,
-          value: c.jk_name,
-          address: c.address
-        })),
-        streets: []
+        complexes: defaultComplexes,
+        streets: [
+          { label: 'вул. Сумська', value: 'Сумська' },
+          { label: 'просп. Науки', value: 'Науки' },
+          { label: 'вул. Полтавський Шлях', value: 'Полтавський Шлях' }
+        ]
       }
     }
 
-    const matchingMetro = []
+    const rawMetro = []
     METRO_LINES.forEach((line) => {
       line.stations.forEach((st) => {
         if (st.label.toLowerCase().includes(q) || st.value.toLowerCase().includes(q)) {
-          matchingMetro.push({ label: st.label, value: st.value, line: line.name })
+          rawMetro.push({ label: st.label, value: st.value, line: line.name })
         }
       })
     })
 
-    const matchingDistricts = DISTRICTS.filter(
+    const rawDistricts = DISTRICTS.filter(
       (d) => d.label.toLowerCase().includes(q) || d.value.toLowerCase().includes(q)
-    ).slice(0, 5)
+    )
 
-    const matchingComplexes = (geoData.complexes || [])
+    const rawComplexes = (geoData.complexes || [])
       .filter((c) => c.jk_name?.toLowerCase().includes(q) || c.address?.toLowerCase().includes(q))
-      .slice(0, 4)
       .map((c) => ({ label: c.jk_name, value: c.jk_name, address: c.address }))
 
-    const matchingStreets = (geoData.streets || [])
+    const rawStreets = (geoData.streets || [])
       .filter((s) => {
         if (s.current_name?.toLowerCase().includes(q)) return true
         if (s.old_names && s.old_names.some((old) => old.toLowerCase().includes(q))) return true
         return false
       })
-      .slice(0, 5)
-      .map((s) => ({ label: s.current_name, value: s.current_name }))
+      .map((s) => ({
+        label: s.short_type ? `${s.short_type} ${s.current_name}` : s.current_name,
+        value: s.current_name
+      }))
 
-    const hasResults =
-      matchingMetro.length > 0 ||
-      matchingDistricts.length > 0 ||
-      matchingComplexes.length > 0 ||
-      matchingStreets.length > 0
+    const nonEmptyCount = [rawMetro, rawDistricts, rawComplexes, rawStreets].filter((arr) => arr.length > 0).length
+    const perGroupLimit = nonEmptyCount === 1 ? 6 : 3
 
     return {
-      hasResults,
+      hasResults: nonEmptyCount > 0,
       isPopular: false,
-      metro: matchingMetro.slice(0, 4),
-      districts: matchingDistricts,
-      complexes: matchingComplexes,
-      streets: matchingStreets
+      metro: rawMetro.slice(0, perGroupLimit),
+      districts: rawDistricts.slice(0, perGroupLimit),
+      complexes: rawComplexes.slice(0, perGroupLimit),
+      streets: rawStreets.slice(0, perGroupLimit)
     }
   }, [query, geoData])
 
@@ -465,11 +476,11 @@ const HomePage = () => {
       <JsonLd data={generateRealEstateAgentSchema()} />
 
       {/* Hero — cinematic, left-aligned with safe clipping for dropdown */}
-      <section className="relative min-h-[92vh] sm:min-h-screen flex items-center">
-        {/* Background image & gradient with safe clipping */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <section className="relative min-h-[92vh] sm:min-h-screen flex items-center bg-navy">
+        {/* Background image & gradient positioned below fixed navbar so top sky & flagpole aren't clipped */}
+        <div className="absolute inset-x-0 top-[68px] sm:top-[76px] bottom-0 overflow-hidden pointer-events-none">
           <picture className="block w-full h-full">
-            <source media="(max-width: 767px)" srcSet="/hero-kharkiv-mobile.webp" type="image/webp" />
+            <source media="(max-width: 767px)" srcSet="/images/backgrounds/hero-kharkiv-mobile.webp" type="image/webp" />
             <img
               src={HERO_BG}
               alt="Харків Ріелтер - елітна нерухомість"
@@ -477,7 +488,7 @@ const HomePage = () => {
               height={572}
               fetchPriority="high"
               decoding="async"
-              className="w-full h-full object-cover object-[60%_center] sm:object-center brightness-110 saturate-[1.15]"
+              className="w-full h-full object-cover object-[60%_center] sm:object-[center_32%] brightness-110 saturate-[1.15]"
             />
           </picture>
           <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-navy/70 via-navy/30 to-transparent" />
@@ -485,40 +496,64 @@ const HomePage = () => {
           <div className="sm:hidden absolute inset-0 bg-gradient-to-b from-navy/35 via-navy/60 to-navy/90" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-28 pb-16 sm:pt-36 sm:pb-24 text-left">
-          <p className="inline-flex px-4 py-2 rounded-full border border-white/15 bg-navy/40 backdrop-blur-xl text-white text-xs tracking-[0.25em] uppercase font-inter mb-8">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pt-24 pb-20 sm:pt-20 sm:pb-36 text-left">
+          <p className="inline-flex px-4 py-2 rounded-full border border-white/15 bg-navy/40 backdrop-blur-xl text-white text-xs tracking-[0.25em] uppercase font-inter mb-5">
             Корпорація нерухомості · з 1996 року
           </p>
 
-          <h1 className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-7xl lg:text-8xl text-white mb-6 max-w-4xl drop-shadow-xl [text-shadow:0_4px_24px_rgba(10,20,40,0.55)]">
-            Харків
+          <h1 className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-6xl lg:text-7xl xl:text-8xl mb-4 max-w-4xl drop-shadow-xl [text-shadow:0_4px_24px_rgba(10,20,40,0.75)]">
+            <span className="text-sky-300">Харків</span>
             <br />
-            <span className="text-sky-300 drop-shadow-lg">Ріелтер</span>
+            <span className="text-amber-300">Ріелтер</span>
           </h1>
 
-          <p className="text-white text-lg font-normal mb-10 max-w-xl font-inter drop-shadow-md [text-shadow:0_2px_10px_rgba(10,20,40,0.75)]">
+          <p className="text-white text-base sm:text-lg font-normal mb-7 max-w-xl font-inter drop-shadow-md [text-shadow:0_2px_10px_rgba(10,20,40,0.75)]">
             Чесність, порядок та безпека угод з будь-якою нерухомістю. З Агентством нерухомості «Харків-Ріелтер» вирішити житлове питання легко та надійно!
           </p>
 
           {/* Search pill with live popup autocomplete */}
-          <div className="relative max-w-2xl z-30" ref={searchContainerRef}>
+          <div className="relative max-w-2xl lg:max-w-4xl z-30" ref={searchContainerRef}>
             <form
               onSubmit={handleSearch}
               className="flex flex-col sm:flex-row gap-0 w-full border border-white/20 bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-full p-2 shadow-2xl"
             >
-              <div className="flex gap-1 rounded-full bg-black/35 p-1 mx-1 shrink-0">
+              <div className="relative flex gap-1 rounded-full bg-black/35 p-1 mx-1 shrink-0">
                 <button
                   type="button"
                   onClick={handleSetDealSale}
-                  className={`flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-all ${deal === 'sale' ? 'bg-white text-navy shadow-sm' : 'text-cream/75 hover:text-cream'}`}
+                  tabIndex={0}
+                  aria-pressed={deal === 'sale'}
+                  className={cn(
+                    'relative z-10 flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-colors cursor-pointer',
+                    deal === 'sale' ? 'text-navy' : 'text-cream/75 hover:text-cream'
+                  )}
                 >
+                  {deal === 'sale' && (
+                    <motion.div
+                      layoutId="home-deal-pill"
+                      className="absolute inset-0 bg-white rounded-full shadow-sm -z-10"
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                  )}
                   Купити
                 </button>
                 <button
                   type="button"
                   onClick={handleSetDealRent}
-                  className={`flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-all ${deal === 'rent' ? 'bg-white text-navy shadow-sm' : 'text-cream/75 hover:text-cream'}`}
+                  tabIndex={0}
+                  aria-pressed={deal === 'rent'}
+                  className={cn(
+                    'relative z-10 flex-1 px-5 py-2 rounded-full text-xs tracking-widest uppercase font-inter font-medium transition-colors cursor-pointer',
+                    deal === 'rent' ? 'text-navy' : 'text-cream/75 hover:text-cream'
+                  )}
                 >
+                  {deal === 'rent' && (
+                    <motion.div
+                      layoutId="home-deal-pill"
+                      className="absolute inset-0 bg-white rounded-full shadow-sm -z-10"
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                  )}
                   Орендувати
                 </button>
               </div>
@@ -570,114 +605,16 @@ const HomePage = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
                   transition={{ duration: 0.16 }}
-                  className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 p-3 sm:p-4 z-50 max-h-[min(420px,55vh)] overflow-y-auto custom-scrollbar font-inter text-foreground"
+                  className="absolute top-full left-0 right-0 mt-2.5 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 overflow-hidden z-50 font-inter text-foreground"
                 >
-                  {suggestions.isPopular ? (
-                    /* 2-Column Balanced Layout for Popular Items */
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Left: Популярне метро */}
-                      <div>
-                        <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                          <TrainFront className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Популярне метро</span>
-                        </div>
-                        <div className="space-y-0.5">
-                          {suggestions.metro.map((m) => {
-                            const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'metro' && x.value === m.value)
-                            const isHighlighted = highlightedIndex === flatIdx
-                            return (
-                              <button
-                                key={m.value}
-                                type="button"
-                                onMouseDown={(e) => {
-                                  e.preventDefault()
-                                  handleSelectSuggestion('metro', m.value)
-                                }}
-                                tabIndex={0}
-                                className={cn(
-                                  'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
-                                  isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
-                                )}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                                  <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">м. {m.label}</span>
-                                </div>
-                                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Right: Популярні райони та ЖК */}
-                      <div>
-                        <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                          <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                          <span>Популярні райони та ЖК</span>
-                        </div>
-                        <div className="space-y-0.5">
-                          {suggestions.districts.map((d) => {
-                            const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'district' && x.value === d.value)
-                            const isHighlighted = highlightedIndex === flatIdx
-                            return (
-                              <button
-                                key={d.value}
-                                type="button"
-                                onMouseDown={(e) => {
-                                  e.preventDefault()
-                                  handleSelectSuggestion('district', d.value)
-                                }}
-                                tabIndex={0}
-                                className={cn(
-                                  'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
-                                  isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
-                                )}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                                  <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">р-н {d.label}</span>
-                                </div>
-                                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                              </button>
-                            )
-                          })}
-
-                          {suggestions.complexes.map((c) => {
-                            const flatIdx = flattenedSuggestions.findIndex((x) => x.type === 'complex' && x.value === c.value)
-                            const isHighlighted = highlightedIndex === flatIdx
-                            return (
-                              <button
-                                key={c.value}
-                                type="button"
-                                onMouseDown={(e) => {
-                                  e.preventDefault()
-                                  handleSelectSuggestion('complex', c.value)
-                                }}
-                                tabIndex={0}
-                                className={cn(
-                                  'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
-                                  isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
-                                )}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                                  <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">{c.label}</span>
-                                </div>
-                                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  ) : suggestions.hasResults ? (
+                  <div className="p-3 max-h-[min(320px,calc(100vh-180px))] overflow-y-auto custom-scrollbar">
+                  {suggestions.hasResults ? (
                     (() => {
                       const activeGroups = []
                       if (suggestions.metro?.length > 0) {
                         activeGroups.push({
                           id: 'metro',
-                          title: 'Станції метро',
+                          title: 'Метро',
                           icon: TrainFront,
                           iconColor: 'text-blue-600',
                           dotColor: 'bg-blue-500',
@@ -701,7 +638,7 @@ const HomePage = () => {
                       if (suggestions.complexes?.length > 0) {
                         activeGroups.push({
                           id: 'complexes',
-                          title: 'Житлові комплекси (ЖК)',
+                          title: 'ЖК',
                           icon: Building2,
                           iconColor: 'text-purple-600',
                           dotColor: 'bg-purple-500',
@@ -723,77 +660,78 @@ const HomePage = () => {
                         })
                       }
 
-                      const renderGroup = (g, isSingleGroup = false) => {
-                        const IconComp = g.icon
-                        return (
-                          <div key={g.id}>
-                            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                              <IconComp className={cn('w-3.5 h-3.5', g.iconColor)} />
-                              <span>{g.title}</span>
-                            </div>
-                            <div className={cn('space-y-0.5', isSingleGroup && 'grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 space-y-0')}>
-                              {g.items.map((item) => {
-                                const flatIdx = flattenedSuggestions.findIndex((x) => x.type === g.type && x.value === item.value)
-                                const isHighlighted = highlightedIndex === flatIdx
-                                return (
-                                  <button
-                                    key={item.value}
-                                    type="button"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault()
-                                      handleSelectSuggestion(g.type, item.value)
-                                    }}
-                                    tabIndex={0}
-                                    className={cn(
-                                      'w-full text-left px-3 py-2 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
-                                      isHighlighted ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20' : 'hover:bg-muted/80'
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <span className={cn('w-2 h-2 rounded-full shrink-0', g.dotColor)} />
-                                      <span className="text-sm font-semibold text-foreground group-hover:text-navy truncate">
-                                        {g.prefix}{item.label}
-                                      </span>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )
-                      }
-
-                      if (activeGroups.length === 1) {
-                        return (
-                          <div className="w-full">
-                            {renderGroup(activeGroups[0], true)}
-                          </div>
-                        )
-                      }
-
-                      const mid = Math.ceil(activeGroups.length / 2)
-                      const col1 = activeGroups.slice(0, mid)
-                      const col2 = activeGroups.slice(mid)
+                      const isSingleGroup = activeGroups.length === 1
+                      const gridColsClass =
+                        activeGroups.length === 4
+                          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                          : activeGroups.length === 3
+                            ? 'grid-cols-1 sm:grid-cols-3'
+                            : activeGroups.length === 2
+                              ? 'grid-cols-1 sm:grid-cols-2'
+                              : 'grid-cols-1'
 
                       return (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-3">
-                            {col1.map((g) => renderGroup(g, false))}
-                          </div>
-                          <div className="space-y-3">
-                            {col2.map((g) => renderGroup(g, false))}
-                          </div>
+                        <div className={cn('grid gap-2.5', gridColsClass)}>
+                          {activeGroups.map((g) => {
+                            const IconComp = g.icon
+                            return (
+                              <div key={g.id} className="min-w-0">
+                                <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                                  <IconComp className={cn('w-3.5 h-3.5 shrink-0', g.iconColor)} />
+                                  <span>{g.title}</span>
+                                </div>
+                                <div
+                                  className={cn(
+                                    'space-y-0.5',
+                                    isSingleGroup && 'grid grid-cols-1 sm:grid-cols-3 gap-x-2.5 gap-y-0.5 space-y-0'
+                                  )}
+                                >
+                                  {g.items.map((item) => {
+                                    const flatIdx = flattenedSuggestions.findIndex(
+                                      (x) => x.type === g.type && x.value === item.value
+                                    )
+                                    const isHighlighted = highlightedIndex === flatIdx
+                                    return (
+                                      <button
+                                        key={item.value}
+                                        type="button"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault()
+                                          handleSelectSuggestion(g.type, item.value)
+                                        }}
+                                        tabIndex={0}
+                                        className={cn(
+                                          'w-full text-left px-2 py-1.5 rounded-xl transition-colors flex items-center justify-between group cursor-pointer',
+                                          isHighlighted
+                                            ? 'bg-navy/10 text-navy font-semibold ring-1 ring-navy/20'
+                                            : 'hover:bg-muted/80'
+                                        )}
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <span className={cn('w-2 h-2 rounded-full shrink-0', g.dotColor)} />
+                                          <span className="text-xs sm:text-[13px] font-semibold text-foreground group-hover:text-navy truncate">
+                                            {g.prefix}
+                                            {item.label}
+                                          </span>
+                                        </div>
+                                        <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-navy opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       )
                     })()
                   ) : (
                     /* Friendly Empty State with Direct Search */
-                    <div className="py-6 px-4 text-center">
-                      <p className="text-sm text-foreground/80 font-medium mb-1">
-                        Не знайдено точних назв серед метро, районів чи ЖК
+                    <div className="py-4 px-4 text-center">
+                      <p className="text-xs sm:text-[13px] text-foreground/80 font-medium mb-1">
+                        Не знайдено точних назв серед метро, районів, вулиць чи ЖК
                       </p>
-                      <p className="text-xs text-muted-foreground mb-4">
+                      <p className="text-xs text-muted-foreground mb-3">
                         Ви можете знайти «{query.trim()}» по всій базі описів та оголошень
                       </p>
                       <button
@@ -802,7 +740,8 @@ const HomePage = () => {
                           e.preventDefault()
                           handleSelectSuggestion('query', query.trim())
                         }}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-xs font-semibold rounded-xl hover:bg-navy/90 transition-colors shadow-sm"
+                        tabIndex={0}
+                        className="inline-flex items-center gap-2 px-4 py-1.5 bg-navy text-white text-xs font-semibold rounded-xl hover:bg-navy/90 transition-colors shadow-sm"
                       >
                         <Search className="w-3.5 h-3.5" />
                         <span>Шукати «{query.trim()}» у каталозі</span>
@@ -812,7 +751,7 @@ const HomePage = () => {
 
                   {/* Free Search fallback action at bottom when typing */}
                   {query.trim().length > 0 && suggestions.hasResults && (
-                    <div className="pt-2.5 mt-3 border-t border-border/60">
+                    <div className="pt-2 mt-2 border-t border-border/50">
                       <button
                         type="button"
                         onMouseDown={(e) => {
@@ -820,16 +759,17 @@ const HomePage = () => {
                           handleSelectSuggestion('query', query.trim())
                         }}
                         tabIndex={0}
-                        className="w-full text-left px-3.5 py-2.5 rounded-xl bg-muted/60 hover:bg-navy hover:text-white transition-colors flex items-center justify-between group cursor-pointer"
+                        className="w-full text-left px-2.5 py-1.5 rounded-xl bg-muted/50 hover:bg-navy hover:text-white transition-colors flex items-center justify-between group cursor-pointer"
                       >
-                        <div className="flex items-center gap-2.5">
-                          <Search className="w-4 h-4 text-gold shrink-0 group-hover:text-white transition-colors" />
+                        <div className="flex items-center gap-2">
+                          <Search className="w-3.5 h-3.5 text-gold shrink-0 group-hover:text-white transition-colors" />
                           <span className="text-xs font-semibold">Шукати всі об'єкти за запитом: «{query.trim()}»</span>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors shrink-0" />
+                        <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-white transition-colors shrink-0" />
                       </button>
                     </div>
                   )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1077,17 +1017,23 @@ const HomePage = () => {
               {
                 num: '01',
                 title: 'ТОП-100 України & 30 років',
-                desc: 'Входимо до офіційного рейтингу «ТОП-100 агенцій нерухомості України 2026» за версією ЛУН (платформи ЛУН, Flatfy, Rieltor, Bird). На ринку з 1996 року.'
+                desc: 'Входимо до офіційного рейтингу «ТОП-100 агенцій нерухомості України 2026» за версією ЛУН (платформи ЛУН, Flatfy, Rieltor, Bird). На ринку з 1996 року.',
+                numColor: 'text-amber-500/80 group-hover:text-amber-500',
+                barColor: 'bg-amber-400'
               },
               {
                 num: '02',
                 title: 'Професійна спільнота',
-                desc: 'Дійсний член Асоціації фахівців з нерухомості України (АСНУ), Союзу ріелторів Харкова (ХСРіО) та Європейської Асоціації CEREAN.'
+                desc: 'Дійсний член Асоціації фахівців з нерухомості України (АСНУ), Союзу ріелторів Харкова (ХСРіО) та Європейської Асоціації CEREAN.',
+                numColor: 'text-sky-600/80 group-hover:text-sky-600',
+                barColor: 'bg-sky-500'
               },
               {
                 num: '03',
                 title: 'Локальна експертиза',
-                desc: 'Глибоке знання кожного району Харкова та області. Понад 100 кваліфікованих співробітників, які допоможуть з будь-яким запитом.'
+                desc: 'Глибоке знання кожного району Харкова та області. Понад 100 кваліфікованих співробітників, які допоможуть з будь-яким запитом.',
+                numColor: 'text-emerald-600/80 group-hover:text-emerald-600',
+                barColor: 'bg-emerald-500'
               }
             ].map((item, i) => (
               <motion.div
@@ -1098,7 +1044,12 @@ const HomePage = () => {
                 transition={{ delay: i * 0.15 }}
                 className="group p-8 rounded-2xl bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 relative overflow-hidden"
               >
-                <p className="font-cormorant font-extrabold tracking-tight text-6xl text-gold/10 group-hover:text-gold/25 transition-colors mb-6">{item.num}</p>
+                <div className="flex items-center justify-between mb-6">
+                  <p className={`font-cormorant font-extrabold tracking-tight text-5xl transition-colors ${item.numColor}`}>
+                    {item.num}
+                  </p>
+                  <span className={`h-1 w-10 rounded-full ${item.barColor} opacity-80 group-hover:w-14 transition-all duration-300`} />
+                </div>
                 <h3 className="font-cormorant font-bold text-2xl mb-3 text-foreground">{item.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed font-inter">{item.desc}</p>
               </motion.div>

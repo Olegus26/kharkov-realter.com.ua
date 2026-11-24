@@ -1,7 +1,7 @@
 export const telHref = (phone) => {
-  if (!phone) return '#';
-  return `tel:${phone.replace(/[\s-()]/g, '')}`;
-};
+  if (!phone) return '#'
+  return `tel:${phone.replace(/[\s-()]/g, '')}`
+}
 
 export const utilities = [
   {
@@ -193,4 +193,4 @@ export const utilities = [
       { name: 'Шевченківський', address: 'просп. Науки, 17-А' }
     ]
   }
-];
+]

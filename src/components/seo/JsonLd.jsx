@@ -40,7 +40,7 @@ export const generateRealEstateSchema = (property, url) => {
     name: property.title || fallbackName,
     description: property.description || fallbackName,
     url,
-    image: property.images && property.images.length > 0 ? property.images : 'https://kharkov-realter.com.ua/og-image.jpg',
+    image: property.images && property.images.length > 0 ? property.images : 'https://kharkov-realter.com.ua/images/brand/og-image.webp',
     offers: {
       '@type': 'Offer',
       price: property.price,
@@ -71,8 +71,8 @@ export const generateLocalBusinessSchema = () => {
     name: 'Харків Ріелтер',
     alternateName: 'Корпорація нерухомості Харків-Ріелтер',
     url: 'https://kharkov-realter.com.ua',
-    logo: 'https://kharkov-realter.com.ua/logo.png',
-    image: 'https://kharkov-realter.com.ua/og-image.jpg',
+    logo: 'https://kharkov-realter.com.ua/images/brand/logo.png',
+    image: 'https://kharkov-realter.com.ua/images/brand/og-image.webp',
     telephone: '+380577320000',
     email: 'info@kharkov-realter.com.ua',
     address: {

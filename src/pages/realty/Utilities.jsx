@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import UtilityCard from '@/components/realty/UtilityCard'
-import { utilities } from '@/lib/utilityData'
+import { utilities } from '@/data/utilityData'
 import SeoMeta from '@/components/seo/SeoMeta'
 
 const UtilitiesPage = () => {

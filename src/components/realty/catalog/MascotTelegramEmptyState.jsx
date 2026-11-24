@@ -31,8 +31,10 @@ const MascotTelegramEmptyState = ({ deal = 'sale', onClearFilters }) => {
         <div className="relative w-48 sm:w-56 max-w-[240px] flex items-center justify-center">
           <div className="absolute inset-0 bg-amber-400/25 rounded-full blur-2xl scale-75 pointer-events-none" />
           <img
-            src="/mascot-search.webp"
+            src="/images/mascots/mascot-search.webp"
             alt="Маскот Харків Ріелтер шукає квартиру з лупою"
+            width={512}
+            height={440}
             loading="lazy"
             decoding="async"
             className="w-full h-auto object-contain relative z-10 drop-shadow-[0_16px_32px_rgba(0,0,0,0.25)] hover:scale-105 transition-transform duration-300"

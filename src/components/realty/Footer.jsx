@@ -1,11 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Instagram, Facebook, Send as Telegram, Bot, X, ArrowRight } from 'lucide-react'
-import { OFFICES, GENERAL_EMAIL } from '@/data/offices'
-import AddressRevolver from './AddressRevolver'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Phone, Mail, MapPin, Clock, Instagram, Facebook, Send as Telegram, Bot, X, ArrowRight } from 'lucide-react'
+import { OFFICES, MAIN_PHONE, GENERAL_EMAIL } from '@/data/offices'
+import { getPhoneLink } from '@/lib/phones'
+
+const ROTATION_INTERVAL_MS = 6000
 
 const Footer = () => {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
+  const [activeOfficeIndex, setActiveOfficeIndex] = useState(0)
+  const [isContactsPaused, setIsContactsPaused] = useState(false)
+
+  useEffect(() => {
+    if (isContactsPaused || OFFICES.length <= 1) return
+    const timer = setInterval(() => {
+      setActiveOfficeIndex((prev) => (prev + 1) % OFFICES.length)
+    }, ROTATION_INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [isContactsPaused])
+
+  const currentOffice = OFFICES[activeOfficeIndex] || OFFICES[0]
+  const officePhones =
+    currentOffice.phones.length >= 2
+      ? currentOffice.phones.slice(0, 2)
+      : [currentOffice.phones[0], MAIN_PHONE].filter(Boolean)
+
+  const handleContactsMouseEnter = () => {
+    setIsContactsPaused(true)
+  }
+
+  const handleContactsMouseLeave = () => {
+    setIsContactsPaused(false)
+  }
+
+  const handleContactsFocus = () => {
+    setIsContactsPaused(true)
+  }
+
+  const handleContactsBlur = () => {
+    setIsContactsPaused(false)
+  }
 
   return (
     <footer className="bg-card border-t border-border">
@@ -15,7 +50,7 @@ const Footer = () => {
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-4 mb-6 group">
               <img
-                src="/logo.png"
+                src="/images/brand/logo.png"
                 alt=""
                 width={160}
                 height={160}
@@ -35,7 +70,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram Харків Ріелтер"
-                className="w-9 h-9 border border-border flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors rounded-lg"
+                className="w-9 h-9 border border-pink-200/80 bg-pink-50/70 text-[#E1306C] hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:text-white hover:border-transparent flex items-center justify-center transition-all rounded-lg"
               >
                 <Instagram className="w-4 h-4" />
               </a>
@@ -44,7 +79,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook Харків Ріелтер"
-                className="w-9 h-9 border border-border flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors rounded-lg"
+                className="w-9 h-9 border border-blue-200/80 bg-blue-50/70 text-[#1877F2] hover:bg-[#1877F2] hover:text-white hover:border-transparent flex items-center justify-center transition-all rounded-lg"
               >
                 <Facebook className="w-4 h-4" />
               </a>
@@ -53,7 +88,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telegram канал Харків Ріелтер"
-                className="w-9 h-9 border border-border flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors rounded-lg"
+                className="w-9 h-9 border border-sky-200/80 bg-sky-50/70 text-[#0088cc] hover:bg-[#0088cc] hover:text-white hover:border-transparent flex items-center justify-center transition-all rounded-lg"
               >
                 <Telegram className="w-4 h-4" />
               </a>
@@ -62,7 +97,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telegram бот Харків Ріелтер"
-                className="w-9 h-9 border border-border flex items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors rounded-lg"
+                className="w-9 h-9 border border-amber-200/80 bg-amber-50/70 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-transparent flex items-center justify-center transition-all rounded-lg"
               >
                 <Bot className="w-4 h-4" />
               </a>
@@ -119,28 +154,78 @@ const Footer = () => {
           </div>
 
           {/* Contacts */}
-          <div>
+          <div
+            onMouseEnter={handleContactsMouseEnter}
+            onMouseLeave={handleContactsMouseLeave}
+            onFocus={handleContactsFocus}
+            onBlur={handleContactsBlur}
+          >
             <p className="text-xs tracking-[0.2em] uppercase text-gold mb-5 font-inter font-semibold">Контакти</p>
-            <div className="space-y-4 font-inter">
-              <AddressRevolver addresses={OFFICES} />
-
-              {/* General Email & Contacts link */}
-              <div className="flex items-center gap-2.5 text-xs text-muted-foreground px-1">
-                <Mail className="w-3.5 h-3.5 text-gold shrink-0" />
-                <a href={`mailto:${GENERAL_EMAIL}`} className="hover:text-gold transition-colors font-medium">
-                  {GENERAL_EMAIL}
-                </a>
+            <div className="space-y-3 text-sm text-muted-foreground font-inter">
+              <div className="min-h-[104px]">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.ul
+                    key={currentOffice.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="space-y-2.5"
+                  >
+                    <li className="flex items-start gap-2.5">
+                      <MapPin className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+                      <div className="min-w-0 leading-snug">
+                        <p className="font-semibold text-foreground truncate">{currentOffice.name}</p>
+                        <p className="text-[13px] text-muted-foreground truncate" title={currentOffice.shortAddress}>
+                          {currentOffice.shortAddress}
+                        </p>
+                      </div>
+                    </li>
+                    {officePhones.map((phone, idx) => (
+                      <li key={`${currentOffice.id}-${idx}`}>
+                        <a
+                          href={getPhoneLink(phone)}
+                          tabIndex={0}
+                          aria-label={`Зателефонувати у філію ${currentOffice.name} за номером ${phone}`}
+                          className="inline-flex items-center gap-2.5 text-foreground font-semibold hover:text-gold transition-colors"
+                        >
+                          <Phone className="w-4 h-4 text-gold shrink-0" />
+                          <span>{phone}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </motion.ul>
+                </AnimatePresence>
               </div>
 
-              <div className="pt-2">
-                <Link
-                  to="/kontakty"
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-gold hover:text-foreground transition-colors"
-                >
-                  <span>Всі 13 відділень та телефони</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+              <ul className="space-y-3 pt-0.5">
+                <li>
+                  <a
+                    href={`mailto:${GENERAL_EMAIL}`}
+                    tabIndex={0}
+                    aria-label={`Написати на email ${GENERAL_EMAIL}`}
+                    className="inline-flex items-center gap-2.5 hover:text-foreground transition-colors"
+                  >
+                    <Mail className="w-4 h-4 text-gold shrink-0" />
+                    <span>{GENERAL_EMAIL}</span>
+                  </a>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-gold shrink-0" />
+                  <span>Пн–Пт: 10:00 – 18:00</span>
+                </li>
+                <li className="pt-1">
+                  <Link
+                    to="/kontakty"
+                    tabIndex={0}
+                    aria-label="Переглянути всі 13 відділень та телефони"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-gold hover:text-foreground transition-colors group"
+                  >
+                    <span>Всі 13 відділень та телефони</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -161,11 +246,11 @@ const Footer = () => {
           {/* Partner logos */}
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 lg:gap-4">
             {[
-              { src: '/rieltor_logo.png', alt: 'РІЕЛТОР.ua Партнер', h: 'h-6', width: 80, height: 24 },
-              { src: '/lun_logo_386.svg', alt: 'ЛУН Партнер', h: 'h-5', width: 51, height: 20 },
-              { src: '/flatfy.svg', alt: 'Flatfy Партнер', h: 'h-5', width: 49, height: 20 },
-              { src: '/olx_logo.svg', alt: 'OLX Партнер', h: 'h-5', width: 35, height: 20 },
-              { src: '/dimria-partner.svg', alt: 'dim RIA Партнер', h: 'h-6', width: 79, height: 24 },
+              { src: '/images/partners/rieltor.svg', alt: 'РІЕЛТОР.ua Партнер', h: 'h-6', width: 80, height: 24 },
+              { src: '/images/partners/lun.svg', alt: 'ЛУН Партнер', h: 'h-5', width: 51, height: 20 },
+              { src: '/images/partners/flatfy.svg', alt: 'Flatfy Партнер', h: 'h-5', width: 49, height: 20 },
+              { src: '/images/partners/olx.svg', alt: 'OLX Партнер', h: 'h-5', width: 35, height: 20 },
+              { src: '/images/partners/dimria.svg', alt: 'dim RIA Партнер', h: 'h-6', width: 79, height: 24 },
             ].map((logo, i) => (
               <div
                 key={i}

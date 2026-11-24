@@ -17,7 +17,11 @@ const FilterPopover = ({ label, count = 0, isActive = false, contentClassName = 
       )}
       {isActive && <span className="absolute top-0 right-1 w-3 h-3 bg-navy border-2 border-card rounded-full" />}
     </PopoverTrigger>
-    <PopoverContent className={`${contentClassName} border-border bg-card rounded-2xl shadow-lg`} align="start">
+    <PopoverContent
+      className={`${contentClassName} border-border bg-card rounded-2xl shadow-lg overflow-hidden`}
+      align="start"
+      collisionPadding={16}
+    >
       {children}
     </PopoverContent>
   </Popover>

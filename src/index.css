@@ -92,3 +92,15 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(220 12% 80%); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: hsl(222 55% 35%); }
+
+@supports not selector(::-webkit-scrollbar) {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 14% 80%) transparent;
+  }
+}
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; margin-block: 8px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: hsl(220 14% 80%); border-radius: 9999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(222 55% 35%); }

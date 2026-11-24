@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import FloatingTelegram from './FloatingTelegram'
+import AmbientSideWaves from './AmbientSideWaves'
 
 const SiteLayout = () => {
   const location = useLocation()
@@ -9,6 +10,7 @@ const SiteLayout = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-x-hidden">
+      {!isMapView && <AmbientSideWaves />}
       <Navbar />
       <main className="flex-grow relative z-10 min-h-screen">
         <Outlet />

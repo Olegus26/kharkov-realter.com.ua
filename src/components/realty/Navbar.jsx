@@ -140,7 +140,7 @@ const Navbar = () => {
           className="flex items-center gap-2.5 sm:gap-3 shrink-0 group focus:outline-none"
         >
           <img
-            src="/logo.png"
+            src="/images/brand/logo.png"
             alt=""
             width={160}
             height={160}
@@ -293,24 +293,28 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[290px] max-h-[340px] overflow-y-auto custom-scrollbar bg-white rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] border border-border/70 p-2 space-y-1"
+                    className="w-[296px] bg-white rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] border border-border/70 overflow-hidden flex flex-col"
                   >
-                    <div className="px-3 py-1.5 border-b border-border/40 mb-1">
+                    <div className="px-4 py-2.5 border-b border-border/40 bg-muted/20 shrink-0">
                       <p className="text-[10px] tracking-widest uppercase font-semibold text-muted-foreground font-inter">Відгуки Google Maps за філіями</p>
                     </div>
-                    {OFFICES.map((office) => (
-                      <a
-                        key={office.id}
-                        href={office.reviewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-col px-3 py-2 hover:bg-muted/70 rounded-xl transition-colors group"
-                        onClick={handleCloseAll}
-                      >
-                        <span className="font-semibold text-xs text-foreground group-hover:text-navy transition-colors">{office.name}</span>
-                        <span className="text-[11px] text-muted-foreground truncate">{office.shortAddress}</span>
-                      </a>
-                    ))}
+                    <div className="max-h-[280px] overflow-y-auto px-2 py-1.5 mr-1 my-1 space-y-0.5 custom-scrollbar">
+                      {OFFICES.map((office) => (
+                        <a
+                          key={office.id}
+                          href={office.reviewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          tabIndex={0}
+                          aria-label={`Відгуки філії ${office.name}`}
+                          className="flex flex-col px-3 py-2 hover:bg-muted/70 rounded-xl transition-colors group"
+                          onClick={handleCloseAll}
+                        >
+                          <span className="font-semibold text-xs text-foreground group-hover:text-navy transition-colors">{office.name}</span>
+                          <span className="text-[11px] text-muted-foreground truncate">{office.shortAddress}</span>
+                        </a>
+                      ))}
+                    </div>
                   </motion.div>
                 </div>
               )}

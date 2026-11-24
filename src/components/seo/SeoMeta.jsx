@@ -1,10 +1,10 @@
 import { Helmet } from 'react-helmet-async'
 
 const SeoMeta = ({ title, description, url, image, type = 'website' }) => {
-  const defaultTitle = "Агентство нерухомості Харків Ріелтер"
-  const defaultDescription = "Найбільша база актуальної нерухомості в Харкові. Купити чи орендувати квартиру, будинок, комерційні об'єкти з допомогою професіоналів агентства Харків Ріелтер."
-  const defaultImage = "https://kharkov-realter.com.ua/og-image.jpg"
-  const defaultUrl = "https://kharkov-realter.com.ua"
+  const defaultTitle = 'Агентство нерухомості Харків Ріелтер'
+  const defaultDescription = 'Найбільша база актуальної нерухомості в Харкові. Купити чи орендувати квартиру, будинок, комерційні об\'єкти з допомогою професіоналів агентства Харків Ріелтер.'
+  const defaultImage = 'https://kharkov-realter.com.ua/images/brand/og-image.webp'
+  const defaultUrl = 'https://kharkov-realter.com.ua'
 
   const finalTitle = title ? `${title} | Харків Ріелтер` : defaultTitle
   const finalDescription = description || defaultDescription

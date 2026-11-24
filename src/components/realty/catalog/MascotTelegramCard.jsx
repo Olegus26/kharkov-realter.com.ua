@@ -20,14 +20,14 @@ const MascotTelegramCard = ({ deal = 'sale', variant = 'keys', onDismiss }) => {
 
   const titleText = isSearchVariant
     ? (deal === 'rent' ? 'Потрібна перевірена оренда?' : 'Індивідуальний підбір житла')
-    : (deal === 'rent' ? 'Свіжа оренда від 13 філій' : 'Нові квартири з’являються щодня')
+    : (deal === 'rent' ? 'Свіжа оренда щодня' : 'Нові квартири з’являються щодня')
 
   const descriptionText = isSearchVariant
-    ? 'Бот відстежує нові надходження по Харкову та сповістить вас, щойно з\'явиться відповідний об\'єкт'
-    : 'Підпишіться на свої фільтри — бот надішле нові варіанти раніше, ніж вони потраплять на інші дошки'
+    ? 'Бот знайде потрібне житло по Харкову та миттєво сповістить у Telegram'
+    : 'Вкажіть свої фільтри — бот надішле нові варіанти раніше за інші сайти'
 
   const badgeTag = isSearchVariant ? 'Пошук по базі' : 'Офіційний бот'
-  const mascotSrc = isSearchVariant ? '/mascot-search.webp' : '/mascot-squirrel.webp'
+  const mascotSrc = isSearchVariant ? '/images/mascots/mascot-search.webp' : '/images/mascots/mascot-squirrel.webp'
   const mascotAlt = isSearchVariant
     ? 'Маскот Харків Ріелтер шукає квартиру з лупою'
     : 'Маскот Харків Ріелтер з ключами від квартири'
@@ -47,7 +47,7 @@ const MascotTelegramCard = ({ deal = 'sale', variant = 'keys', onDismiss }) => {
       />
 
       {/* Header bar with tag and dismiss button */}
-      <div className="flex items-center justify-between gap-3 relative z-10 mb-1.5">
+      <div className="flex items-center justify-between gap-3 relative z-10">
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-inter font-bold tracking-wide">
           <Sparkles className="w-3 h-3 text-amber-400" />
           <span>{badgeTag}</span>
@@ -68,27 +68,27 @@ const MascotTelegramCard = ({ deal = 'sale', variant = 'keys', onDismiss }) => {
       </div>
 
       {/* Mascot illustration */}
-      <div className="relative z-10 flex items-center justify-center my-0.5">
-        <div className="relative w-28 sm:w-32 max-w-[128px] flex items-center justify-center">
+      <div className="relative z-10 flex items-center justify-center">
+        <div className="relative w-36 sm:w-40 max-w-[164px] flex items-center justify-center">
           <div className="absolute inset-0 bg-amber-400/25 rounded-full blur-2xl scale-75 pointer-events-none" />
           <img
             src={mascotSrc}
             alt={mascotAlt}
-            width={128}
-            height={110}
+            width={512}
+            height={440}
             loading="lazy"
             decoding="async"
-            className="w-full h-auto max-h-[110px] object-contain relative z-10 drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] group-hover:scale-105 group-hover:-translate-y-1 transition-all duration-300"
+            className="w-full h-auto max-h-[142px] object-contain relative z-10 drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] group-hover:scale-105 group-hover:-translate-y-1 transition-all duration-300"
           />
         </div>
       </div>
 
       {/* Content */}
-      <div className="relative z-10 text-center mt-1 flex flex-col items-center">
+      <div className="relative z-10 text-center flex flex-col items-center">
         <h3 className="font-cormorant font-bold text-lg sm:text-xl text-white leading-snug mb-1 drop-shadow-sm">
           {titleText}
         </h3>
-        <p className="font-inter text-[11px] sm:text-xs text-slate-200 leading-snug max-w-[280px] font-normal line-clamp-2">
+        <p className="font-inter text-[11px] sm:text-xs text-slate-200 leading-snug max-w-[270px] font-normal">
           {descriptionText}
         </p>
 
@@ -96,7 +96,7 @@ const MascotTelegramCard = ({ deal = 'sale', variant = 'keys', onDismiss }) => {
         <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2 text-[10px] font-inter text-slate-100 font-medium">
           <span className="inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-md border border-white/15">
             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-            База 13 філій
+            Велика база
           </span>
           <span className="inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-md border border-white/15">
             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -110,7 +110,7 @@ const MascotTelegramCard = ({ deal = 'sale', variant = 'keys', onDismiss }) => {
       </div>
 
       {/* CTA Button */}
-      <div className="relative z-10 pt-2.5 mt-2">
+      <div className="relative z-10 pt-2">
         <a
           href={BOT_URL}
           target="_blank"

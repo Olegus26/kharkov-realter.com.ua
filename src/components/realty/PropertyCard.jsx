@@ -11,8 +11,8 @@ const PROGRAM_BADGES = [
 ]
 
 const STATUS_STAMPS = [
-  { key: 'is_sold', src: '/stamp-sold.webp', alt: 'Продано' },
-  { key: 'deposit', src: '/stamp-deposit.webp', alt: 'Завдаток' },
+  { key: 'is_sold', src: '/images/stamps/stamp-sold.webp', alt: 'Продано' },
+  { key: 'deposit', src: '/images/stamps/stamp-deposit.webp', alt: 'Завдаток' },
 ]
 
 const formatPrice = (price, deal) => {

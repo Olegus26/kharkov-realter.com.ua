@@ -3,7 +3,7 @@ import {
   Zap, Flame, Droplet, Trash2, Recycle, Landmark, Building2, Fuel,
   Phone, Mail, MapPin, Clock, Globe, ChevronDown,
 } from 'lucide-react'
-import { telHref } from '@/lib/utilityData'
+import { telHref } from '@/data/utilityData'
 
 const ICONS = { Zap, Flame, Droplet, Trash2, Recycle, Landmark, Building2, Fuel }
 

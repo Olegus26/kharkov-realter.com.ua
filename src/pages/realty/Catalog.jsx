@@ -900,7 +900,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                               groups={METRO_LINES}
                               selected={metroStations}
                               onChange={setMetroStations}
-                              contentClassName="w-[min(500px,calc(100vw-2rem))]"
+                              contentClassName="w-[min(740px,calc(100vw-2rem))]"
                             />
 
                             <CheckboxFilter

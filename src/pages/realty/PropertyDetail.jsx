@@ -18,8 +18,8 @@ const DEAL_LABELS = { sale: 'Продаж', rent: 'Оренда' }
 const TYPE_LABELS = { apartment: 'Квартира', house: 'Будинок', penthouse: 'Пентхаус', villa: 'Вілла', commercial: 'Комерційна' }
 
 const STATUS_STAMPS = [
-  { key: 'is_sold', src: '/stamp-sold.webp', alt: 'Продано' },
-  { key: 'deposit', src: '/stamp-deposit.webp', alt: 'Завдаток' },
+  { key: 'is_sold', src: '/images/stamps/stamp-sold.webp', alt: 'Продано' },
+  { key: 'deposit', src: '/images/stamps/stamp-deposit.webp', alt: 'Завдаток' },
 ]
 
 const sanitizeHtml = (html) => {
@@ -70,10 +70,12 @@ const PropertyDetail = () => {
   const [isSubmittingBooking, setIsSubmittingBooking] = useState(false)
   const [bookingSubmitted, setBookingSubmitted] = useState(false)
   const [bookingError, setBookingError] = useState('')
+  const [isPhoneRevealed, setIsPhoneRevealed] = useState(false)
 
   useEffect(() => {
     setActiveImg(0)
     setMainImgFailed(false)
+    setIsPhoneRevealed(false)
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [id])
 
@@ -382,9 +384,15 @@ const PropertyDetail = () => {
   const schemaUrl = `https://kharkov-realter.com.ua/property/${property.id}`
   const seoTitle = `${TYPE_LABELS[property.type] || 'Об\'єкт'} ${property.rooms ? property.rooms + '-кімн., ' : ''}${property.area ? property.area + ' м² ' : ''}за ${formattedPrice}`
 
-  const primaryCallPhone = property.agent_phones?.[0]
-    ? `tel:+38${property.agent_phones[0]}`
-    : 'tel:+380957372261'
+  const primaryPhoneRaw = property.agent_phones?.[0]
+    ? `+38${property.agent_phones[0]}`
+    : '+380957372261'
+  const primaryCallPhone = `tel:${primaryPhoneRaw}`
+  const primaryPhoneDisplay = formatPhone(primaryPhoneRaw)
+
+  const handleDesktopRevealPhone = () => {
+    setIsPhoneRevealed(true)
+  }
 
   return (
     <div className="pt-24 pb-20" onKeyDown={handleKeyDownGallery} tabIndex={0}>
@@ -756,14 +764,39 @@ const PropertyDetail = () => {
                   Записатись на перегляд
                 </button>
 
-                {/* Primary Action 2: Call agent directly */}
+                {/* Primary Action 2: Mobile calls immediately; desktop reveals & copies number */}
                 <a
                   href={primaryCallPhone}
-                  className="flex items-center justify-center w-full mt-3 py-3.5 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold hover:bg-navy/90 transition-colors rounded-full shadow-sm gap-2"
+                  tabIndex={0}
+                  aria-label="Подзвонити агенту"
+                  className="flex sm:hidden items-center justify-center w-full mt-3 py-3.5 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold hover:bg-navy/90 transition-colors rounded-full shadow-sm gap-2"
                 >
                   <Phone className="w-4 h-4" />
                   Подзвонити агенту
                 </a>
+
+                {!isPhoneRevealed ? (
+                  <button
+                    type="button"
+                    onClick={handleDesktopRevealPhone}
+                    tabIndex={0}
+                    aria-label="Показати номер телефону агента"
+                    className="hidden sm:flex items-center justify-center w-full mt-3 py-3.5 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold hover:bg-navy/90 transition-colors rounded-full shadow-sm gap-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Подзвонити агенту
+                  </button>
+                ) : (
+                  <a
+                    href={primaryCallPhone}
+                    tabIndex={0}
+                    aria-label={`Номер агента ${primaryPhoneDisplay}`}
+                    className="hidden sm:flex items-center justify-center w-full mt-3 py-3.5 px-4 bg-navy text-white text-sm font-inter font-bold hover:bg-navy/90 transition-colors rounded-full shadow-sm gap-2"
+                  >
+                    <Phone className="w-4 h-4 shrink-0" />
+                    <span className="tracking-tight">{primaryPhoneDisplay}</span>
+                  </a>
+                )}
 
                 {/* Primary Action 3: Add to favorites */}
                 <button

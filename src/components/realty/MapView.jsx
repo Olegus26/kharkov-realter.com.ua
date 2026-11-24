@@ -40,19 +40,15 @@ L.Icon.Default.mergeOptions({
 
 const createCustomIcon = (isSelected, isVisited) => {
   const size = isSelected ? 18 : 13
-  const bg = isSelected ? '#ff7a00' : isVisited ? '#10b981' : '#60a5fa'
-  const border = isSelected ? 'white' : isVisited ? '#a7f3d0' : '#bfdbfe'
+  const dotClass = isSelected
+    ? 'w-[18px] h-[18px] bg-[#ff7a00] border-2 border-white'
+    : isVisited
+      ? 'w-[13px] h-[13px] bg-emerald-500 border-2 border-emerald-200'
+      : 'w-[13px] h-[13px] bg-blue-400 border-2 border-blue-200'
 
   return L.divIcon({
     className: 'custom-dot-marker',
-    html: `<div style="
-      width: ${size}px; height: ${size}px;
-      background: ${bg};
-      border: 2px solid ${border};
-      border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-      transition: all 0.2s;
-    "></div>`,
+    html: `<div class="${dotClass} rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.5)] transition-all duration-200"></div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   })
@@ -245,7 +241,7 @@ const MapView = ({ properties = [] }) => {
                   {(p.is_sold || p.deposit) && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
                       <img
-                        src={p.is_sold ? '/stamp-sold.webp' : '/stamp-deposit.webp'}
+                        src={p.is_sold ? '/images/stamps/stamp-sold.webp' : '/images/stamps/stamp-deposit.webp'}
                         alt={p.is_sold ? 'Продано' : 'Завдаток'}
                         className="w-3/4 h-3/4 object-contain drop-shadow-md"
                         onError={(e) => {

@@ -1,0 +1,15 @@
+<svg width="160" height="48" viewBox="0 0 160 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Golden key icon -->
+  <circle cx="20" cy="18" r="8.5" stroke="#F5C400" stroke-width="4.2"/>
+  <path d="M23 25L23 39L27 36L27 33L24.5 31.5L27 29.5L27 25" fill="#E0B000"/>
+  <path d="M18.5 25.5V40.5L22.5 38V25.5H18.5Z" fill="#FFD633"/>
+  <path d="M25 23.5L34 32.5L34 36.5L30 36.5L30 33.5L27.5 33.5L23 27.5" fill="#F5C400"/>
+  <!-- RIELTOR wordmark -->
+  <text x="41" y="27" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="21" letter-spacing="0.8">RIELTOR</text>
+  <!-- "від" + LUN cube + "лун" -->
+  <text x="96" y="42" fill="#FFFFFF" fill-opacity="0.85" font-family="Inter, Arial, sans-serif" font-weight="600" font-size="10">від</text>
+  <polygon points="122,31 128,34.5 122,38 116,34.5" fill="#FF8A06"/>
+  <polygon points="116,34.5 122,38 122,45 116,41.5" fill="#EB3D00"/>
+  <polygon points="128,34.5 122,38 122,45 128,41.5" fill="#FF5201"/>
+  <text x="132" y="42" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="11">лун</text>
+</svg>
