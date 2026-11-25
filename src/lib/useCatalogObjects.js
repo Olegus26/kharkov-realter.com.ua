@@ -5,7 +5,7 @@ const SELL_TYPE_BY_DEAL = { sale: '2', rent: '1' }
 const SNAPSHOT_SIZE = 100
 const INTERACTION_EVENTS = ['pointerdown', 'pointermove', 'touchstart', 'wheel', 'scroll', 'keydown']
 
-const getSnapshotKey = (deal) => `catalog-snapshot-v3-${deal}`
+const getSnapshotKey = (deal) => `catalog-snapshot-v4-${deal}`
 
 // Resolves immediately on first user interaction or after `timeoutMs`, preventing heavy JSON parsing from blocking mobile LCP/TBT
 export const waitForInteractiveOrIdle = (timeoutMs = 3500) => {
@@ -41,6 +41,7 @@ export const waitForInteractiveOrIdle = (timeoutMs = 3500) => {
 export const readSnapshot = (deal) => {
   try {
     localStorage.removeItem(`catalog-snapshot-v2-${deal}`)
+    localStorage.removeItem(`catalog-snapshot-v3-${deal}`)
     const raw = localStorage.getItem(getSnapshotKey(deal))
     if (raw) {
       const parsed = JSON.parse(raw)
@@ -55,7 +56,7 @@ export const readSnapshot = (deal) => {
 const writeSnapshot = (deal, items) => {
   const slimItems = items
     .slice(0, SNAPSHOT_SIZE)
-    .map(({ description, images, agent_phones, address_full, source_url, flat, ...cardFields }) => cardFields)
+    .map(({ description, images, address_full, source_url, flat, ...cardFields }) => cardFields)
   try {
     localStorage.setItem(getSnapshotKey(deal), JSON.stringify(slimItems))
   } catch {
@@ -85,12 +86,15 @@ export const fetchFullCatalog = async (deal) => {
   return items
 }
 
-export const useCatalogObjects = (deal) =>
-  useQuery({
+export const useCatalogObjects = (deal, options = {}) => {
+  const { enabled = true, skipIdleDelay = false } = options
+
+  return useQuery({
     queryKey: ['novostoy-objects', deal],
+    enabled,
     queryFn: async () => {
       const cachedSeed = readSnapshot(deal)
-      if (cachedSeed && cachedSeed.length > 0) {
+      if (!skipIdleDelay && cachedSeed && cachedSeed.length > 0) {
         await waitForInteractiveOrIdle(1500)
       }
       return fetchFullCatalog(deal)
@@ -101,3 +105,4 @@ export const useCatalogObjects = (deal) =>
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   })
+}

@@ -256,7 +256,7 @@ const VacanciesPage = () => {
       />
 
       {/* Header */}
-      <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16 border-b border-border">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-b border-border">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold/10 text-gold text-xs tracking-widest uppercase font-inter font-semibold mb-4">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Кар'єра без меж · 13 філій у Харкові</span>
@@ -299,7 +299,7 @@ const VacanciesPage = () => {
       </section>
 
       {/* Hero Vibrant Banner */}
-      <section className="max-w-7xl mx-auto px-6 pt-12">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -365,7 +365,7 @@ const VacanciesPage = () => {
       </section>
 
       {/* Interactive Simulator Section */}
-      <section id="simulator" className="max-w-7xl mx-auto px-6 py-20 sm:py-24 scroll-mt-24">
+      <section id="simulator" className="max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-24 scroll-mt-24">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 text-gold text-xs uppercase font-inter font-bold tracking-wider mb-3">
             <DollarSign className="w-3.5 h-3.5" />
@@ -385,7 +385,7 @@ const VacanciesPage = () => {
             <div className="space-y-8">
               {/* Slider 1: Deals */}
               <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-inter">
                     Кількість угод на місяць
                   </span>
@@ -412,7 +412,7 @@ const VacanciesPage = () => {
 
               {/* Slider 2: Average Property Price */}
               <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-inter">
                     Середня вартість об'єкта
                   </span>
@@ -476,7 +476,7 @@ const VacanciesPage = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-white/60 font-inter">
                   Твій прогноз доходу:
                 </span>
@@ -719,7 +719,7 @@ const VacanciesPage = () => {
                       type="button"
                       disabled={activeTimeIndex === 0}
                       onClick={() => setActiveTimeIndex((prev) => Math.max(0, prev - 1))}
-                      className="text-xs font-semibold font-inter text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                      className="text-xs font-semibold font-inter text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors py-2 px-2 -ml-2"
                     >
                       ← Попередній етап
                     </button>
@@ -730,7 +730,7 @@ const VacanciesPage = () => {
                       type="button"
                       disabled={activeTimeIndex === DAILY_SCHEDULE.length - 1}
                       onClick={() => setActiveTimeIndex((prev) => Math.min(DAILY_SCHEDULE.length - 1, prev + 1))}
-                      className="text-xs font-semibold font-inter text-gold hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors flex items-center gap-1"
+                      className="text-xs font-semibold font-inter text-gold hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors flex items-center gap-1 py-2 px-2 -mr-2"
                     >
                       <span>Наступний</span>
                       <ChevronRight className="w-3.5 h-3.5" />

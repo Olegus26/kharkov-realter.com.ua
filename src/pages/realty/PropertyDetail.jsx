@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -13,6 +14,8 @@ import { formatPhone, cn, getOptimizedImageUrl } from '@/lib/utils'
 import PropertyCard from '@/components/realty/PropertyCard'
 import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateSchema } from '@/components/seo/JsonLd'
+
+const PropertyLocationMap = lazy(() => import('@/components/realty/PropertyLocationMap'))
 
 const DEAL_LABELS = { sale: 'Продаж', rent: 'Оренда' }
 const TYPE_LABELS = { apartment: 'Квартира', house: 'Будинок', penthouse: 'Пентхаус', villa: 'Вілла', commercial: 'Комерційна' }
@@ -71,6 +74,31 @@ const PropertyDetail = () => {
   const [bookingSubmitted, setBookingSubmitted] = useState(false)
   const [bookingError, setBookingError] = useState('')
   const [isPhoneRevealed, setIsPhoneRevealed] = useState(false)
+
+  const handleCloseBooking = useCallback(() => {
+    setIsBookingOpen(false)
+    setBookingSubmitted(false)
+    setBookingError('')
+  }, [])
+
+  const handleBookingCardClick = (e) => {
+    e.stopPropagation()
+  }
+
+  useEffect(() => {
+    if (!isBookingOpen || typeof document === 'undefined') return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Escape') return
+      handleCloseBooking()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isBookingOpen, handleCloseBooking])
 
   useEffect(() => {
     setActiveImg(0)
@@ -395,7 +423,7 @@ const PropertyDetail = () => {
   }
 
   return (
-    <div className="pt-24 pb-20" onKeyDown={handleKeyDownGallery} tabIndex={0}>
+    <div className="pt-24 pb-28 sm:pb-20" onKeyDown={handleKeyDownGallery} tabIndex={0}>
       <SeoMeta
         title={seoTitle}
         description={property.description?.substring(0, 160) || `${property.deal === 'rent' ? 'Орендувати' : 'Купити'} ${seoTitle.toLowerCase()} від агентства Харків Ріелтер.`}
@@ -406,11 +434,11 @@ const PropertyDetail = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Breadcrumb */}
-        <div className="py-6 flex items-center gap-3 text-xs sm:text-sm font-inter">
+        <div className="py-5 sm:py-6 flex items-center gap-3 text-xs sm:text-sm font-inter">
           <Link
             to={catalogBackLink}
             onClick={handleBackClick}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-gold transition-colors font-medium"
+            className="flex items-center gap-1.5 py-1.5 text-muted-foreground hover:text-gold transition-colors font-medium shrink-0"
           >
             <ArrowLeft className="w-4 h-4" /> {hasInAppHistory ? 'Назад' : catalogBackTitle}
           </Link>
@@ -675,11 +703,20 @@ const PropertyDetail = () => {
                   href={property.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-gold font-inter transition-colors"
+                  className="inline-flex items-center gap-2 py-1.5 text-xs text-muted-foreground hover:text-gold font-inter transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" /> Оригінальна сторінка об&apos;єкта
                 </a>
               )}
+
+              {/* Compact Location Mini-Map */}
+              <Suspense
+                fallback={
+                  <div className="mt-8 h-[310px] rounded-2xl bg-muted/40 animate-pulse border border-border" />
+                }
+              >
+                <PropertyLocationMap property={property} />
+              </Suspense>
 
               {/* Mortgage Calculator - eOselia */}
               {Boolean(property.eoselia) && property.deal === 'sale' && property.price > 0 && (
@@ -876,104 +913,118 @@ const PropertyDetail = () => {
       </div>
 
       {/* Booking Modal */}
-      {isBookingOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-card border border-border rounded-3xl max-w-lg w-full p-6 sm:p-8 relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      {isBookingOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Запис на перегляд"
+          onClick={handleCloseBooking}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        >
+          <div
+            onClick={handleBookingCardClick}
+            className="bg-card border border-border rounded-3xl max-w-lg w-full max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden relative shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+          >
             <button
               type="button"
-              onClick={() => { setIsBookingOpen(false); setBookingSubmitted(false); setBookingError('') }}
+              onClick={handleCloseBooking}
               aria-label="Закрити вікно"
-              className="absolute top-5 right-5 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-muted hover:bg-muted/80 text-foreground flex items-center justify-center cursor-pointer transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            {bookingSubmitted ? (
-              <div className="text-center py-8">
-                <CheckCircle className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
-                <h3 className="font-cormorant text-3xl font-bold mb-2">Заявку прийнято!</h3>
-                <p className="text-muted-foreground font-inter text-sm mb-6">
-                  Ми зв'яжемося з вами найближчим часом для узгодження зручного часу перегляду об'єкта <b>#{property.id}</b>.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsBookingOpen(false)}
-                  className="px-8 py-3.5 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full hover:bg-navy/90 transition-colors"
-                >
-                  Зрозуміло
-                </button>
-              </div>
-            ) : (
-              <div>
-                <p className="text-[10px] tracking-[0.2em] uppercase text-gold font-inter font-semibold mb-1">Огляд нерухомості</p>
-                <h3 className="font-cormorant text-2xl sm:text-3xl font-bold mb-2">Запис на перегляд</h3>
-                <p className="text-xs text-muted-foreground font-inter mb-6 line-clamp-1">
-                  Об'єкт: #{property.id} · {property.title}
-                </p>
-
-                <form onSubmit={handleBookingSubmit} className="space-y-4">
-                  <div>
-                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Ваше ім'я *</label>
-                    <input
-                      required
-                      type="text"
-                      value={bookingForm.name}
-                      onChange={(e) => setBookingForm((prev) => ({ ...prev, name: e.target.value }))}
-                      placeholder="Олександр"
-                      className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Номер телефону *</label>
-                    <input
-                      required
-                      type="tel"
-                      value={bookingForm.phone}
-                      onChange={(e) => setBookingForm((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
-                      placeholder="+380 (50) 000-00-00"
-                      className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Зручний час або коментар</label>
-                    <textarea
-                      rows={3}
-                      value={bookingForm.note}
-                      onChange={(e) => setBookingForm((prev) => ({ ...prev, note: e.target.value }))}
-                      placeholder="Наприклад: завтра після 15:00"
-                      className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter resize-none"
-                    />
-                  </div>
-
-                  {bookingError && (
-                    <p className="text-xs text-destructive font-inter bg-destructive/10 p-3 rounded-xl">{bookingError}</p>
-                  )}
-
+            <div className="overflow-y-auto overscroll-contain p-5 sm:p-8 custom-scrollbar">
+              {bookingSubmitted ? (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
+                  <h3 className="font-cormorant text-3xl font-bold mb-2">Заявку прийнято!</h3>
+                  <p className="text-muted-foreground font-inter text-sm mb-6">
+                    Ми зв'яжемося з вами найближчим часом для узгодження зручного часу перегляду об'єкта <b>#{property.id}</b>.
+                  </p>
                   <button
-                    type="submit"
-                    disabled={isSubmittingBooking}
-                    className="w-full py-4 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
+                    type="button"
+                    onClick={handleCloseBooking}
+                    className="px-8 py-3.5 bg-navy text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full hover:bg-navy/90 transition-colors"
                   >
-                    {isSubmittingBooking ? (
-                      <span>Відправляємо...</span>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        <span>Підтвердити запис</span>
-                      </>
-                    )}
+                    Зрозуміло
                   </button>
-                </form>
-              </div>
-            )}
+                </div>
+              ) : (
+                <div>
+                  <div className="pr-11">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-gold font-inter font-semibold mb-1">Огляд нерухомості</p>
+                    <h3 className="font-cormorant text-2xl sm:text-3xl font-bold mb-2">Запис на перегляд</h3>
+                    <p className="text-xs text-muted-foreground font-inter mb-6 line-clamp-1">
+                      Об'єкт: #{property.id} · {property.title}
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleBookingSubmit} className="space-y-4">
+                    <div>
+                      <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Ваше ім'я *</label>
+                      <input
+                        required
+                        type="text"
+                        value={bookingForm.name}
+                        onChange={(e) => setBookingForm((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="Олександр"
+                        className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Номер телефону *</label>
+                      <input
+                        required
+                        type="tel"
+                        value={bookingForm.phone}
+                        onChange={(e) => setBookingForm((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                        placeholder="+380 (50) 000-00-00"
+                        className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] tracking-widest uppercase text-muted-foreground font-inter block mb-1.5">Зручний час або коментар</label>
+                      <textarea
+                        rows={3}
+                        value={bookingForm.note}
+                        onChange={(e) => setBookingForm((prev) => ({ ...prev, note: e.target.value }))}
+                        placeholder="Наприклад: завтра після 15:00"
+                        className="w-full border border-border bg-card text-foreground px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-navy/20 font-inter resize-none"
+                      />
+                    </div>
+
+                    {bookingError && (
+                      <p className="text-xs text-destructive font-inter bg-destructive/10 p-3 rounded-xl">{bookingError}</p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isSubmittingBooking}
+                      className="w-full py-4 gradient-gold text-white text-xs tracking-widest uppercase font-inter font-bold rounded-full hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isSubmittingBooking ? (
+                        <span>Відправляємо...</span>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>Підтвердити запис</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Mobile sticky action bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-t border-border px-3 py-2.5 shadow-2xl flex items-center gap-2">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-t border-border px-3 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-2xl flex items-center gap-2">
         <a
           href={primaryCallPhone}
           className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-navy text-white text-xs font-inter font-bold rounded-xl active:scale-95 transition-transform"

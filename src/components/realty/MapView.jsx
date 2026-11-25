@@ -196,10 +196,10 @@ const MapView = ({ properties = [] }) => {
       {selectedGroup && createPortal(
         <div 
           key={selectedGroup.groupKey}
-          className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-auto z-[60] w-auto sm:w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50 max-h-[75vh] h-[480px]" 
+          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 left-3 right-3 sm:left-6 sm:right-auto z-[60] w-auto sm:w-[340px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left-8 duration-300 rounded-2xl overflow-hidden border border-border/50 max-h-[min(480px,calc(100dvh-5.5rem))]" 
         >
           <div className="p-4 flex items-center justify-between border-b border-border bg-white z-10 shrink-0">
-            <div className="pr-2 flex-1">
+            <div className="pr-2 flex-1 min-w-0">
               <h3 className="font-inter font-bold text-sm text-foreground leading-tight line-clamp-1">{selectedGroup.key}</h3>
               <p className="text-xs text-muted-foreground mt-0.5">{selectedGroup.properties.length} об'єктів за цією адресою</p>
             </div>
@@ -207,7 +207,7 @@ const MapView = ({ properties = [] }) => {
               type="button"
               onClick={() => setSelectedGroup(null)}
               aria-label="Закрити інформаційне вікно"
-              className="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground shrink-0"
+              className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-full transition-colors text-muted-foreground shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -215,8 +215,8 @@ const MapView = ({ properties = [] }) => {
 
           <div className="overflow-y-auto flex-1 custom-scrollbar snap-y snap-mandatory">
             {selectedGroup.properties.map((p) => (
-              <div key={p.id} className="p-4 h-full w-full shrink-0 snap-start snap-always flex flex-col justify-between">
-                <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative bg-muted flex items-center justify-center text-muted-foreground" style={{ height: '180px' }}>
+              <div key={p.id} className="p-4 min-h-0 w-full shrink-0 snap-start snap-always flex flex-col justify-between">
+                <div className="mb-3 rounded-xl overflow-hidden shrink-0 relative bg-muted flex items-center justify-center text-muted-foreground h-36 sm:h-[180px]">
                   {p.image_url ? (
                     <img
                       src={getOptimizedImageUrl(p.image_url, 480)}

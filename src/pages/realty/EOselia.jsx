@@ -228,7 +228,7 @@ const EOselia = () => {
 
               {/* Property Price */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-2">
                   <label className="text-xs uppercase tracking-widest text-muted-foreground font-inter font-semibold">
                     Вартість нерухомості
                   </label>
@@ -255,7 +255,7 @@ const EOselia = () => {
 
               {/* Down Payment */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-2">
                   <label className="text-xs uppercase tracking-widest text-muted-foreground font-inter font-semibold">
                     Перший внесок ({downPaymentPercent}%)
                   </label>
@@ -273,14 +273,14 @@ const EOselia = () => {
                   className="w-full accent-navy cursor-pointer h-2 bg-muted rounded-lg"
                   aria-label="Відсоток першого внеску"
                 />
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   {[20, 30, 40, 50].map((pct) => (
                     <button
                       key={pct}
                       type="button"
                       onClick={() => setDownPaymentPercent(pct)}
                       className={cn(
-                        'px-3 py-1 rounded-full text-xs font-inter font-medium border transition-colors',
+                        'px-3.5 py-2 rounded-full text-xs font-inter font-medium border transition-colors',
                         downPaymentPercent === pct
                           ? 'bg-navy text-white border-navy'
                           : 'border-border text-foreground hover:bg-muted'
@@ -294,7 +294,7 @@ const EOselia = () => {
 
               {/* Loan Term */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-2">
                   <label className="text-xs uppercase tracking-widest text-muted-foreground font-inter font-semibold">
                     Термін кредиту
                   </label>
@@ -390,7 +390,7 @@ const EOselia = () => {
             {/* 3% Box */}
             <div className="p-6 sm:p-8 rounded-3xl bg-card border-2 border-navy/20 shadow-sm flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-4">
                   <span className="px-3.5 py-1 rounded-full bg-navy text-white text-xs font-bold font-inter">
                     Ставка 3% річних
                   </span>
@@ -428,7 +428,7 @@ const EOselia = () => {
               <div className="mt-6 pt-4">
                 <Link
                   to="/flats?deal=sale&eoselia=true"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-navy hover:underline font-inter"
+                  className="inline-flex items-center gap-1.5 py-1.5 text-xs font-bold text-navy hover:underline font-inter"
                 >
                   Підібрати квартиру за ставкою 3% →
                 </Link>
@@ -438,7 +438,7 @@ const EOselia = () => {
             {/* 7% Box */}
             <div className="p-6 sm:p-8 rounded-3xl bg-card border-2 border-navy/20 shadow-sm flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-4">
                   <span className="px-3.5 py-1 rounded-full bg-navy text-white text-xs font-bold font-inter">
                     Ставка 7% річних
                   </span>
@@ -476,7 +476,7 @@ const EOselia = () => {
               <div className="mt-6 pt-4">
                 <Link
                   to="/flats?deal=sale&eoselia=true"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-navy hover:underline font-inter"
+                  className="inline-flex items-center gap-1.5 py-1.5 text-xs font-bold text-navy hover:underline font-inter"
                 >
                   Підібрати квартиру за ставкою 7% →
                 </Link>

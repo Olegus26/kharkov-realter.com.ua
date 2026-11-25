@@ -57,7 +57,7 @@ const ContactPage = () => {
   return (
     <div className="pt-24 pb-20">
       {/* Header */}
-      <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16 border-b border-border mb-12">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-b border-border mb-12">
         <p className="text-xs tracking-[0.4em] uppercase text-gold mb-3 font-inter font-semibold">Зворотній зв'язок</p>
         <h1 className="font-cormorant text-5xl sm:text-6xl font-bold text-foreground">Зв'яжіться з нами</h1>
         <p className="text-muted-foreground font-inter text-sm mt-3 max-w-xl">
@@ -65,7 +65,7 @@ const ContactPage = () => {
         </p>
       </section>
 
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           {/* Form */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -193,8 +193,8 @@ const ContactPage = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-8">
             <div className="bg-card border border-border rounded-3xl shadow-sm overflow-hidden divide-y divide-border">
               {/* Phones */}
-              <div className="p-6">
-                <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="p-5 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                   <p className="text-[10px] tracking-[0.2em] uppercase text-gold font-inter font-semibold">
                     Консультація та підбір об&apos;єктів
                   </p>
@@ -319,18 +319,18 @@ const ContactPage = () => {
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('АН "Харків-Ріелтер" ' + o.name)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[11px] font-semibold text-gold hover:underline font-inter shrink-0"
+                        className="text-[11px] font-semibold text-gold hover:underline font-inter shrink-0 py-1 px-2 -mr-1 rounded-lg hover:bg-muted/60"
                       >
                         Карта ↗
                       </a>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-border/50 flex flex-wrap gap-2">
+                    <div className="mt-3 pt-2.5 border-t border-border/50 flex flex-wrap gap-x-3 gap-y-1">
                       {o.phones.map((phone) => (
                         <a
                           key={phone}
                           href={getPhoneLink(phone)}
-                          className="text-xs font-inter text-foreground/80 hover:text-gold transition-colors font-medium"
+                          className="text-xs font-inter text-foreground/80 hover:text-gold transition-colors font-medium py-1"
                         >
                           {phone}
                         </a>

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, startTransition, lazy, Suspense } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
-import { LayoutGrid, Map, AlertCircle, ChevronDown, Filter, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
+import { LayoutGrid, Map as MapIcon, AlertCircle, ChevronDown, Filter, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import { useCatalogObjects } from '@/lib/useCatalogObjects'
 
@@ -11,6 +11,7 @@ import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateItemListSchema } from '@/components/seo/JsonLd'
 import { Autocomplete } from '@/components/ui/autocomplete'
 import { cn } from '@/lib/utils'
+import { parseSearchIntent, matchesPropertyTag, matchesPropertyPhone } from '@/lib/searchQuery'
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
 import {
   CATEGORIES,
@@ -428,7 +429,28 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       filterTender
   )
 
-  const { data: properties = [], isLoading, isFetching, error } = useCatalogObjects(deal)
+  const searchIntent = useMemo(() => parseSearchIntent(searchQuery), [searchQuery])
+  const isCrossCatalogLookup = searchIntent.type === 'tag' || searchIntent.type === 'phone'
+  const otherDeal = deal === 'rent' ? 'sale' : 'rent'
+
+  const { data: primaryProperties = [], isLoading, isFetching, error } = useCatalogObjects(deal, {
+    skipIdleDelay: isCrossCatalogLookup,
+  })
+  const { data: secondaryProperties = [], isFetching: isFetchingSecondary } = useCatalogObjects(otherDeal, {
+    enabled: isCrossCatalogLookup,
+    skipIdleDelay: true,
+  })
+
+  const properties = useMemo(() => {
+    if (!isCrossCatalogLookup) return primaryProperties
+    const byId = new Map()
+    primaryProperties.forEach((item) => byId.set(String(item.id), item))
+    secondaryProperties.forEach((item) => {
+      const key = String(item.id)
+      if (!byId.has(key)) byId.set(key, item)
+    })
+    return Array.from(byId.values())
+  }, [isCrossCatalogLookup, primaryProperties, secondaryProperties])
 
   const filtered = useMemo(() => {
     const list = properties.filter((p) => {
@@ -436,19 +458,26 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       if (maxPrice && p.price > Number(maxPrice)) return false
       if (minArea && p.area < Number(minArea)) return false
       if (maxArea && p.area > Number(maxArea)) return false
-      if (category && p.type !== category) return false
+      if (!isCrossCatalogLookup && category && p.type !== category) return false
 
       if (searchQuery) {
-        const q = searchQuery.toLowerCase().trim()
-        const matchesQ =
-          (p.title && p.title.toLowerCase().includes(q)) ||
-          (p.location && p.location.toLowerCase().includes(q)) ||
-          (p.street && p.street.toLowerCase().includes(q)) ||
-          (p.region && p.region.toLowerCase().includes(q)) ||
-          (p.mregion && p.mregion.toLowerCase().includes(q)) ||
-          (p.building && p.building.toLowerCase().includes(q)) ||
-          (p.description && p.description.toLowerCase().includes(q))
-        if (!matchesQ) return false
+        if (searchIntent.type === 'tag') {
+          if (!matchesPropertyTag(p, searchIntent.value)) return false
+        } else if (searchIntent.type === 'phone') {
+          if (!matchesPropertyPhone(p, searchIntent.value)) return false
+        } else {
+          const q = searchQuery.toLowerCase().trim()
+          const matchesQ =
+            (p.title && p.title.toLowerCase().includes(q)) ||
+            (p.location && p.location.toLowerCase().includes(q)) ||
+            (p.street && p.street.toLowerCase().includes(q)) ||
+            (p.region && p.region.toLowerCase().includes(q)) ||
+            (p.mregion && p.mregion.toLowerCase().includes(q)) ||
+            (p.building && p.building.toLowerCase().includes(q)) ||
+            (p.description && p.description.toLowerCase().includes(q)) ||
+            String(p.id).includes(q)
+          if (!matchesQ) return false
+        }
       }
 
       if (searchComplex) {
@@ -527,6 +556,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     maxArea,
     category,
     searchQuery,
+    searchIntent,
+    isCrossCatalogLookup,
     searchComplex,
     subTypes,
     searchStreet,
@@ -546,6 +577,9 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
   const isPromoPage = (currentPage - 1) % 3 === 0
   const shouldShowPromo = isPromoPage && !isPromoDismissed && filtered.length > 3
+
+  const isLookupLoading =
+    isLoading || (isCrossCatalogLookup && (isFetching || isFetchingSecondary) && filtered.length === 0)
 
   const promoPagesBefore = useMemo(() => {
     if (isPromoDismissed || currentPage <= 1) return 0
@@ -628,7 +662,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
   return (
     <div
-      className={cn('pt-24 flex flex-col', viewMode === 'list' ? 'pb-8 min-h-screen' : 'h-screen overflow-hidden pb-0')}
+      className={cn('pt-24 flex flex-col', viewMode === 'list' ? 'pb-8 min-h-[100dvh]' : 'h-[100dvh] overflow-hidden pb-0')}
       id="catalog-top"
     >
       <SeoMeta title={getSeoTitle()} description={getSeoDescription()} url={`${location.pathname}${location.search}`} />
@@ -761,14 +795,14 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                       )}
 
                       <p className="text-muted-foreground text-sm font-inter whitespace-nowrap font-medium flex items-center gap-1.5">
-                        {isFetching && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
+                        {(isFetching || isFetchingSecondary) && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
                         <span>{filtered.length} об'єктів</span>
                       </p>
 
                       <div className="flex p-1 bg-muted rounded-full relative shrink-0">
                         {[
                           { id: 'list', icon: LayoutGrid, label: 'Список' },
-                          { id: 'map', icon: Map, label: 'Карта' },
+                          { id: 'map', icon: MapIcon, label: 'Карта' },
                         ].map((v) => (
                           <button
                             key={v.id}
@@ -797,7 +831,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
                   <div className="flex flex-col w-full">
                     <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 w-full font-inter">
-                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px] z-50">
+                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px]">
                         <Autocomplete
                           placeholder="Оберіть ЖК..."
                           options={complexOptions}
@@ -807,7 +841,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         />
                       </div>
 
-                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px] z-50">
+                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px]">
                         <Autocomplete
                           placeholder="Вулиця..."
                           options={streetOptions}
@@ -824,7 +858,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                         />
                       </div>
 
-                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[100px] lg:max-w-[120px] z-50">
+                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[100px] lg:max-w-[120px]">
                         <Autocomplete
                           placeholder="Дім..."
                           disabled={!searchStreet}
@@ -984,7 +1018,11 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
                           onRemove={() => setSearchQuery('')}
                           removeLabel="Скинути пошуковий запит"
                         >
-                          Пошук: "{searchQuery}"
+                          {searchIntent.type === 'tag'
+                            ? `Код об'єкта: #${searchIntent.value}`
+                            : searchIntent.type === 'phone'
+                              ? `Агент: ${searchQuery}`
+                              : `Пошук: "${searchQuery}"`}
                         </ActiveFilterBadge>
                       )}
                       {(minPrice || maxPrice) && (
@@ -1162,8 +1200,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       </div>
 
       {viewMode === 'map' && (
-        <div className="fixed inset-0 top-[80px] z-0">
-          {isLoading ? (
+        <div className="fixed inset-0 top-16 sm:top-20 z-0">
+          {isLookupLoading ? (
             <div className="w-full h-full animate-pulse bg-muted flex items-center justify-center">
               <p className="text-muted-foreground font-inter text-sm">Завантаження карти...</p>
             </div>
@@ -1183,7 +1221,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
       {viewMode === 'list' && (
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
-          {isLoading ? (
+          {isLookupLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-card border border-border aspect-[4/5] animate-pulse rounded-2xl" />

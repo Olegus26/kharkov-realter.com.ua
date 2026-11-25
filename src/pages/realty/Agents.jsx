@@ -65,7 +65,7 @@ const AgentsPage = () => {
         url="/agents"
       />
 
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <header className="pb-4 text-center mb-6">
           <p className="text-[10px] tracking-[0.3em] uppercase text-gold mb-1.5 font-inter font-semibold">Наша команда</p>
           <h1 className="font-cormorant text-4xl sm:text-5xl font-bold mb-2 text-foreground tracking-tight">Експерти агентства</h1>
@@ -114,13 +114,13 @@ const AgentsPage = () => {
                     {agent.bio}
                   </p>
 
-                  <div className="flex items-center gap-2 pt-4 border-t border-border">
+                  <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border">
                     {/* Mobile: direct tel: call */}
                     <a
                       href={phoneLink}
                       tabIndex={0}
                       aria-label={`Зателефонувати ${agent.name}`}
-                      className="flex sm:hidden items-center justify-center gap-2 flex-1 py-2.5 bg-navy text-white text-xs font-inter font-semibold rounded-xl hover:bg-navy/90 transition-colors shadow-sm"
+                      className="flex sm:hidden items-center justify-center gap-2 min-w-[140px] flex-1 py-2.5 bg-navy text-white text-xs font-inter font-semibold rounded-xl hover:bg-navy/90 transition-colors shadow-sm"
                     >
                       <Phone aria-hidden="true" className="w-3.5 h-3.5" /> Зателефонувати
                     </a>
@@ -132,7 +132,7 @@ const AgentsPage = () => {
                         onClick={() => handleRevealPhone(agent.id)}
                         tabIndex={0}
                         aria-label={`Показати номер ${agent.name}`}
-                        className="hidden sm:flex items-center justify-center gap-2 flex-1 py-2.5 bg-navy text-white text-xs font-inter font-semibold rounded-xl hover:bg-navy/90 transition-colors shadow-sm cursor-pointer"
+                        className="hidden sm:flex items-center justify-center gap-2 min-w-[152px] flex-1 py-2.5 bg-navy text-white text-xs font-inter font-semibold rounded-xl hover:bg-navy/90 transition-colors shadow-sm cursor-pointer"
                       >
                         <Phone aria-hidden="true" className="w-3.5 h-3.5" /> Зателефонувати
                       </button>
@@ -141,7 +141,7 @@ const AgentsPage = () => {
                         href={phoneLink}
                         tabIndex={0}
                         aria-label={`Номер ${agent.name} ${phoneDisplay}`}
-                        className="hidden sm:flex items-center justify-center gap-1.5 flex-1 py-2.5 px-2 bg-navy text-white text-xs font-inter font-bold rounded-xl hover:bg-navy/90 transition-colors shadow-sm whitespace-nowrap"
+                        className="hidden sm:flex items-center justify-center gap-1.5 min-w-[152px] flex-1 py-2.5 px-2 bg-navy text-white text-xs font-inter font-bold rounded-xl hover:bg-navy/90 transition-colors shadow-sm whitespace-nowrap"
                       >
                         <Phone aria-hidden="true" className="w-3.5 h-3.5 shrink-0" />
                         <span>{phoneDisplay}</span>

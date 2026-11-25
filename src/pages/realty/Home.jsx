@@ -22,7 +22,9 @@ import {
   Search,
   X,
   ArrowUpRight,
-  Hammer
+  Hammer,
+  Hash,
+  Phone
 } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import { getObjects, mapObject } from '@/lib/novostoyApi'
@@ -32,8 +34,9 @@ import SeoMeta from '@/components/seo/SeoMeta'
 import JsonLd, { generateRealEstateAgentSchema } from '@/components/seo/JsonLd'
 import { useSwipe } from '@/lib/useSwipe'
 import { cn } from '@/lib/utils'
+import { useSeasonalAssets } from '@/lib/season'
+import { parseSearchIntent } from '@/lib/searchQuery'
 
-const HERO_BG = '/images/backgrounds/hero-kharkiv.webp'
 const HOME_FEATURED_KEY = 'home_featured_state'
 
 const FEATURED_CATEGORIES = [
@@ -83,6 +86,7 @@ const stats = [
 ]
 
 const HomePage = () => {
+  const { heroDesktop, heroMobile } = useSeasonalAssets()
   const [deal, setDeal] = useState('sale')
   const [query, setQuery] = useState('')
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false)
@@ -352,6 +356,7 @@ const HomePage = () => {
     }
   }, [query, geoData])
 
+  const searchIntent = useMemo(() => parseSearchIntent(query), [query])
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
 
   const flattenedSuggestions = useMemo(() => {
@@ -406,6 +411,14 @@ const HomePage = () => {
     const trimmed = query.trim()
     if (!trimmed) {
       navigate(`/flats?deal=${deal}`)
+      return
+    }
+    if (searchIntent.type === 'tag') {
+      navigate(`/flats?deal=${deal}&q=${encodeURIComponent(`#${searchIntent.value}`)}`)
+      return
+    }
+    if (searchIntent.type === 'phone') {
+      navigate(`/flats?deal=${deal}&q=${encodeURIComponent(searchIntent.value)}`)
       return
     }
     navigate(`/flats?deal=${deal}&q=${encodeURIComponent(trimmed)}`)
@@ -476,13 +489,13 @@ const HomePage = () => {
       <JsonLd data={generateRealEstateAgentSchema()} />
 
       {/* Hero — cinematic, left-aligned with safe clipping for dropdown */}
-      <section className="relative min-h-[92vh] sm:min-h-screen flex items-center bg-navy">
+      <section className="relative min-h-[92dvh] sm:min-h-[100dvh] flex items-center bg-navy">
         {/* Background image & gradient positioned below fixed navbar so top sky & flagpole aren't clipped */}
         <div className="absolute inset-x-0 top-[68px] sm:top-[76px] bottom-0 overflow-hidden pointer-events-none">
           <picture className="block w-full h-full">
-            <source media="(max-width: 767px)" srcSet="/images/backgrounds/hero-kharkiv-mobile.webp" type="image/webp" />
+            <source media="(max-width: 767px)" srcSet={heroMobile} type="image/webp" />
             <img
-              src={HERO_BG}
+              src={heroDesktop}
               alt="Харків Ріелтер - елітна нерухомість"
               width={1024}
               height={572}
@@ -501,15 +514,11 @@ const HomePage = () => {
             Корпорація нерухомості · з 1996 року
           </p>
 
-          <h1 className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-6xl lg:text-7xl xl:text-8xl mb-4 max-w-4xl drop-shadow-xl [text-shadow:0_4px_24px_rgba(10,20,40,0.75)]">
+          <h1 className="font-cormorant font-extrabold tracking-tight leading-[1.02] text-5xl sm:text-6xl lg:text-7xl xl:text-8xl mb-7 max-w-4xl drop-shadow-xl [text-shadow:0_4px_24px_rgba(10,20,40,0.75)]">
             <span className="text-sky-300">Харків</span>
             <br />
             <span className="text-amber-300">Ріелтер</span>
           </h1>
-
-          <p className="text-white text-base sm:text-lg font-normal mb-7 max-w-xl font-inter drop-shadow-md [text-shadow:0_2px_10px_rgba(10,20,40,0.75)]">
-            Чесність, порядок та безпека угод з будь-якою нерухомістю. З Агентством нерухомості «Харків-Ріелтер» вирішити житлове питання легко та надійно!
-          </p>
 
           {/* Search pill with live popup autocomplete */}
           <div className="relative max-w-2xl lg:max-w-4xl z-30" ref={searchContainerRef}>
@@ -567,8 +576,8 @@ const HomePage = () => {
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}
                   onKeyDown={handleKeyDown}
-                  placeholder="Район, метро, вулиця або ЖК..."
-                  aria-label="Пошук за районом, метро, вулицею або ЖК"
+                  placeholder="Район, метро, вулиця, ЖК, #ID або тел. агента..."
+                  aria-label="Пошук за районом, метро, вулицею, ЖК, кодом об'єкта або номером агента"
                   autoComplete="off"
                   spellCheck="false"
                   aria-expanded={isSuggestionsOpen}
@@ -607,8 +616,46 @@ const HomePage = () => {
                   transition={{ duration: 0.16 }}
                   className="absolute top-full left-0 right-0 mt-2.5 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 overflow-hidden z-50 font-inter text-foreground"
                 >
-                  <div className="p-3 max-h-[min(320px,calc(100vh-180px))] overflow-y-auto custom-scrollbar">
-                  {suggestions.hasResults ? (
+                  <div className="p-3 max-h-[min(320px,calc(100dvh-220px))] overflow-y-auto custom-scrollbar">
+                  {searchIntent.type === 'tag' || searchIntent.type === 'phone' ? (
+                    <div className="p-1">
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          handleSelectSuggestion(
+                            'query',
+                            searchIntent.type === 'tag' ? `#${searchIntent.value}` : searchIntent.value
+                          )
+                        }}
+                        tabIndex={0}
+                        className="w-full text-left px-3.5 py-3 rounded-xl bg-navy/5 hover:bg-navy text-foreground hover:text-white transition-colors flex items-center justify-between gap-3 group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-navy text-white group-hover:bg-white group-hover:text-navy flex items-center justify-center shrink-0 transition-colors">
+                            {searchIntent.type === 'tag' ? (
+                              <Hash className="w-4 h-4" aria-hidden="true" />
+                            ) : (
+                              <Phone className="w-4 h-4" aria-hidden="true" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold truncate">
+                              {searchIntent.type === 'tag'
+                                ? `Знайти об'єкт #${searchIntent.value}`
+                                : `Всі об'єкти агента ${query.trim()}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground group-hover:text-white/80 truncate">
+                              {searchIntent.type === 'tag'
+                                ? "Пошук по всій базі за кодом об'єкта"
+                                : 'Показати оголошення за номером телефону'}
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-white shrink-0 transition-colors" />
+                      </button>
+                    </div>
+                  ) : suggestions.hasResults ? (
                     (() => {
                       const activeGroups = []
                       if (suggestions.metro?.length > 0) {
@@ -750,7 +797,7 @@ const HomePage = () => {
                   )}
 
                   {/* Free Search fallback action at bottom when typing */}
-                  {query.trim().length > 0 && suggestions.hasResults && (
+                  {query.trim().length > 0 && searchIntent.type === 'text' && suggestions.hasResults && (
                     <div className="pt-2 mt-2 border-t border-border/50">
                       <button
                         type="button"
@@ -869,7 +916,7 @@ const HomePage = () => {
             <Link
               to={currentCategoryObj.catalogUrl}
               onMouseEnter={handlePrefetchCatalog}
-              className="hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-gold hover:text-gold/80 transition-all font-inter pl-2"
+              className="hidden sm:inline-flex items-center gap-2 py-2 text-sm font-semibold text-gold hover:text-gold/80 transition-all font-inter pl-2"
             >
               Весь каталог <ArrowRight className="w-4 h-4" />
             </Link>

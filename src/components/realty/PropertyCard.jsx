@@ -229,7 +229,7 @@ const PropertyCard = memo(({ property, className = '', priority = false }) => {
 
 
         {/* Specs row matching reference layout: Rooms, Total Area, Living Area, Kitchen Area, Floor */}
-        <div className="flex items-center justify-between gap-1 sm:gap-2 pt-3 border-t border-border/50 text-xs text-muted-foreground font-inter mt-auto">
+        <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 sm:gap-2 pt-3 border-t border-border/50 text-xs text-muted-foreground font-inter mt-auto">
           {property.rooms > 0 && (
             <span className="flex items-center gap-1 text-foreground/90 font-medium shrink-0" title={`Кількість кімнат: ${property.rooms}`}>
               <BedDouble className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />

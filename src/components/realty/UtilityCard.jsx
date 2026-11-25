@@ -48,10 +48,10 @@ const UtilityCard = ({ utility }) => {
         )}
 
         {/* Phones */}
-        <div className="space-y-2 mb-4">
+        <div className="space-y-1.5 mb-4">
           {utility.phones?.map((phone, i) => (
             <a key={i} href={telHref(phone.number)}
-              className="flex items-center gap-2 text-sm group"
+              className="flex items-center gap-2 py-1 text-sm group"
             >
               <Phone className="w-3.5 h-3.5 text-gold/60 shrink-0" aria-hidden="true" />
               <span className="font-inter">
@@ -65,15 +65,15 @@ const UtilityCard = ({ utility }) => {
 
         {/* Email + Website */}
         {(utility.email || utility.website) && (
-          <div className="flex gap-4 mb-4">
+          <div className="flex flex-wrap gap-4 mb-4">
             {utility.email && (
-              <a href={`mailto:${utility.email}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-gold transition-colors font-inter">
+              <a href={`mailto:${utility.email}`} className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground hover:text-gold transition-colors font-inter">
                 <Mail className="w-3.5 h-3.5" aria-hidden="true" /> Email
               </a>
             )}
             {utility.website && (
               <a href={utility.website} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-gold transition-colors font-inter"
+                className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground hover:text-gold transition-colors font-inter"
               >
                 <Globe className="w-3.5 h-3.5" aria-hidden="true" /> Сайт
               </a>
@@ -138,7 +138,7 @@ const UtilityCard = ({ utility }) => {
                   <p className="font-medium text-foreground font-inter">{d.name}</p>
                   {d.address && <p className="text-muted-foreground text-xs font-inter">{d.address}</p>}
                   {d.phones?.map((phone, i) => (
-                    <a key={i} href={telHref(phone.number)} className="flex items-center gap-2 text-xs mt-1 group">
+                    <a key={i} href={telHref(phone.number)} className="flex items-center gap-2 py-1 text-xs mt-1 group">
                       <Phone className="w-3 h-3 text-gold/60 shrink-0" />
                       {phone.label && <span className="text-muted-foreground">{phone.label}:</span>}
                       <span className="group-hover:text-gold transition-colors">{phone.number}</span>

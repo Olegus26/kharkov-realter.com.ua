@@ -40,8 +40,8 @@ const FavoritesPage = () => {
     })
 
     // 2. Source: localStorage catalog snapshots
-    const saleSnapshot = readLocalSnapshot('catalog-snapshot-v2-sale')
-    const rentSnapshot = readLocalSnapshot('catalog-snapshot-v2-rent')
+    const saleSnapshot = readLocalSnapshot('catalog-snapshot-v4-sale')
+    const rentSnapshot = readLocalSnapshot('catalog-snapshot-v4-rent')
     ;[...saleSnapshot, ...rentSnapshot].forEach((item) => {
       if (item?.id && !map.has(String(item.id))) {
         map.set(String(item.id), item)
@@ -134,7 +134,7 @@ const FavoritesPage = () => {
             <p className="text-sm text-muted-foreground font-inter">0 об'єктів</p>
           </div>
 
-          <div className="flex flex-col items-center justify-center text-center py-32 bg-card rounded-3xl shadow-sm border border-border">
+          <div className="flex flex-col items-center justify-center text-center px-6 py-20 sm:py-32 bg-card rounded-3xl shadow-sm border border-border">
             <div className="w-16 h-16 rounded-full border-2 border-border flex items-center justify-center mb-6 text-muted-foreground">
               <Heart className="w-8 h-8" strokeWidth={1.5} />
             </div>

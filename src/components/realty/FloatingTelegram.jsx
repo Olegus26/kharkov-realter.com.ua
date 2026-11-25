@@ -2,7 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, Rss } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const FloatingTelegram = () => {
+const canHoverPointer = () =>
+  typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
+const FloatingTelegram = ({ hideOnMobile = false }) => {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef(null)
 
@@ -12,8 +15,8 @@ const FloatingTelegram = () => {
         setIsOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [])
 
   const handleToggle = () => {
@@ -21,16 +24,21 @@ const FloatingTelegram = () => {
   }
 
   const handleMouseEnter = () => {
+    if (!canHoverPointer()) return
     setIsOpen(true)
   }
 
   const handleMouseLeave = () => {
+    if (!canHoverPointer()) return
     setIsOpen(false)
   }
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex flex-col items-end"
+      className={cn(
+        'fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 sm:bottom-6 sm:right-6 z-50 flex-col items-end',
+        hideOnMobile ? 'hidden sm:flex' : 'flex'
+      )}
       ref={containerRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

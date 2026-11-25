@@ -46,15 +46,31 @@
 
 @layer base {
   * { @apply border-border; }
-  html { scroll-behavior: smooth; scrollbar-gutter: stable; }
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+  }
+  @media (min-width: 768px) {
+    html { scrollbar-gutter: stable; }
+  }
   body { 
     @apply bg-background text-foreground font-inter antialiased font-medium;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  button, a { -webkit-tap-highlight-color: transparent; }
   h1, h2, h3, h4 { @apply font-cormorant tracking-tight; }
   ::selection { background: hsl(222 55% 20% / 0.12); }
+
+  @media (max-width: 639px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer utilities {

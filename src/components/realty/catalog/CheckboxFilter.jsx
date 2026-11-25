@@ -3,7 +3,7 @@ import FilterPopover, { FilterTitle } from './FilterPopover'
 
 // Native checkbox stays in the DOM (sr-only) so the filter is keyboard accessible
 const CheckboxOption = ({ option, isChecked, onToggle }) => (
-  <label className="flex items-center gap-2.5 cursor-pointer group">
+  <label className="flex items-center gap-2.5 py-0.5 cursor-pointer group">
     <input
       type="checkbox"
       className="sr-only peer"
@@ -45,8 +45,8 @@ const CheckboxFilter = ({ label, title, options, groups, selected, onChange, con
 
   return (
     <FilterPopover label={label} count={selected.length} contentClassName={cn('p-4 sm:p-5', contentClassName)}>
-      <FilterTitle className="mb-2.5">{title || label}</FilterTitle>
-      <div className="max-h-[min(440px,calc(var(--radix-popover-content-available-height,460px)-56px))] overflow-y-auto pr-1 custom-scrollbar">
+      <FilterTitle className="mb-2.5 shrink-0">{title || label}</FilterTitle>
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
         {groups ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4">
             {groups.map((group) => (
@@ -57,7 +57,7 @@ const CheckboxFilter = ({ label, title, options, groups, selected, onChange, con
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-5 gap-y-2">{renderOptions(options)}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2">{renderOptions(options)}</div>
         )}
       </div>
     </FilterPopover>

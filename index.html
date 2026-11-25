@@ -3,8 +3,23 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Харків Ріелтер — агентство нерухомості в Харкові</title>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-WJR5HX2');</script>
+  <!-- End Google Tag Manager -->
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MKY5JQ9KFM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-MKY5JQ9KFM');
+  </script>
   <meta name="description" content="Агентство нерухомості Харків Ріелтер. Купити, продати, орендувати квартиру або будинок в Харкові. Надійно та безпечно з 1996 року." />
   <meta name="theme-color" content="#1b2a4a" />
   <link rel="icon" type="image/png" href="/images/brand/logo.png" />
@@ -27,12 +42,25 @@
   <link rel="preconnect" href="https://wsrv.nl" crossorigin>
   <script>
     (function() {
+      var seasons = ['winter', 'spring', 'summer', 'autumn'];
+      var param = new URLSearchParams(location.search).get('season');
+      param = param ? param.toLowerCase() : '';
+      var season = seasons.indexOf(param) !== -1 ? param : '';
+      if (!season) {
+        var m = new Date().getMonth();
+        season = (m === 11 || m === 0 || m === 1) ? 'winter' : (m >= 2 && m <= 4) ? 'spring' : (m >= 5 && m <= 7) ? 'summer' : 'autumn';
+      }
+      if (season === 'winter') {
+        var fav = document.querySelector('link[rel="icon"]');
+        if (fav) fav.href = '/images/brand/logo-winter.png';
+      }
       var p = location.pathname.replace(/\/+$/, '') || '/';
+      var isMobile = window.innerWidth <= 767;
       var href = '';
       if (p === '/') {
-        href = window.innerWidth <= 767 ? '/images/backgrounds/hero-kharkiv-mobile.webp' : '/images/backgrounds/hero-kharkiv.webp';
+        href = '/images/backgrounds/hero-' + season + (isMobile ? '-mobile.webp' : '.webp');
       } else if (p === '/o-korporatcii') {
-        href = window.innerWidth <= 767 ? '/images/backgrounds/about-bg-mobile.webp' : '/images/backgrounds/about-bg.webp';
+        href = '/images/backgrounds/about-' + season + (isMobile ? '-mobile.webp' : '.webp');
       }
       if (href) {
         var l = document.createElement('link');
@@ -63,6 +91,10 @@
 </head>
 
 <body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WJR5HX2"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
   <noscript>Для роботи сайту потрібно увімкнути JavaScript.</noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>

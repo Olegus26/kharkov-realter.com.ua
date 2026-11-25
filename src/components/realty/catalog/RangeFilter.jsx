@@ -4,7 +4,11 @@ const INPUT_CLASS =
   'w-full bg-muted text-sm px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-navy/20 transition-all text-foreground'
 
 const RangeFilter = ({ label, title = label, minValue, maxValue, onMinChange, onMaxChange }) => (
-  <FilterPopover label={label} isActive={Boolean(minValue || maxValue)}>
+  <FilterPopover
+    label={label}
+    isActive={Boolean(minValue || maxValue)}
+    contentClassName="w-[min(272px,calc(100vw-1.5rem))] p-4 sm:p-5"
+  >
     <FilterTitle>{title}</FilterTitle>
     <div className="flex items-center gap-2 mb-2">
       <input

@@ -61,7 +61,7 @@ export const Autocomplete = ({
   )
 
   return (
-    <div ref={containerRef} className={cn('relative', className)}>
+    <div ref={containerRef} className={cn('relative', isOpen ? 'z-[60]' : 'z-10', className)}>
       <div className="relative flex items-center w-full">
         <input
           type="text"
@@ -71,7 +71,10 @@ export const Autocomplete = ({
           placeholder={placeholder}
           disabled={disabled}
           aria-label={placeholder}
-          className="w-full bg-muted text-foreground text-sm px-4 lg:px-6 py-3 sm:py-3.5 rounded-full outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-muted-foreground disabled:opacity-50"
+          className={cn(
+            'w-full bg-muted text-foreground text-sm px-4 lg:px-6 py-3 sm:py-3.5 rounded-full outline-none focus:ring-2 focus:ring-navy/20 transition-all placeholder:text-muted-foreground disabled:opacity-50',
+            value && 'pr-9'
+          )}
         />
         {value && (
           <button

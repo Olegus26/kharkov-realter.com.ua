@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Clock, Instagram, Facebook, Send as Telegram, Bot, X, ArrowRight } from 'lucide-react'
 import { OFFICES, MAIN_PHONE, GENERAL_EMAIL } from '@/data/offices'
 import { getPhoneLink } from '@/lib/phones'
+import { useSeasonalAssets } from '@/lib/season'
 
 const ROTATION_INTERVAL_MS = 6000
 
 const Footer = () => {
+  const { logo } = useSeasonalAssets()
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
   const [activeOfficeIndex, setActiveOfficeIndex] = useState(0)
   const [isContactsPaused, setIsContactsPaused] = useState(false)
@@ -42,6 +45,29 @@ const Footer = () => {
     setIsContactsPaused(false)
   }
 
+  useEffect(() => {
+    if (!isPrivacyOpen || typeof document === 'undefined') return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Escape') return
+      setIsPrivacyOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isPrivacyOpen])
+
+  const handleClosePrivacy = () => {
+    setIsPrivacyOpen(false)
+  }
+
+  const handlePrivacyCardClick = (e) => {
+    e.stopPropagation()
+  }
+
   return (
     <footer className="bg-card border-t border-border">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -50,7 +76,7 @@ const Footer = () => {
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-4 mb-6 group">
               <img
-                src="/images/brand/logo.png"
+                src={logo}
                 alt=""
                 width={160}
                 height={160}
@@ -264,24 +290,33 @@ const Footer = () => {
       </div>
 
       {/* Privacy Policy Modal */}
-      {isPrivacyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-card border border-border rounded-3xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
+      {isPrivacyOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Політика конфіденційності"
+          onClick={handleClosePrivacy}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        >
+          <div
+            onClick={handlePrivacyCardClick}
+            className="bg-card border border-border rounded-3xl max-w-2xl w-full p-5 sm:p-8 relative shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100dvh-2rem)] flex flex-col"
+          >
             <button
               type="button"
-              onClick={() => setIsPrivacyOpen(false)}
+              onClick={handleClosePrivacy}
               aria-label="Закрити вікно"
-              className="absolute top-5 right-5 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-muted hover:bg-muted/80 text-foreground flex items-center justify-center cursor-pointer transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="mb-4">
+            <div className="mb-4 pr-11">
               <p className="text-[10px] tracking-widest uppercase text-gold font-inter font-semibold mb-1">Юридична інформація</p>
               <h3 className="font-cormorant font-bold text-2xl sm:text-3xl text-foreground">Політика конфіденційності</h3>
             </div>
 
-            <div className="overflow-y-auto space-y-4 text-xs sm:text-sm text-muted-foreground font-inter leading-relaxed pr-2 custom-scrollbar">
+            <div className="overflow-y-auto overscroll-contain space-y-4 text-xs sm:text-sm text-muted-foreground font-inter leading-relaxed pr-2 custom-scrollbar">
               <p>
                 Ця Політика конфіденційності визначає порядок обробки та захисту персональних даних користувачів сайту Корпорації «Харків Ріелтер» відповідно до Закону України «Про захист персональних даних».
               </p>
@@ -299,17 +334,18 @@ const Footer = () => {
               </p>
             </div>
 
-            <div className="pt-6 border-t border-border mt-4 flex justify-end">
+            <div className="pt-5 border-t border-border mt-4 flex justify-end">
               <button
                 type="button"
-                onClick={() => setIsPrivacyOpen(false)}
+                onClick={handleClosePrivacy}
                 className="px-6 py-2.5 bg-navy text-white text-xs font-inter font-semibold rounded-full hover:bg-navy/90 transition-colors"
               >
                 Зрозуміло
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </footer>
   )

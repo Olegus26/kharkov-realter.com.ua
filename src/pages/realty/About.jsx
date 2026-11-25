@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, Shield, Star, Clock, Globe, Instagram, Facebook, Send } from 'lucide-react'
 import SeoMeta from '@/components/seo/SeoMeta'
+import { useSeasonalAssets } from '@/lib/season'
 
 const SOCIAL_LINKS = [
   {
@@ -70,6 +71,8 @@ const timeline = [
 ]
 
 const AboutPage = () => {
+  const { aboutDesktop, aboutMobile } = useSeasonalAssets()
+
   return (
     <div className="pb-20">
       <SeoMeta
@@ -81,9 +84,9 @@ const AboutPage = () => {
       {/* Hero */}
       <section className="relative h-80 sm:h-[460px] overflow-hidden mb-20 rounded-b-3xl pt-24 bg-navy">
         <picture className="absolute inset-x-0 top-[68px] sm:top-[76px] bottom-0 block">
-          <source media="(max-width: 767px)" srcSet="/images/backgrounds/about-bg-mobile.webp" type="image/webp" />
+          <source media="(max-width: 767px)" srcSet={aboutMobile} type="image/webp" />
           <img
-            src="/images/backgrounds/about-bg.webp"
+            src={aboutDesktop}
             alt="Агентство нерухомості Харків Ріелтер"
             width={1024}
             height={572}
