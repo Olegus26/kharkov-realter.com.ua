@@ -286,7 +286,7 @@ const MapView = ({ properties = [] }) => {
       )}
 
       {/* Overlay objects count / status pill */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 bg-white/95 backdrop-blur rounded-full shadow-lg border border-border/50 text-sm font-inter font-semibold text-navy flex items-center gap-2">
+      <div className="absolute bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 bg-white/95 backdrop-blur rounded-full shadow-lg border border-border/50 text-sm font-inter font-semibold text-navy flex items-center gap-2 whitespace-nowrap">
         {isProcessing && <Loader2 className="w-4 h-4 animate-spin text-gold" />}
         <span>{isProcessing ? 'Підготовка міток на карті...' : `${properties.length} об'єктів`}</span>
       </div>

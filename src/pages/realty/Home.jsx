@@ -27,6 +27,7 @@ import {
   Phone
 } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
+import MobileSearchModal from '@/components/realty/home/MobileSearchModal'
 import { getObjects, mapObject } from '@/lib/novostoyApi'
 import { fetchFullCatalog, readSnapshot, waitForInteractiveOrIdle } from '@/lib/useCatalogObjects'
 import { METRO_LINES, DISTRICTS } from '@/data/geoFilters'
@@ -90,6 +91,7 @@ const HomePage = () => {
   const [deal, setDeal] = useState('sale')
   const [query, setQuery] = useState('')
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false)
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [geoData, setGeoData] = useState({ streets: [], complexes: [] })
 
   const searchContainerRef = useRef(null)
@@ -119,6 +121,18 @@ const HomePage = () => {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(min-width: 640px)')
+    const handleBreakpointChange = (e) => {
+      if (e.matches) {
+        setIsMobileSearchOpen(false)
+      }
+    }
+    mq.addEventListener('change', handleBreakpointChange)
+    return () => mq.removeEventListener('change', handleBreakpointChange)
   }, [])
 
   const handlePrefetchCatalog = useCallback(() => {
@@ -378,6 +392,7 @@ const HomePage = () => {
 
   const handleSelectSuggestion = (type, val) => {
     setIsSuggestionsOpen(false)
+    setIsMobileSearchOpen(false)
     setHighlightedIndex(-1)
     if (!val) return
 
@@ -407,6 +422,7 @@ const HomePage = () => {
   const handleSearch = (e) => {
     e.preventDefault()
     setIsSuggestionsOpen(false)
+    setIsMobileSearchOpen(false)
     setHighlightedIndex(-1)
     const trimmed = query.trim()
     if (!trimmed) {
@@ -444,10 +460,23 @@ const HomePage = () => {
     setIsSuggestionsOpen(true)
   }
 
+  const handleOpenMobileSearch = () => {
+    loadGeoData()
+    setIsSuggestionsOpen(false)
+    setHighlightedIndex(-1)
+    setIsMobileSearchOpen(true)
+  }
+
+  const handleCloseMobileSearch = useCallback(() => {
+    setIsMobileSearchOpen(false)
+  }, [])
+
   const handleClearQuery = () => {
     setQuery('')
     setHighlightedIndex(-1)
-    inputRef.current?.focus()
+    if (typeof window !== 'undefined' && window.innerWidth >= 640) {
+      inputRef.current?.focus()
+    }
   }
 
   const handleKeyDown = (e) => {
@@ -567,7 +596,35 @@ const HomePage = () => {
                 </button>
               </div>
 
-              <div className="relative flex-1 flex items-center min-w-0">
+              {/* Mobile Search Trigger opens full-screen solid-white modal above keyboard */}
+              <div className="flex sm:hidden flex-1 items-center min-w-0 gap-1">
+                <button
+                  type="button"
+                  onClick={handleOpenMobileSearch}
+                  aria-label="Відкрити пошук нерухомості"
+                  tabIndex={0}
+                  className="flex-1 min-w-0 flex items-center gap-2.5 px-4 py-3 text-left outline-none"
+                >
+                  <Search className="w-4 h-4 text-white/75 shrink-0" aria-hidden="true" />
+                  <span className={cn('text-sm truncate font-inter', query ? 'text-white font-medium' : 'text-white/75')}>
+                    {query || 'Район, метро, ЖК, #ID або тел.'}
+                  </span>
+                </button>
+                {query && (
+                  <button
+                    type="button"
+                    onClick={handleClearQuery}
+                    aria-label="Очистити поле пошуку"
+                    tabIndex={0}
+                    className="p-2 text-white/70 hover:text-white transition-colors mr-1 shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Desktop Inline Search Input */}
+              <div className="hidden sm:flex relative flex-1 items-center min-w-0">
                 <input
                   ref={inputRef}
                   type="text"
@@ -580,17 +637,17 @@ const HomePage = () => {
                   aria-label="Пошук за районом, метро, вулицею, ЖК, кодом об'єкта або номером агента"
                   autoComplete="off"
                   spellCheck="false"
-                  aria-expanded={isSuggestionsOpen}
+                  aria-expanded={isSuggestionsOpen && !isMobileSearchOpen}
                   aria-autocomplete="list"
-                  aria-controls={isSuggestionsOpen ? 'hero-search-suggestions' : undefined}
-                  className="w-full px-5 py-3 bg-transparent text-sm text-cream placeholder:text-cream/50 outline-none font-inter"
+                  aria-controls={isSuggestionsOpen && !isMobileSearchOpen ? 'hero-search-suggestions' : undefined}
+                  className="w-full px-5 py-3 bg-transparent text-sm text-white placeholder:text-white/65 outline-none font-inter"
                 />
                 {query && (
                   <button
                     type="button"
                     onClick={handleClearQuery}
                     aria-label="Очистити поле пошуку"
-                    className="p-1.5 text-cream/60 hover:text-white transition-colors mr-2 shrink-0"
+                    className="p-1.5 text-white/70 hover:text-white transition-colors mr-2 shrink-0"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -605,16 +662,16 @@ const HomePage = () => {
               </button>
             </form>
 
-            {/* Live Autocomplete Dropdown Popup */}
+            {/* Live Autocomplete Dropdown Popup (Desktop) */}
             <AnimatePresence>
-              {isSuggestionsOpen && (
+              {isSuggestionsOpen && !isMobileSearchOpen && (
                 <motion.div
                   id="hero-search-suggestions"
                   initial={{ opacity: 0, y: -6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
                   transition={{ duration: 0.16 }}
-                  className="absolute top-full left-0 right-0 mt-2.5 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 overflow-hidden z-50 font-inter text-foreground"
+                  className="hidden sm:block absolute top-full left-0 right-0 mt-2.5 bg-white rounded-2xl shadow-[0_24px_50px_rgba(15,23,42,0.28)] border border-border/80 overflow-hidden z-50 font-inter text-foreground"
                 >
                   <div className="p-3 max-h-[min(320px,calc(100dvh-220px))] overflow-y-auto custom-scrollbar">
                   {searchIntent.type === 'tag' || searchIntent.type === 'phone' ? (
@@ -822,6 +879,20 @@ const HomePage = () => {
             </AnimatePresence>
           </div>
         </div>
+
+        <MobileSearchModal
+          isOpen={isMobileSearchOpen}
+          onClose={handleCloseMobileSearch}
+          query={query}
+          onQueryChange={handleInputChange}
+          onClearQuery={handleClearQuery}
+          deal={deal}
+          onDealChange={setDeal}
+          searchIntent={searchIntent}
+          suggestions={suggestions}
+          onSelectSuggestion={handleSelectSuggestion}
+          onSubmit={handleSearch}
+        />
 
         <a
           href="#featured"

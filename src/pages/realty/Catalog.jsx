@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, startTransition, lazy, Suspense } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
-import { LayoutGrid, Map as MapIcon, AlertCircle, ChevronDown, Filter, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
+import { LayoutGrid, Map as MapIcon, AlertCircle, ChevronDown, SlidersHorizontal, ChevronUp, Check, Hammer, Home as HomeIcon } from 'lucide-react'
 import PropertyCard from '@/components/realty/PropertyCard'
 import { useCatalogObjects } from '@/lib/useCatalogObjects'
 
@@ -23,6 +23,7 @@ import {
 import RangeFilter from '@/components/realty/catalog/RangeFilter'
 import CheckboxFilter from '@/components/realty/catalog/CheckboxFilter'
 import ActiveFilterBadge from '@/components/realty/catalog/ActiveFilterBadge'
+import MobileFilterSheet from '@/components/realty/catalog/MobileFilterSheet'
 import Pagination from '@/components/realty/catalog/Pagination'
 import MascotTelegramCard from '@/components/realty/catalog/MascotTelegramCard'
 import MascotTelegramEmptyState from '@/components/realty/catalog/MascotTelegramEmptyState'
@@ -49,6 +50,8 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const [searchQuery, setSearchQuery] = useState(initialSearchParams.get('q') || '')
   const [sortBy, setSortBy] = useState(initialSearchParams.get('sort') || 'date_desc')
   const [isSortOpen, setIsSortOpen] = useState(false)
+  const [isMobileSortOpen, setIsMobileSortOpen] = useState(false)
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
   const [subTypes, setSubTypes] = useState(
     initialSearchParams.get('subTypes') ? initialSearchParams.get('subTypes').split(',') : []
   )
@@ -349,16 +352,33 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   }, [viewMode])
 
   useEffect(() => {
-    if (viewMode === 'map') {
+    if (viewMode === 'map' || isMobileFilterOpen) {
       document.body.style.overflow = 'hidden'
-      window.scrollTo(0, 0)
     } else {
       document.body.style.overflow = ''
     }
     return () => {
       document.body.style.overflow = ''
     }
+  }, [viewMode, isMobileFilterOpen])
+
+  useEffect(() => {
+    if (viewMode === 'map') {
+      window.scrollTo(0, 0)
+    }
   }, [viewMode])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const handleBreakpointChange = (e) => {
+      if (e.matches) {
+        setIsMobileFilterOpen(false)
+      }
+    }
+    mq.addEventListener('change', handleBreakpointChange)
+    return () => mq.removeEventListener('change', handleBreakpointChange)
+  }, [])
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode)
@@ -385,6 +405,15 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
   const handleToggleEoselia = () => setFilterEoselia((prev) => !prev)
   const handleToggleErecovery = () => setFilterErecovery((prev) => !prev)
 
+  const handleOpenMobileFilters = useCallback(() => {
+    ensureGeoData()
+    setIsMobileFilterOpen(true)
+  }, [ensureGeoData])
+
+  const handleCloseMobileFilters = useCallback(() => {
+    setIsMobileFilterOpen(false)
+  }, [])
+
   const handleClearFilters = () => {
     setSearchQuery('')
     setSubTypes([])
@@ -407,27 +436,24 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
     setFilterTender(false)
   }
 
-  const hasFilters = Boolean(
-    searchQuery ||
-      subTypes.length > 0 ||
-      minPrice ||
-      maxPrice ||
-      minArea ||
-      maxArea ||
-      searchComplex ||
-      searchStreet ||
-      searchHouse ||
-      metroStations.length > 0 ||
-      districts.length > 0 ||
-      states.length > 0 ||
-      minFloor ||
-      maxFloor ||
-      minFloorsTotal ||
-      maxFloorsTotal ||
-      filterEoselia ||
-      filterErecovery ||
-      filterTender
-  )
+  const activeFiltersCount =
+    (searchQuery ? 1 : 0) +
+    (searchComplex ? 1 : 0) +
+    (searchStreet ? 1 : 0) +
+    (searchHouse ? 1 : 0) +
+    (minPrice || maxPrice ? 1 : 0) +
+    (minArea || maxArea ? 1 : 0) +
+    (subTypes.length > 0 ? 1 : 0) +
+    (metroStations.length > 0 ? 1 : 0) +
+    (districts.length > 0 ? 1 : 0) +
+    (states.length > 0 ? 1 : 0) +
+    (minFloor || maxFloor ? 1 : 0) +
+    (minFloorsTotal || maxFloorsTotal ? 1 : 0) +
+    (filterEoselia ? 1 : 0) +
+    (filterErecovery ? 1 : 0) +
+    (filterTender ? 1 : 0)
+
+  const hasFilters = activeFiltersCount > 0
 
   const searchIntent = useMemo(() => parseSearchIntent(searchQuery), [searchQuery])
   const isCrossCatalogLookup = searchIntent.type === 'tag' || searchIntent.type === 'phone'
@@ -660,9 +686,183 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
 
   const schemaUrl = `https://kharkov-realter.com.ua${location.pathname}${location.search}`
 
+  const activeFilterBadgesContent = hasFilters ? (
+    <>
+      <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider mr-1 shrink-0">
+        Фільтри:
+      </span>
+      {searchQuery && (
+        <ActiveFilterBadge
+          onRemove={() => setSearchQuery('')}
+          removeLabel="Скинути пошуковий запит"
+        >
+          {searchIntent.type === 'tag'
+            ? `Код об'єкта: #${searchIntent.value}`
+            : searchIntent.type === 'phone'
+              ? `Агент: ${searchQuery}`
+              : `Пошук: "${searchQuery}"`}
+        </ActiveFilterBadge>
+      )}
+      {(minPrice || maxPrice) && (
+        <ActiveFilterBadge
+          onRemove={() => {
+            setMinPrice('')
+            setMaxPrice('')
+          }}
+          removeLabel="Скинути фільтр ціни"
+        >
+          Ціна: {minPrice ? `від ${minPrice}` : ''} {maxPrice ? `до ${maxPrice}` : ''}{' '}
+          {deal === 'rent' ? 'грн' : '$'}
+        </ActiveFilterBadge>
+      )}
+      {(minArea || maxArea) && (
+        <ActiveFilterBadge
+          onRemove={() => {
+            setMinArea('')
+            setMaxArea('')
+          }}
+          removeLabel="Скинути фільтр площі"
+        >
+          Площа: {minArea ? `від ${minArea}` : ''} {maxArea ? `до ${maxArea}` : ''} м²
+        </ActiveFilterBadge>
+      )}
+      {searchComplex && (
+        <ActiveFilterBadge
+          onRemove={() => setSearchComplex('')}
+          removeLabel="Скинути фільтр ЖК"
+        >
+          ЖК: {searchComplex}
+        </ActiveFilterBadge>
+      )}
+      {searchStreet && (
+        <ActiveFilterBadge
+          onRemove={() => {
+            setSearchStreet('')
+            setSearchHouse('')
+          }}
+          removeLabel="Скинути фільтр вулиці"
+        >
+          Вулиця: {searchStreet} {searchHouse}
+        </ActiveFilterBadge>
+      )}
+      {filterErecovery && (
+        <ActiveFilterBadge
+          onRemove={() => setFilterErecovery(false)}
+          removeLabel="Скинути фільтр єВідновлення"
+          tone="emerald"
+          isBold
+        >
+          Програма: єВідновлення
+        </ActiveFilterBadge>
+      )}
+      {filterEoselia && (
+        <ActiveFilterBadge
+          onRemove={() => setFilterEoselia(false)}
+          removeLabel="Скинути фільтр єОселя"
+          isBold
+        >
+          Програма: єОселя
+        </ActiveFilterBadge>
+      )}
+      {filterTender && (
+        <ActiveFilterBadge
+          onRemove={() => setFilterTender(false)}
+          removeLabel="Скинути фільтр Можливий торг"
+          isBold
+        >
+          Можливий торг
+        </ActiveFilterBadge>
+      )}
+      {subTypes.map((st) => {
+        const item = (SUBTYPES_BY_CATEGORY[category] || []).find((x) => x.value === st)
+        return (
+          <ActiveFilterBadge
+            key={st}
+            onRemove={() => setSubTypes(subTypes.filter((v) => v !== st))}
+            removeLabel={`Видалити тип ${st}`}
+          >
+            {item ? item.label : st}
+          </ActiveFilterBadge>
+        )
+      })}
+      {districts.map((d) => {
+        const item = DISTRICTS.find((x) => x.value === d)
+        return (
+          <ActiveFilterBadge
+            key={d}
+            onRemove={() => setDistricts(districts.filter((v) => v !== d))}
+            removeLabel={`Видалити район ${d}`}
+          >
+            {item ? item.label : d}
+          </ActiveFilterBadge>
+        )
+      })}
+      {metroStations.map((m) => {
+        let label = m
+        for (const line of METRO_LINES) {
+          const found = line.stations.find((s) => s.value === m)
+          if (found) {
+            label = found.label
+            break
+          }
+        }
+        return (
+          <ActiveFilterBadge
+            key={m}
+            onRemove={() => setMetroStations(metroStations.filter((v) => v !== m))}
+            removeLabel={`Видалити станцію ${label}`}
+          >
+            М: {label}
+          </ActiveFilterBadge>
+        )
+      })}
+      {states.map((s) => {
+        const item = STATES.find((x) => x.value === s)
+        return (
+          <ActiveFilterBadge
+            key={s}
+            onRemove={() => setStates(states.filter((v) => v !== s))}
+            removeLabel={`Видалити стан ${s}`}
+          >
+            {item ? item.label : s}
+          </ActiveFilterBadge>
+        )
+      })}
+      {(minFloor || maxFloor) && (
+        <ActiveFilterBadge
+          onRemove={() => {
+            setMinFloor('')
+            setMaxFloor('')
+          }}
+          removeLabel="Скинути фільтр поверху"
+        >
+          Поверх: {minFloor ? `від ${minFloor}` : ''} {maxFloor ? `до ${maxFloor}` : ''}
+        </ActiveFilterBadge>
+      )}
+      {(minFloorsTotal || maxFloorsTotal) && (
+        <ActiveFilterBadge
+          onRemove={() => {
+            setMinFloorsTotal('')
+            setMaxFloorsTotal('')
+          }}
+          removeLabel="Скинути фільтр поверховості"
+        >
+          Поверховість: {minFloorsTotal ? `від ${minFloorsTotal}` : ''} {maxFloorsTotal ? `до ${maxFloorsTotal}` : ''}
+        </ActiveFilterBadge>
+      )}
+      <button
+        type="button"
+        onClick={handleClearFilters}
+        className="text-xs text-destructive hover:underline font-semibold ml-auto transition-colors shrink-0 whitespace-nowrap"
+      >
+        Скинути все
+      </button>
+    </>
+  ) : null
+
   return (
     <div
-      className={cn('pt-24 flex flex-col', viewMode === 'list' ? 'pb-8 min-h-[100dvh]' : 'h-[100dvh] overflow-hidden pb-0')}
+      className={cn('pt-[74px] sm:pt-24 flex flex-col', viewMode === 'list' ? 'pb-8 min-h-[100dvh]' : 'h-[100dvh] overflow-hidden pb-0')}
       id="catalog-top"
     >
       <SeoMeta title={getSeoTitle()} description={getSeoDescription()} url={`${location.pathname}${location.search}`} />
@@ -671,525 +871,539 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       <h2 className="sr-only">Фільтри та список нерухомості</h2>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-40">
-        {viewMode === 'map' && (
-          <div className="lg:hidden mb-4 relative z-50">
-            <button
-              type="button"
-              onClick={() => setShowMapFilters(!showMapFilters)}
-              className="w-full py-3 bg-card backdrop-blur-md border border-border rounded-2xl shadow-md text-sm font-inter font-semibold text-foreground flex items-center justify-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-              {showMapFilters ? 'Сховати фільтри' : 'Показати фільтри'}
-            </button>
-          </div>
-        )}
-
-        <AnimatePresence initial={false}>
-          {!(viewMode === 'map' && !showMapFilters) && (
-            <motion.div
-              initial={false}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className={cn(
-                'bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 mt-2',
-                viewMode === 'map' ? 'rounded-3xl' : 'rounded-3xl mb-6 sm:mb-10'
-              )}
-            >
-              <LayoutGroup id={viewMode}>
-                <div className="p-3.5 sm:p-6 flex flex-col gap-3.5 sm:gap-5">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 border-b border-border/50 pb-4 sm:pb-5">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
-                      <div className="grid grid-cols-2 sm:flex p-1 bg-muted rounded-full w-full sm:w-auto shrink-0 relative">
-                        {[
-                          ['sale', 'Продаж'],
-                          ['rent', 'Оренда'],
-                        ].map(([v, l]) => (
-                          <button
-                            key={v}
-                            type="button"
-                            onClick={() => setDeal(v)}
-                            className={cn(
-                              'relative z-10 px-4 sm:px-6 py-2 sm:py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full text-center justify-center',
-                              deal === v ? 'text-white' : 'text-muted-foreground hover:text-foreground'
-                            )}
-                          >
-                            {deal === v && (
-                              <motion.div
-                                layoutId="deal-pill"
-                                className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
-                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                              />
-                            )}
-                            {l}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="grid grid-cols-3 sm:flex p-1 bg-muted rounded-full w-full sm:w-auto shrink-0 relative">
-                        {CATEGORIES.map((c) => (
-                          <button
-                            key={c.value}
-                            type="button"
-                            onClick={() => handleCategoryChange(c.value)}
-                            className={cn(
-                              'relative z-10 px-2 sm:px-6 py-2 sm:py-2.5 text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap text-center justify-center',
-                              category === c.value ? 'text-white' : 'text-muted-foreground hover:text-foreground'
-                            )}
-                          >
-                            {category === c.value && (
-                              <motion.div
-                                layoutId="category-pill"
-                                className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
-                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                              />
-                            )}
-                            {c.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-wrap w-full lg:w-auto lg:ml-auto">
-                      {viewMode === 'list' && (
-                        <Popover open={isSortOpen} onOpenChange={setIsSortOpen}>
-                          <PopoverTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full px-4 py-2.5 outline-none transition-colors border border-transparent hover:border-border"
-                            >
-                              <span>{SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Новіші спочатку'}</span>
-                              <ChevronDown
-                                className={cn(
-                                  'w-3.5 h-3.5 text-muted-foreground transition-transform duration-200',
-                                  isSortOpen && 'rotate-180'
-                                )}
-                              />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-52 p-1.5 rounded-2xl bg-white shadow-xl border border-border/70 z-50" align="start">
-                            <div className="space-y-0.5">
-                              {SORT_OPTIONS.map((opt) => {
-                                const isSelected = sortBy === opt.value
-                                return (
-                                  <button
-                                    key={opt.value}
-                                    type="button"
-                                    onClick={() => {
-                                      setSortBy(opt.value)
-                                      setIsSortOpen(false)
-                                    }}
-                                    className={cn(
-                                      'w-full text-left px-3 py-2 text-xs font-inter rounded-xl transition-colors font-medium flex items-center justify-between',
-                                      isSelected ? 'bg-gold/15 text-gold font-semibold' : 'text-foreground hover:bg-muted/70'
-                                    )}
-                                  >
-                                    <span>{opt.label}</span>
-                                    {isSelected && <Check className="w-3.5 h-3.5 text-gold shrink-0" />}
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-
-                      <p className="text-muted-foreground text-sm font-inter whitespace-nowrap font-medium flex items-center gap-1.5">
-                        {(isFetching || isFetchingSecondary) && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
-                        <span>{filtered.length} об'єктів</span>
-                      </p>
-
-                      <div className="flex p-1 bg-muted rounded-full relative shrink-0">
-                        {[
-                          { id: 'list', icon: LayoutGrid, label: 'Список' },
-                          { id: 'map', icon: MapIcon, label: 'Карта' },
-                        ].map((v) => (
-                          <button
-                            key={v.id}
-                            type="button"
-                            aria-label={v.label}
-                            onClick={() => startTransition(() => handleViewModeChange(v.id))}
-                            className={cn(
-                              'relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full',
-                              viewMode === v.id ? 'text-white' : 'text-muted-foreground hover:text-foreground'
-                            )}
-                          >
-                            {viewMode === v.id && (
-                              <motion.div
-                                layoutId="view-pill"
-                                className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
-                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                              />
-                            )}
-                            <v.icon className="w-4 h-4" />
-                            <span className="hidden sm:inline">{v.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col w-full">
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 w-full font-inter">
-                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px]">
-                        <Autocomplete
-                          placeholder="Оберіть ЖК..."
-                          options={complexOptions}
-                          value={searchComplex}
-                          onChange={handleComplexSelect}
-                          onInputChange={setSearchComplex}
-                        />
-                      </div>
-
-                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[140px] lg:max-w-[200px]">
-                        <Autocomplete
-                          placeholder="Вулиця..."
-                          options={streetOptions}
-                          value={searchStreet}
-                          onChange={(val) => {
-                            setSearchStreet(val)
-                            setSearchHouse('')
-                          }}
-                          onInputChange={(val) => {
-                            setSearchStreet(val)
-                            setSearchHouse('')
-                          }}
-                          minChars={1}
-                        />
-                      </div>
-
-                      <div onFocus={ensureGeoData} className="relative w-full sm:flex-1 sm:min-w-[100px] lg:max-w-[120px]">
-                        <Autocomplete
-                          placeholder="Дім..."
-                          disabled={!searchStreet}
-                          options={houseOptions}
-                          value={searchHouse}
-                          onChange={setSearchHouse}
-                          onInputChange={setSearchHouse}
-                        />
-                      </div>
-
-                      <RangeFilter
-                        label="Ціна"
-                        title={deal === 'rent' ? 'Ціна (грн)' : 'Ціна ($)'}
-                        minValue={minPrice}
-                        maxValue={maxPrice}
-                        onMinChange={setMinPrice}
-                        onMaxChange={setMaxPrice}
+        {/* Mobile Unified Header (< lg): identical structure and locked position in List & Map */}
+        <div className="lg:hidden">
+          <div
+            data-catalog-mobile-bar="true"
+            className="bg-white shadow-md border border-border rounded-2xl p-2.5 flex flex-col gap-2 w-full relative z-40 mt-1"
+          >
+            <LayoutGroup id="catalog-mobile-bar">
+              {/* Row 1: Deal toggle */}
+              <div className="grid grid-cols-2 p-1 bg-muted rounded-full relative">
+                {[
+                  ['sale', 'Продаж'],
+                  ['rent', 'Оренда'],
+                ].map(([v, l]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setDeal(v)}
+                    className={cn(
+                      'relative z-10 py-2 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full text-center',
+                      deal === v ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {deal === v && (
+                      <motion.div
+                        layoutId="mobile-deal-pill"
+                        className="absolute inset-0 gradient-gold shadow-sm rounded-full -z-10"
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       />
+                    )}
+                    {l}
+                  </button>
+                ))}
+              </div>
 
-                      <RangeFilter
-                        label="Площа"
-                        title="Площа (кв.м)"
-                        minValue={minArea}
-                        maxValue={maxArea}
-                        onMinChange={setMinArea}
-                        onMaxChange={setMaxArea}
+              {/* Row 2: Category toggle */}
+              <div className="grid grid-cols-3 p-1 bg-muted rounded-full relative">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => handleCategoryChange(c.value)}
+                    className={cn(
+                      'relative z-10 px-1.5 py-2 text-[11px] tracking-wider uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap text-center',
+                      category === c.value ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {category === c.value && (
+                      <motion.div
+                        layoutId="mobile-category-pill"
+                        className="absolute inset-0 gradient-gold shadow-sm rounded-full -z-10"
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       />
+                    )}
+                    {c.label}
+                  </button>
+                ))}
+              </div>
 
-                      {category && SUBTYPES_BY_CATEGORY[category] && (
-                        <CheckboxFilter
-                          label="Тип нерухомості"
-                          options={SUBTYPES_BY_CATEGORY[category]}
-                          selected={subTypes}
-                          onChange={setSubTypes}
-                          contentClassName="w-[min(420px,calc(100vw-2rem))]"
-                        />
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                        aria-expanded={showAdvancedFilters}
-                        className="relative col-span-2 sm:col-span-1 w-full sm:w-auto px-4 sm:px-6 py-3 sm:py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-2 sm:gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
-                      >
-                        <span className="truncate">Більше фільтрів</span>
-                        <ChevronDown
-                          className={cn(
-                            'w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200',
-                            showAdvancedFilters && 'rotate-180'
-                          )}
-                        />
-                        {advancedFiltersActiveCount > 0 && !showAdvancedFilters && (
-                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">
-                            {advancedFiltersActiveCount}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-
-                    <AnimatePresence initial={false}>
-                      {showAdvancedFilters && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.22, ease: [0.04, 0.62, 0.23, 0.98] }}
-                          className="overflow-hidden w-full"
-                        >
-                          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 w-full font-inter border-t border-border/50 pt-4 mt-3">
-                            <CheckboxFilter
-                              label="Станція метро"
-                              title="Оберіть станції"
-                              groups={METRO_LINES}
-                              selected={metroStations}
-                              onChange={setMetroStations}
-                              contentClassName="w-[min(740px,calc(100vw-2rem))]"
-                            />
-
-                            <CheckboxFilter
-                              label="Район"
-                              title="Оберіть район"
-                              options={DISTRICTS}
-                              selected={districts}
-                              onChange={setDistricts}
-                              contentClassName="w-[min(450px,calc(100vw-2rem))]"
-                            />
-
-                            <RangeFilter
-                              label="Поверх"
-                              minValue={minFloor}
-                              maxValue={maxFloor}
-                              onMinChange={setMinFloor}
-                              onMaxChange={setMaxFloor}
-                            />
-
-                            <RangeFilter
-                              label="Всього поверхів"
-                              minValue={minFloorsTotal}
-                              maxValue={maxFloorsTotal}
-                              onMinChange={setMinFloorsTotal}
-                              onMaxChange={setMaxFloorsTotal}
-                            />
-
-                            <CheckboxFilter
-                              label="Стан"
-                              title="Оберіть стан"
-                              options={STATES}
-                              selected={states}
-                              onChange={setStates}
-                              contentClassName="w-[min(450px,calc(100vw-2rem))]"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={handleToggleErecovery}
-                              aria-pressed={filterErecovery}
-                              tabIndex={0}
-                              className={cn(
-                                'w-full sm:w-auto px-4 sm:px-5 py-3 sm:py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center justify-center gap-2 border select-none',
-                                filterErecovery
-                                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                                  : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
-                              )}
-                            >
-                              <Hammer className={cn('w-4 h-4 shrink-0', filterErecovery ? 'text-white' : 'text-emerald-600')} />
-                              <span className="truncate">єВідновлення</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={handleToggleEoselia}
-                              aria-pressed={filterEoselia}
-                              tabIndex={0}
-                              className={cn(
-                                'w-full sm:w-auto px-4 sm:px-5 py-3 sm:py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center justify-center gap-2 border select-none',
-                                filterEoselia
-                                  ? 'bg-navy text-white border-navy shadow-sm'
-                                  : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
-                              )}
-                            >
-                              <HomeIcon className={cn('w-4 h-4 shrink-0', filterEoselia ? 'text-white' : 'text-navy')} />
-                              <span className="truncate">єОселя</span>
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {hasFilters && (
-                    <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/50 text-xs font-inter">
-                      <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider mr-1">
-                        Фільтри:
-                      </span>
-                      {searchQuery && (
-                        <ActiveFilterBadge
-                          onRemove={() => setSearchQuery('')}
-                          removeLabel="Скинути пошуковий запит"
-                        >
-                          {searchIntent.type === 'tag'
-                            ? `Код об'єкта: #${searchIntent.value}`
-                            : searchIntent.type === 'phone'
-                              ? `Агент: ${searchQuery}`
-                              : `Пошук: "${searchQuery}"`}
-                        </ActiveFilterBadge>
-                      )}
-                      {(minPrice || maxPrice) && (
-                        <ActiveFilterBadge
-                          onRemove={() => {
-                            setMinPrice('')
-                            setMaxPrice('')
-                          }}
-                          removeLabel="Скинути фільтр ціни"
-                        >
-                          Ціна: {minPrice ? `від ${minPrice}` : ''} {maxPrice ? `до ${maxPrice}` : ''}{' '}
-                          {deal === 'rent' ? 'грн' : '$'}
-                        </ActiveFilterBadge>
-                      )}
-                      {(minArea || maxArea) && (
-                        <ActiveFilterBadge
-                          onRemove={() => {
-                            setMinArea('')
-                            setMaxArea('')
-                          }}
-                          removeLabel="Скинути фільтр площі"
-                        >
-                          Площа: {minArea ? `від ${minArea}` : ''} {maxArea ? `до ${maxArea}` : ''} м²
-                        </ActiveFilterBadge>
-                      )}
-                      {searchComplex && (
-                        <ActiveFilterBadge
-                          onRemove={() => setSearchComplex('')}
-                          removeLabel="Скинути фільтр ЖК"
-                        >
-                          ЖК: {searchComplex}
-                        </ActiveFilterBadge>
-                      )}
-                      {searchStreet && (
-                        <ActiveFilterBadge
-                          onRemove={() => {
-                            setSearchStreet('')
-                            setSearchHouse('')
-                          }}
-                          removeLabel="Скинути фільтр вулиці"
-                        >
-                          Вулиця: {searchStreet} {searchHouse}
-                        </ActiveFilterBadge>
-                      )}
-                      {filterErecovery && (
-                        <ActiveFilterBadge
-                          onRemove={() => setFilterErecovery(false)}
-                          removeLabel="Скинути фільтр єВідновлення"
-                          tone="emerald"
-                          isBold
-                        >
-                          Програма: єВідновлення
-                        </ActiveFilterBadge>
-                      )}
-                      {filterEoselia && (
-                        <ActiveFilterBadge
-                          onRemove={() => setFilterEoselia(false)}
-                          removeLabel="Скинути фільтр єОселя"
-                          isBold
-                        >
-                          Програма: єОселя
-                        </ActiveFilterBadge>
-                      )}
-                      {filterTender && (
-                        <ActiveFilterBadge
-                          onRemove={() => setFilterTender(false)}
-                          removeLabel="Скинути фільтр Можливий торг"
-                          isBold
-                        >
-                          Можливий торг
-                        </ActiveFilterBadge>
-                      )}
-                      {subTypes.map((st) => {
-                        const item = (SUBTYPES_BY_CATEGORY[category] || []).find((x) => x.value === st)
-                        return (
-                          <ActiveFilterBadge
-                            key={st}
-                            onRemove={() => setSubTypes(subTypes.filter((v) => v !== st))}
-                            removeLabel={`Видалити тип ${st}`}
-                          >
-                            {item ? item.label : st}
-                          </ActiveFilterBadge>
-                        )
-                      })}
-                      {districts.map((d) => {
-                        const item = DISTRICTS.find((x) => x.value === d)
-                        return (
-                          <ActiveFilterBadge
-                            key={d}
-                            onRemove={() => setDistricts(districts.filter((v) => v !== d))}
-                            removeLabel={`Видалити район ${d}`}
-                          >
-                            {item ? item.label : d}
-                          </ActiveFilterBadge>
-                        )
-                      })}
-                      {metroStations.map((m) => {
-                        let label = m
-                        for (const line of METRO_LINES) {
-                          const found = line.stations.find((s) => s.value === m)
-                          if (found) {
-                            label = found.label
-                            break
-                          }
-                        }
-                        return (
-                          <ActiveFilterBadge
-                            key={m}
-                            onRemove={() => setMetroStations(metroStations.filter((v) => v !== m))}
-                            removeLabel={`Видалити станцію ${label}`}
-                          >
-                            М: {label}
-                          </ActiveFilterBadge>
-                        )
-                      })}
-                      {states.map((s) => {
-                        const item = STATES.find((x) => x.value === s)
-                        return (
-                          <ActiveFilterBadge
-                            key={s}
-                            onRemove={() => setStates(states.filter((v) => v !== s))}
-                            removeLabel={`Видалити стан ${s}`}
-                          >
-                            {item ? item.label : s}
-                          </ActiveFilterBadge>
-                        )
-                      })}
-                      {(minFloor || maxFloor) && (
-                        <ActiveFilterBadge
-                          onRemove={() => {
-                            setMinFloor('')
-                            setMaxFloor('')
-                          }}
-                          removeLabel="Скинути фільтр поверху"
-                        >
-                          Поверх: {minFloor ? `від ${minFloor}` : ''} {maxFloor ? `до ${maxFloor}` : ''}
-                        </ActiveFilterBadge>
-                      )}
-                      <button
-                        type="button"
-                        onClick={handleClearFilters}
-                        className="text-xs text-destructive hover:underline font-semibold ml-auto transition-colors"
-                      >
-                        Скинути все
-                      </button>
-                    </div>
+              {/* Row 3: Left = Filters Sheet Trigger, Right = Locked List/Map Segmented Toggle */}
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={handleOpenMobileFilters}
+                  aria-label="Відкрити фільтри"
+                  aria-expanded={isMobileFilterOpen}
+                  tabIndex={0}
+                  className={cn(
+                    'relative flex-1 min-w-0 h-10 px-3.5 rounded-full text-xs font-inter font-semibold transition-colors flex items-center justify-center gap-2 border',
+                    activeFiltersCount > 0
+                      ? 'bg-navy text-white border-navy shadow-sm'
+                      : 'bg-muted hover:bg-muted/80 text-foreground border-transparent'
                   )}
-                </div>
-              </LayoutGroup>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                >
+                  <SlidersHorizontal className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>Фільтри</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-gold text-white text-[10px] font-bold flex items-center justify-center">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
 
-        {viewMode === 'map' && (
-          <div className="hidden lg:flex justify-center absolute left-1/2 -bottom-5 -translate-x-1/2 z-50">
-            <button
-              type="button"
-              onClick={() => setShowMapFilters(!showMapFilters)}
-              aria-label="Перемкнути видимість панелі фільтрів"
-              className="bg-white border border-border shadow-md rounded-full p-1.5 text-muted-foreground hover:text-navy hover:shadow-lg transition-all flex items-center justify-center"
-            >
-              <ChevronUp
-                className={cn('w-5 h-5 transition-transform duration-300', !showMapFilters && 'rotate-180')}
-              />
-            </button>
+                <div className="flex p-1 bg-muted rounded-full shrink-0 h-10 items-center relative">
+                  {[
+                    { id: 'list', icon: LayoutGrid, label: 'Список' },
+                    { id: 'map', icon: MapIcon, label: 'Карта' },
+                  ].map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      aria-label={v.label}
+                      aria-pressed={viewMode === v.id}
+                      onClick={() => startTransition(() => handleViewModeChange(v.id))}
+                      className={cn(
+                        'relative z-10 h-8 px-3 rounded-full text-xs font-inter font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap',
+                        viewMode === v.id ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {viewMode === v.id && (
+                        <motion.div
+                          layoutId="mobile-view-pill"
+                          className="absolute inset-0 gradient-gold shadow-sm rounded-full -z-10"
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        />
+                      )}
+                      <v.icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span className="hidden min-[360px]:inline">{v.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </LayoutGroup>
           </div>
-        )}
+
+          {/* Mobile List Secondary Strip: Object Count + Sort Popover + Active Filter Badges */}
+          {viewMode === 'list' && (
+            <div className="mt-3 mb-4 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-muted-foreground text-xs sm:text-sm font-inter whitespace-nowrap font-medium flex items-center gap-1.5">
+                  {(isFetching || isFetchingSecondary) && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
+                  <span>{filtered.length} об'єктів</span>
+                </p>
+
+                <Popover open={isMobileSortOpen} onOpenChange={setIsMobileSortOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 bg-white hover:bg-muted/70 text-foreground text-xs font-inter font-semibold rounded-full px-3.5 py-2 outline-none transition-colors border border-border/80 shadow-sm"
+                    >
+                      <span>{SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Новіші спочатку'}</span>
+                      <ChevronDown
+                        className={cn(
+                          'w-3.5 h-3.5 text-muted-foreground transition-transform duration-200',
+                          isMobileSortOpen && 'rotate-180'
+                        )}
+                      />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-52 p-1.5 rounded-2xl bg-white shadow-xl border border-border/70 z-50" align="end">
+                    <div className="space-y-0.5">
+                      {SORT_OPTIONS.map((opt) => {
+                        const isSelected = sortBy === opt.value
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setSortBy(opt.value)
+                              setIsMobileSortOpen(false)
+                            }}
+                            className={cn(
+                              'w-full text-left px-3 py-2 text-xs font-inter rounded-xl transition-colors font-medium flex items-center justify-between',
+                              isSelected ? 'bg-gold/15 text-gold font-semibold' : 'text-foreground hover:bg-muted/70'
+                            )}
+                          >
+                            <span>{opt.label}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-gold shrink-0" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {hasFilters && (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs font-inter">
+                  {activeFilterBadgesContent}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mobile Map Active Filters Horizontal Strip */}
+          {viewMode === 'map' && hasFilters && (
+            <div className="mt-2 bg-white/95 backdrop-blur border border-border/80 rounded-xl px-2.5 py-2 shadow-sm flex items-center gap-1.5 overflow-x-auto text-xs font-inter whitespace-nowrap">
+              {activeFilterBadgesContent}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Filter Header (>= lg) */}
+        <div className="hidden lg:block">
+          <AnimatePresence initial={false}>
+            {!(viewMode === 'map' && !showMapFilters) && (
+              <motion.div
+                initial={false}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className={cn(
+                  'bg-card shadow-md border border-border flex-shrink-0 w-full relative z-40 mt-2',
+                  viewMode === 'map' ? 'rounded-3xl' : 'rounded-3xl mb-10'
+                )}
+              >
+                <LayoutGroup id={`catalog-desktop-${viewMode}`}>
+                  <div className="p-6 flex flex-col gap-5">
+                    <div className="flex flex-row items-center justify-between gap-4 border-b border-border/50 pb-5">
+                      <div className="flex items-center gap-3 w-auto">
+                        <div className="flex p-1 bg-muted rounded-full w-auto shrink-0 relative">
+                          {[
+                            ['sale', 'Продаж'],
+                            ['rent', 'Оренда'],
+                          ].map(([v, l]) => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setDeal(v)}
+                              className={cn(
+                                'relative z-10 px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full text-center justify-center',
+                                deal === v ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              {deal === v && (
+                                <motion.div
+                                  layoutId="desktop-deal-pill"
+                                  className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                />
+                              )}
+                              {l}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex p-1 bg-muted rounded-full w-auto shrink-0 relative">
+                          {CATEGORIES.map((c) => (
+                            <button
+                              key={c.value}
+                              type="button"
+                              onClick={() => handleCategoryChange(c.value)}
+                              className={cn(
+                                'relative z-10 px-6 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full whitespace-nowrap text-center justify-center',
+                                category === c.value ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              {category === c.value && (
+                                <motion.div
+                                  layoutId="desktop-category-pill"
+                                  className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                />
+                              )}
+                              {c.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-4 flex-wrap w-auto ml-auto">
+                        {viewMode === 'list' && (
+                          <Popover open={isSortOpen} onOpenChange={setIsSortOpen}>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground text-xs font-inter font-semibold rounded-full px-4 py-2.5 outline-none transition-colors border border-transparent hover:border-border"
+                              >
+                                <span>{SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Новіші спочатку'}</span>
+                                <ChevronDown
+                                  className={cn(
+                                    'w-3.5 h-3.5 text-muted-foreground transition-transform duration-200',
+                                    isSortOpen && 'rotate-180'
+                                  )}
+                                />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-52 p-1.5 rounded-2xl bg-white shadow-xl border border-border/70 z-50" align="start">
+                              <div className="space-y-0.5">
+                                {SORT_OPTIONS.map((opt) => {
+                                  const isSelected = sortBy === opt.value
+                                  return (
+                                    <button
+                                      key={opt.value}
+                                      type="button"
+                                      onClick={() => {
+                                        setSortBy(opt.value)
+                                        setIsSortOpen(false)
+                                      }}
+                                      className={cn(
+                                        'w-full text-left px-3 py-2 text-xs font-inter rounded-xl transition-colors font-medium flex items-center justify-between',
+                                        isSelected ? 'bg-gold/15 text-gold font-semibold' : 'text-foreground hover:bg-muted/70'
+                                      )}
+                                    >
+                                      <span>{opt.label}</span>
+                                      {isSelected && <Check className="w-3.5 h-3.5 text-gold shrink-0" />}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+
+                        <p className="text-muted-foreground text-sm font-inter whitespace-nowrap font-medium flex items-center gap-1.5">
+                          {(isFetching || isFetchingSecondary) && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-ping shrink-0" />}
+                          <span>{filtered.length} об'єктів</span>
+                        </p>
+
+                        <div className="flex p-1 bg-muted rounded-full relative shrink-0">
+                          {[
+                            { id: 'list', icon: LayoutGrid, label: 'Список' },
+                            { id: 'map', icon: MapIcon, label: 'Карта' },
+                          ].map((v) => (
+                            <button
+                              key={v.id}
+                              type="button"
+                              aria-label={v.label}
+                              onClick={() => startTransition(() => handleViewModeChange(v.id))}
+                              className={cn(
+                                'relative z-10 flex items-center gap-2 px-5 py-2.5 text-xs tracking-widest uppercase font-inter font-semibold transition-colors rounded-full',
+                                viewMode === v.id ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              {viewMode === v.id && (
+                                <motion.div
+                                  layoutId="desktop-view-pill"
+                                  className="absolute inset-0 gradient-gold shadow-md rounded-full -z-10"
+                                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                />
+                              )}
+                              <v.icon className="w-4 h-4" />
+                              <span>{v.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col w-full">
+                      <div className="flex flex-wrap items-center gap-3 w-full font-inter">
+                        <div onFocus={ensureGeoData} className="relative flex-1 min-w-[140px] max-w-[200px]">
+                          <Autocomplete
+                            placeholder="Оберіть ЖК..."
+                            options={complexOptions}
+                            value={searchComplex}
+                            onChange={handleComplexSelect}
+                            onInputChange={setSearchComplex}
+                          />
+                        </div>
+
+                        <div onFocus={ensureGeoData} className="relative flex-1 min-w-[140px] max-w-[200px]">
+                          <Autocomplete
+                            placeholder="Вулиця..."
+                            options={streetOptions}
+                            value={searchStreet}
+                            onChange={(val) => {
+                              setSearchStreet(val)
+                              setSearchHouse('')
+                            }}
+                            onInputChange={(val) => {
+                              setSearchStreet(val)
+                              setSearchHouse('')
+                            }}
+                            minChars={1}
+                          />
+                        </div>
+
+                        <div onFocus={ensureGeoData} className="relative flex-1 min-w-[100px] max-w-[120px]">
+                          <Autocomplete
+                            placeholder="Дім..."
+                            disabled={!searchStreet}
+                            options={houseOptions}
+                            value={searchHouse}
+                            onChange={setSearchHouse}
+                            onInputChange={setSearchHouse}
+                          />
+                        </div>
+
+                        <RangeFilter
+                          label="Ціна"
+                          title={deal === 'rent' ? 'Ціна (грн)' : 'Ціна ($)'}
+                          minValue={minPrice}
+                          maxValue={maxPrice}
+                          onMinChange={setMinPrice}
+                          onMaxChange={setMaxPrice}
+                        />
+
+                        <RangeFilter
+                          label="Площа"
+                          title="Площа (кв.м)"
+                          minValue={minArea}
+                          maxValue={maxArea}
+                          onMinChange={setMinArea}
+                          onMaxChange={setMaxArea}
+                        />
+
+                        {category && SUBTYPES_BY_CATEGORY[category] && (
+                          <CheckboxFilter
+                            label="Тип нерухомості"
+                            options={SUBTYPES_BY_CATEGORY[category]}
+                            selected={subTypes}
+                            onChange={setSubTypes}
+                            contentClassName="w-[min(420px,calc(100vw-2rem))]"
+                          />
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                          aria-expanded={showAdvancedFilters}
+                          className="relative w-auto px-6 py-3.5 bg-muted rounded-full text-sm flex items-center justify-between gap-3 hover:bg-muted/80 transition-colors text-foreground font-semibold"
+                        >
+                          <span className="truncate">Більше фільтрів</span>
+                          <ChevronDown
+                            className={cn(
+                              'w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-200',
+                              showAdvancedFilters && 'rotate-180'
+                            )}
+                          />
+                          {advancedFiltersActiveCount > 0 && !showAdvancedFilters && (
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-navy text-white flex items-center justify-center text-[10px] rounded-full font-bold shadow-sm">
+                              {advancedFiltersActiveCount}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+
+                      <AnimatePresence initial={false}>
+                        {showAdvancedFilters && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.22, ease: [0.04, 0.62, 0.23, 0.98] }}
+                            className="overflow-hidden w-full"
+                          >
+                            <div className="flex flex-wrap items-center gap-3 w-full font-inter border-t border-border/50 pt-4 mt-3">
+                              <CheckboxFilter
+                                label="Станція метро"
+                                title="Оберіть станції"
+                                groups={METRO_LINES}
+                                selected={metroStations}
+                                onChange={setMetroStations}
+                                contentClassName="w-[min(740px,calc(100vw-2rem))]"
+                              />
+
+                              <CheckboxFilter
+                                label="Район"
+                                title="Оберіть район"
+                                options={DISTRICTS}
+                                selected={districts}
+                                onChange={setDistricts}
+                                contentClassName="w-[min(450px,calc(100vw-2rem))]"
+                              />
+
+                              <RangeFilter
+                                label="Поверх"
+                                minValue={minFloor}
+                                maxValue={maxFloor}
+                                onMinChange={setMinFloor}
+                                onMaxChange={setMaxFloor}
+                              />
+
+                              <RangeFilter
+                                label="Всього поверхів"
+                                minValue={minFloorsTotal}
+                                maxValue={maxFloorsTotal}
+                                onMinChange={setMinFloorsTotal}
+                                onMaxChange={setMaxFloorsTotal}
+                              />
+
+                              <CheckboxFilter
+                                label="Стан"
+                                title="Оберіть стан"
+                                options={STATES}
+                                selected={states}
+                                onChange={setStates}
+                                contentClassName="w-[min(450px,calc(100vw-2rem))]"
+                              />
+
+                              <button
+                                type="button"
+                                onClick={handleToggleErecovery}
+                                aria-pressed={filterErecovery}
+                                tabIndex={0}
+                                className={cn(
+                                  'w-auto px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center justify-center gap-2 border select-none',
+                                  filterErecovery
+                                    ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                                    : 'bg-muted hover:bg-emerald-500/10 text-foreground border-transparent hover:border-emerald-500/30'
+                                )}
+                              >
+                                <Hammer className={cn('w-4 h-4 shrink-0', filterErecovery ? 'text-white' : 'text-emerald-600')} />
+                                <span className="truncate">єВідновлення</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleToggleEoselia}
+                                aria-pressed={filterEoselia}
+                                tabIndex={0}
+                                className={cn(
+                                  'w-auto px-5 py-3.5 rounded-full text-sm font-inter font-semibold transition-all flex items-center justify-center gap-2 border select-none',
+                                  filterEoselia
+                                    ? 'bg-navy text-white border-navy shadow-sm'
+                                    : 'bg-muted hover:bg-navy/10 text-foreground border-transparent hover:border-navy/30'
+                                )}
+                              >
+                                <HomeIcon className={cn('w-4 h-4 shrink-0', filterEoselia ? 'text-white' : 'text-navy')} />
+                                <span className="truncate">єОселя</span>
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {hasFilters && (
+                      <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/50 text-xs font-inter">
+                        {activeFilterBadgesContent}
+                      </div>
+                    )}
+                  </div>
+                </LayoutGroup>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {viewMode === 'map' && (
+            <div className="flex justify-center absolute left-1/2 -bottom-5 -translate-x-1/2 z-50">
+              <button
+                type="button"
+                onClick={() => setShowMapFilters(!showMapFilters)}
+                aria-label="Перемкнути видимість панелі фільтрів"
+                className="bg-white border border-border shadow-md rounded-full p-1.5 text-muted-foreground hover:text-navy hover:shadow-lg transition-all flex items-center justify-center"
+              >
+                <ChevronUp
+                  className={cn('w-5 h-5 transition-transform duration-300', !showMapFilters && 'rotate-180')}
+                />
+              </button>
+            </div>
+          )}
+        </div>
 
         {error && (
           <div className="flex items-center gap-3 p-4 border border-destructive/40 bg-destructive/10 text-destructive text-sm font-inter mb-6 mt-4 rounded-xl">
@@ -1220,7 +1434,7 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
       )}
 
       {viewMode === 'list' && (
-        <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-10">
           {isLookupLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
@@ -1278,6 +1492,61 @@ const CatalogPage = ({ defaultCategory = 'apartment' }) => {
           )}
         </div>
       )}
+
+      {/* Mobile Full-Screen Filter Sheet (< lg) */}
+      <MobileFilterSheet
+        isOpen={isMobileFilterOpen}
+        onClose={handleCloseMobileFilters}
+        deal={deal}
+        category={category}
+        filteredCount={filtered.length}
+        activeFiltersCount={activeFiltersCount}
+        hasFilters={hasFilters}
+        onClearFilters={handleClearFilters}
+        onEnsureGeoData={ensureGeoData}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        searchComplex={searchComplex}
+        complexOptions={complexOptions}
+        onComplexSelect={handleComplexSelect}
+        onComplexInputChange={setSearchComplex}
+        searchStreet={searchStreet}
+        streetOptions={streetOptions}
+        onStreetChange={setSearchStreet}
+        onStreetInputChange={setSearchStreet}
+        searchHouse={searchHouse}
+        houseOptions={houseOptions}
+        onHouseChange={setSearchHouse}
+        onHouseInputChange={setSearchHouse}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        onMinPriceChange={setMinPrice}
+        onMaxPriceChange={setMaxPrice}
+        minArea={minArea}
+        maxArea={maxArea}
+        onMinAreaChange={setMinArea}
+        onMaxAreaChange={setMaxArea}
+        subTypes={subTypes}
+        onSubTypesChange={setSubTypes}
+        filterErecovery={filterErecovery}
+        onToggleErecovery={handleToggleErecovery}
+        filterEoselia={filterEoselia}
+        onToggleEoselia={handleToggleEoselia}
+        metroStations={metroStations}
+        onMetroStationsChange={setMetroStations}
+        districts={districts}
+        onDistrictsChange={setDistricts}
+        minFloor={minFloor}
+        maxFloor={maxFloor}
+        onMinFloorChange={setMinFloor}
+        onMaxFloorChange={setMaxFloor}
+        minFloorsTotal={minFloorsTotal}
+        maxFloorsTotal={maxFloorsTotal}
+        onMinFloorsTotalChange={setMinFloorsTotal}
+        onMaxFloorsTotalChange={setMaxFloorsTotal}
+        states={states}
+        onStatesChange={setStates}
+      />
 
       {/* Mascot Telegram Scroll Popup Modal */}
       <MascotTelegramModal deal={deal} />

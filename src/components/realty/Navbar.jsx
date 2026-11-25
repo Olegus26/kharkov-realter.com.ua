@@ -219,8 +219,12 @@ const Navbar = () => {
 
   return (
     <header className={cn(
-      'fixed top-0 inset-x-0 z-50 transition-all duration-300',
-      scrolled ? 'bg-white/95 backdrop-blur-xl border-b border-black/5 shadow-sm' : 'bg-white/85 backdrop-blur-xl border-b border-transparent'
+      'fixed top-0 inset-x-0 z-[70] transition-all duration-300',
+      isMobileMenuOpen
+        ? 'bg-white border-b border-border/80 shadow-sm'
+        : scrolled
+          ? 'bg-white/95 backdrop-blur-xl border-b border-black/5 shadow-sm'
+          : 'bg-white/85 backdrop-blur-xl border-b border-transparent'
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2.5 xl:gap-4">
         {/* Logo */}
@@ -489,11 +493,11 @@ const Navbar = () => {
           <div
             aria-hidden="true"
             onClick={handleCloseAll}
-            className="lg:hidden fixed inset-0 top-16 sm:top-20 z-40 bg-black/30 backdrop-blur-[1px]"
+            className="lg:hidden fixed inset-0 top-16 sm:top-20 z-[65] bg-navy/45"
           />
           <div
             id="mobile-navigation"
-            className="lg:hidden fixed inset-x-0 top-16 sm:top-20 z-40 bg-white/98 backdrop-blur-xl border-t border-black/5 px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-5.5rem)] sm:max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain shadow-xl"
+            className="lg:hidden fixed inset-x-0 top-16 sm:top-20 z-[65] bg-white border-t border-border/60 px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain shadow-2xl"
           >
           <nav className="space-y-1">
             <Link
@@ -501,7 +505,7 @@ const Navbar = () => {
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isHomeActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                isHomeActive ? 'bg-navy/10 text-navy font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
               )}
             >
               <HomeIcon className="w-5 h-5 text-gold shrink-0" />
@@ -513,7 +517,7 @@ const Navbar = () => {
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isCatalogActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                isCatalogActive ? 'bg-navy/10 text-navy font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
               )}
             >
               <Building2 className="w-5 h-5 text-gold shrink-0" />
@@ -528,7 +532,7 @@ const Navbar = () => {
                 aria-expanded={isMobileServicesOpen}
                 className={cn(
                   'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
-                  isMobileServicesOpen || isServicesActive ? 'bg-muted/80 text-foreground font-semibold' : 'text-foreground/80 active:bg-black/5'
+                  isMobileServicesOpen || isServicesActive ? 'bg-muted text-foreground font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
                 )}
               >
                 <Layers className="w-5 h-5 text-gold shrink-0" />
@@ -588,7 +592,7 @@ const Navbar = () => {
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isAboutActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                isAboutActive ? 'bg-navy/10 text-navy font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
               )}
             >
               <Info className="w-5 h-5 text-gold shrink-0" />
@@ -600,7 +604,7 @@ const Navbar = () => {
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isAgentsActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                isAgentsActive ? 'bg-navy/10 text-navy font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
               )}
             >
               <Users className="w-5 h-5 text-gold shrink-0" />
@@ -615,7 +619,7 @@ const Navbar = () => {
                 aria-expanded={isMobileReviewsOpen}
                 className={cn(
                   'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors w-full',
-                  isMobileReviewsOpen ? 'bg-muted/80 text-foreground font-semibold' : 'text-foreground/80 active:bg-black/5'
+                  isMobileReviewsOpen ? 'bg-muted text-foreground font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
                 )}
               >
                 <MessageSquare className="w-5 h-5 text-gold shrink-0" />
@@ -647,7 +651,7 @@ const Navbar = () => {
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isVacanciesActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                isVacanciesActive ? 'bg-navy/10 text-navy font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
               )}
             >
               <Briefcase className="w-5 h-5 text-gold shrink-0" />
@@ -659,7 +663,7 @@ const Navbar = () => {
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                isContactActive ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                isContactActive ? 'bg-navy/10 text-navy font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
               )}
             >
               <PhoneCall className="w-5 h-5 text-gold shrink-0" />
@@ -671,10 +675,10 @@ const Navbar = () => {
               onClick={handleCloseAll}
               className={cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                location.pathname === '/favorites' ? 'bg-gold/10 text-gold font-semibold' : 'text-foreground/80 active:bg-black/5'
+                location.pathname === '/favorites' ? 'bg-navy/10 text-navy font-semibold' : 'text-foreground hover:bg-muted/70 active:bg-muted'
               )}
             >
-              <Heart className={cn('w-5 h-5', location.pathname === '/favorites' && 'fill-gold text-gold')} />
+              <Heart className={cn('w-5 h-5 shrink-0', location.pathname === '/favorites' ? 'fill-gold text-gold' : 'text-gold')} />
               <span>Обране {favoritesCount > 0 && <span className="text-sm text-gold font-semibold">({favoritesCount})</span>}</span>
             </Link>
           </nav>
@@ -684,7 +688,7 @@ const Navbar = () => {
             <Link
               to="/kontakty"
               onClick={handleCloseAll}
-              className="flex items-center justify-between px-4 py-3 rounded-2xl bg-muted/50 hover:bg-muted text-sm font-semibold text-foreground transition-colors group"
+              className="flex items-center justify-between px-4 py-3 rounded-2xl bg-muted/70 hover:bg-muted text-sm font-semibold text-foreground transition-colors group"
             >
               <div className="flex items-center gap-2.5">
                 <Building2 className="w-4 h-4 text-gold shrink-0" />
