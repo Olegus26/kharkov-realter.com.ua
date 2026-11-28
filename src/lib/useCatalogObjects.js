@@ -64,20 +64,39 @@ const writeSnapshot = (deal, items) => {
   }
 }
 
+const CATALOG_ENDPOINTS = ['/api/catalog', '/api/catalog.php']
+let workingCatalogEndpoint = null
+
+const fetchFromServerCache = async (deal) => {
+  const candidates = workingCatalogEndpoint
+    ? [workingCatalogEndpoint, ...CATALOG_ENDPOINTS.filter((ep) => ep !== workingCatalogEndpoint)]
+    : CATALOG_ENDPOINTS
+
+  for (const endpoint of candidates) {
+    try {
+      const res = await fetch(`${endpoint}?deal=${encodeURIComponent(deal || 'sale')}`)
+      if (!res.ok) continue
+      const contentType = res.headers.get('content-type') || ''
+      if (!contentType.includes('application/json')) continue
+      const items = await res.json()
+      if (Array.isArray(items) && items.length > 0) {
+        workingCatalogEndpoint = endpoint
+        return items
+      }
+    } catch {
+      // Try next candidate or fall back to direct API scan
+    }
+  }
+  return null
+}
+
 export const fetchFullCatalog = async (deal) => {
   const sellType = SELL_TYPE_BY_DEAL[deal]
 
-  try {
-    const res = await fetch(`/api/catalog?deal=${encodeURIComponent(deal || 'sale')}`)
-    if (res.ok) {
-      const items = await res.json()
-      if (Array.isArray(items) && items.length > 0) {
-        writeSnapshot(deal, items)
-        return items
-      }
-    }
-  } catch {
-    // Fallback to direct API scan if serverless endpoint is unavailable
+  const cachedItems = await fetchFromServerCache(deal)
+  if (cachedItems) {
+    writeSnapshot(deal, cachedItems)
+    return cachedItems
   }
 
   const allItems = await getAllObjects(sellType ? { sell_type: sellType } : {})

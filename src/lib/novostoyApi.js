@@ -1,17 +1,52 @@
 const API_BASE = 'https://novostoy.com.ua/api/json'
-const API_KEY = '4j6yrnNZnAtsZdNfsFCcBPSqsxBO38AP'
+const PROXY_ENDPOINTS = ['/api/novostoy', '/api/novostoy.php']
+let workingProxyEndpoint = null
 
 const post = async (method, data, signal) => {
-  const res = await fetch(`${API_BASE}/${method}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ key: API_KEY, data }),
-    signal,
-  })
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  const json = await res.json()
-  if (json.status === 'false') throw new Error(json.errors?.join(', ') || 'API error')
-  return json
+  if (typeof window === 'undefined') {
+    const serverKey = process.env.NOVOSTOY_API_KEY || ''
+    const res = await fetch(`${API_BASE}/${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ key: serverKey, data }),
+      signal,
+    })
+    if (!res.ok) throw new Error(`API error: ${res.status}`)
+    const json = await res.json()
+    if (json.status === 'false') throw new Error(json.errors?.join(', ') || 'API error')
+    return json
+  }
+
+  const candidates = workingProxyEndpoint
+    ? [workingProxyEndpoint, ...PROXY_ENDPOINTS.filter((ep) => ep !== workingProxyEndpoint)]
+    : PROXY_ENDPOINTS
+
+  let lastError = null
+  for (const endpoint of candidates) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ method, data }),
+        signal,
+      })
+      if (!res.ok) {
+        lastError = new Error(`API error: ${res.status}`)
+        continue
+      }
+      const contentType = res.headers.get('content-type') || ''
+      if (!contentType.includes('application/json')) continue
+      const json = await res.json()
+      if (json.status === 'false') throw new Error(json.errors?.join(', ') || 'API error')
+      workingProxyEndpoint = endpoint
+      return json
+    } catch (err) {
+      if (err?.name === 'AbortError') throw err
+      lastError = err
+    }
+  }
+
+  throw lastError || new Error('API request failed')
 }
 
 export const getConfig = () => post('getConfig', ['all'])
@@ -347,18 +382,21 @@ export const findObjectById = async (targetId, hint = null) => {
     }
   }
 
-  // 2. Fast serverless /api/catalog?id=... lookup when running in the browser (~40ms from edge cache)
+  // 2. Fast server cache lookup (/api/catalog or /api/catalog.php) when running in the browser
   if (typeof window !== 'undefined') {
-    try {
-      const res = await fetch(`/api/catalog?id=${encodeURIComponent(normalizedTarget)}`)
-      if (res.ok) {
+    for (const endpoint of ['/api/catalog', '/api/catalog.php']) {
+      try {
+        const res = await fetch(`${endpoint}?id=${encodeURIComponent(normalizedTarget)}`)
+        if (!res.ok) continue
+        const contentType = res.headers.get('content-type') || ''
+        if (!contentType.includes('application/json')) continue
         const obj = await res.json()
         if (obj && obj.id) {
           return obj.sell_type !== undefined ? mapObject(obj) : obj
         }
+      } catch {
+        // Try next endpoint or fall through to direct scan
       }
-    } catch {
-      // Fall through to direct scan
     }
   }
 
